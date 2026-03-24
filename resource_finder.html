@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBES Resource Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* =============================================
+     CSS Custom Properties — CBES Brand Palette
+     ============================================= */
+  :root {
+    --navy:         #0d2b45;
+    --navy-mid:     #133756;
+    --teal-dark:    #0e6b7c;
+    --teal:         #12899e;
+    --teal-light:   #1ab8d4;
+    --accent:       #f0a500;
+    --accent-lt:    #ffc845;
+    --white:        #ffffff;
+    --glass-bg:     rgba(255,255,255,0.10);
+    --glass-border: rgba(255,255,255,0.20);
+    --text-light:   rgba(255,255,255,0.85);
+    --error:        #e74c5e;
+    --success:      #18c78a;
+    --radius-lg:    24px;
+    --radius-md:    14px;
+    --radius-sm:    8px;
+    --shadow-card:  0 30px 80px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.2);
+    --shadow-btn:   0 6px 24px rgba(0,0,0,0.25);
+    --transition:   all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* =============================================
+     Reset & Base
+     ============================================= */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100%;
+    font-family: 'Inter', sans-serif;
+    color: #ffffff;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: linear-gradient(140deg, #0d2b45 0%, #0e4d6b 35%, #0e6b7c 68%, #094f5e 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 1rem 4rem;
+    position: relative;
+  }
+
+  /* =============================================
+     Animated Background Canvas
+     ============================================= */
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.45;
+  }
+
+  /* =============================================
+     Main Card — Glassmorphism
+     ============================================= */
+  .card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 620px;
+    background: rgba(13, 43, 69, 0.58);
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.12);
+    padding: 2.5rem 2.5rem 3rem;
+    margin-top: 1rem;
+  }
+
+  /* =============================================
+     Logo
+     ============================================= */
+  .logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.75rem;
+  }
+
+  .logo-wrap img {
+    height: 76px;
+    width: auto;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.45)) brightness(1.08);
+  }
+
+  /* =============================================
+     Progress Bar
+     ============================================= */
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2.25rem;
+  }
+
+  .progress-step {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+
+  .progress-step.active {
+    background: var(--teal-light);
+    border-color: var(--teal-light);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(26,184,212,0.55);
+  }
+
+  .progress-step.done {
+    background: var(--success);
+    border-color: var(--success);
+    color: #ffffff;
+  }
+
+  .progress-connector {
+    flex: 1;
+    max-width: 64px;
+    height: 2px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-connector::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--success), var(--teal-light));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .progress-connector.filled::after { transform: scaleX(1); }
+
+  /* =============================================
+     Step Panels
+     ============================================= */
+  .step-panel { display: none; }
+
+  .step-panel.active {
+    display: block;
+    animation: fadeSlideIn 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* =============================================
+     Typography
+     ============================================= */
+  .step-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(1.45rem, 4.5vw, 2rem);
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.22;
+    margin-bottom: 0.6rem;
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  .step-subtitle {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.68);
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.65;
+  }
+
+  /* =============================================
+     Inputs
+     ============================================= */
+  .input-group { margin-bottom: 1.5rem; }
+
+  .input-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 0.55rem;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 0.92rem 1.15rem;
+    background: rgba(255,255,255,0.09);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: var(--radius-md);
+    font-size: 1.05rem;
+    font-family: 'Inter', sans-serif;
+    color: #ffffff;
+    outline: none;
+    transition: var(--transition);
+    -webkit-appearance: none;
+  }
+
+  .input-field::placeholder { color: rgba(255,255,255,0.3); }
+
+  .input-field:focus {
+    border-color: var(--teal-light);
+    background: rgba(255,255,255,0.14);
+    box-shadow: 0 0 0 3px rgba(26,184,212,0.22);
+  }
+
+  .input-field.has-error {
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(231,76,94,0.18);
+  }
+
+  /* Hide number spinners */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  /* =============================================
+     Error Message
+     ============================================= */
+  .error-msg {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(231,76,94,0.14);
+    border: 1px solid rgba(231,76,94,0.32);
+    border-radius: var(--radius-sm);
+    padding: 0.72rem 1rem;
+    font-size: 0.87rem;
+    color: #ffa0ad;
+    margin-top: 0.7rem;
+  }
+
+  .error-msg.visible {
+    display: flex;
+    animation: fadeSlideIn 0.3s ease forwards;
+  }
+
+  /* =============================================
+     Primary Button
+     ============================================= */
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 1.05rem 1.5rem;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-btn);
+    letter-spacing: 0.02em;
+    margin-top: 0.5rem;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(26,184,212,0.45);
+    background: linear-gradient(135deg, #10a0b8 0%, #25d4f0 100%);
+  }
+
+  .btn-primary:active { transform: translateY(-1px); }
+
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.48);
+    font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    padding: 0.25rem 0;
+    transition: color 0.2s;
+  }
+
+  .btn-back:hover { color: rgba(255,255,255,0.88); }
+
+  /* =============================================
+     Loading Spinner
+     ============================================= */
+  .spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 3.5rem 0;
+  }
+
+  .spinner {
+    width: 52px;
+    height: 52px;
+    border: 4px solid rgba(255,255,255,0.12);
+    border-top-color: var(--teal-light);
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .spinner-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.58);
+    letter-spacing: 0.05em;
+  }
+
+  /* =============================================
+     ASAP Result Banner
+     ============================================= */
+  .asap-banner {
+    background: linear-gradient(135deg, rgba(26,184,212,0.16) 0%, rgba(14,107,124,0.20) 100%);
+    border: 1px solid rgba(26,184,212,0.32);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 1.75rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .asap-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light), var(--accent));
+  }
+
+  .asap-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    margin-bottom: 0.5rem;
+  }
+
+  .asap-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(1.15rem, 3.5vw, 1.5rem);
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.65rem;
+    line-height: 1.28;
+  }
+
+  .asap-details {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.65;
+  }
+
+  .asap-details a {
+    color: var(--teal-light);
+    text-decoration: none;
+  }
+
+  .asap-details a:hover { text-decoration: underline; }
+
+  /* =============================================
+     CBES Intake Form
+     ============================================= */
+  .form-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 18px;
+    padding: 1.8rem;
+    backdrop-filter: blur(12px);
+  }
+  .form-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .form-card-icon { font-size: 2rem; line-height: 1; }
+  .form-card-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0 0 .25rem; }
+  .form-card-subtitle { font-size: .85rem; color: rgba(255,255,255,0.65); margin: 0; }
+  .field-row { margin-bottom: 1.2rem; }
+  .field-row.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media(max-width:540px) { .field-row.two-col { grid-template-columns: 1fr; } }
+  .field-label { display: block; font-size: .82rem; font-weight: 600; color: rgba(255,255,255,0.75); margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .05em; }
+  .req { color: #f0a500; }
+  .field-input {
+    width: 100%; box-sizing: border-box;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: .65rem .9rem;
+    color: #fff;
+    font-size: .95rem;
+    font-family: inherit;
+    transition: border-color .2s, background .2s;
+    outline: none;
+  }
+  .field-input::placeholder { color: rgba(255,255,255,0.35); }
+  .field-input:focus { border-color: var(--teal-light); background: rgba(255,255,255,0.13); }
+  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem .75rem; margin-top: .4rem; }
+  @media(max-width:400px) { .check-grid { grid-template-columns: 1fr; } }
+  .check-item {
+    display: flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 9px;
+    padding: .5rem .75rem;
+    cursor: pointer;
+    font-size: .88rem;
+    color: rgba(255,255,255,0.85);
+    transition: background .2s, border-color .2s;
+    user-select: none;
+  }
+  .check-item:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+  .check-item input[type=checkbox] { accent-color: var(--teal-light); width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+  .field-error { display: block; color: #ff7b7b; font-size: .8rem; margin-top: .35rem; min-height: 1rem; }
+  .btn-submit {
+    width: 100%; margin-top: .5rem;
+    padding: .85rem;
+    background: linear-gradient(135deg, var(--teal), #0a8fa3);
+    color: #fff; font-size: 1rem; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer;
+    letter-spacing: .04em;
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+    box-shadow: 0 4px 18px rgba(14,107,124,0.45);
+  }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,107,124,0.55); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .intake-success-msg {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.2rem; border-radius: 12px;
+    background: rgba(52,199,89,0.15);
+    border: 1px solid rgba(52,199,89,0.35);
+    color: #fff; font-size: .95rem;
+  }
+  .success-icon { font-size: 1.8rem; }
+
+  /* =============================================
+     Resource Grid
+     ============================================= */
+  .resources-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.42);
+    text-align: center;
+    margin-bottom: 1.1rem;
+  }
+
+  .resources-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+  }
+
+  .resource-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1.15rem 1.1rem 1.05rem;
+    background: rgba(255,255,255,0.065);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: #ffffff;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .resource-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--btn-gradient, linear-gradient(135deg, rgba(26,184,212,0.18), rgba(14,107,124,0.12)));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .resource-btn:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,255,255,0.26);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+  }
+
+  .resource-btn:hover::before { opacity: 1; }
+  .resource-btn:active { transform: translateY(-1px); }
+
+  .resource-icon {
+    font-size: 1.65rem;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .resource-text { position: relative; z-index: 1; }
+
+  .resource-title {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #ffffff;
+  }
+
+  .resource-sub {
+    display: block;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.4;
+    margin-top: 0.15rem;
+  }
+
+  /* Full-width CBES button */
+  .resource-btn.full-width {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    grid-column: 1 / -1;
+    background: rgba(240,165,0,0.1);
+    border-color: rgba(240,165,0,0.28);
+  }
+
+  .resource-btn.full-width:hover {
+    border-color: rgba(240,165,0,0.5);
+    box-shadow: 0 12px 32px rgba(240,165,0,0.12);
+  }
+
+  .resource-btn.full-width .resource-icon { font-size: 1.9rem; }
+
+  .resource-btn.full-width .resource-arrow {
+    margin-left: auto;
+    font-size: 1.1rem;
+    opacity: 0.45;
+    position: relative;
+    z-index: 1;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .resource-btn.full-width:hover .resource-arrow {
+    opacity: 0.8;
+    transform: translate(2px, -2px);
+  }
+
+  /* =============================================
+     Address Tag
+     ============================================= */
+  .address-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 100px;
+    padding: 0.38rem 0.95rem;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* =============================================
+     Notice Box
+     ============================================= */
+  .notice-box {
+    background: rgba(240,165,0,0.1);
+    border: 1px solid rgba(240,165,0,0.28);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    display: none;
+  }
+
+  .notice-box.visible { display: block; }
+
+  /* =============================================
+     Divider
+     ============================================= */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.09);
+    margin: 1.75rem 0 1.5rem;
+  }
+
+  /* =============================================
+     Responsive
+     ============================================= */
+  @media (max-width: 480px) {
+    body { padding: 1.25rem 0.75rem 3rem; }
+    .card { padding: 1.75rem 1.25rem 2.5rem; border-radius: 18px; }
+    .resources-grid { grid-template-columns: 1fr; }
+    .resource-btn.full-width { grid-column: 1; }
+    .progress-connector { max-width: 36px; }
+    .step-title { font-size: 1.4rem; }
+  }
+
+  @media (min-width: 640px) {
+    body { padding: 3rem 1.5rem 5rem; }
+    .card { padding: 3rem 3rem 3.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Animated particle background -->
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+<main class="card" role="main">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <img src="data:image/png;base64,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" alt="Central Boston Elder Services logo" />
+  </div>
+
+  <!-- Progress indicator -->
+  <nav class="progress-bar" aria-label="Step progress">
+    <div class="progress-step active" id="prog-1" aria-current="step">1</div>
+    <div class="progress-connector" id="conn-1" aria-hidden="true"></div>
+    <div class="progress-step" id="prog-2">2</div>
+    <div class="progress-connector" id="conn-2" aria-hidden="true"></div>
+    <div class="progress-step" id="prog-3">3</div>
+  </nav>
+
+  <!-- ==========================================
+       STEP 1 — Age Gate
+       ========================================== -->
+  <section class="step-panel active" id="step-age" aria-label="Age entry">
+    <h1 class="step-title">Welcome to<br>Resource Finder</h1>
+    <p class="step-subtitle">
+      We'll connect you with community resources based on your location.
+      <br>First — how old are you?
+    </p>
+
+    <div class="input-group">
+      <label class="input-label" for="age-input">Your Age</label>
+      <input
+        id="age-input"
+        class="input-field"
+        type="number"
+        min="1" max="120"
+        placeholder="e.g. 72"
+        inputmode="numeric"
+        autocomplete="off"
+      />
+      <div class="error-msg" id="age-error" role="alert">
+        <span aria-hidden="true">&#9888;</span>
+        <span id="age-error-text">Please enter a valid age.</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="age-next-btn" type="button">
+      Continue <span aria-hidden="true">&#8594;</span>
+    </button>
+  </section>
+
+  <!-- ==========================================
+       STEP 2a — Full Address (65+)
+       ========================================== -->
+  <section class="step-panel" id="step-address" aria-label="Address entry">
+    <button class="btn-back" id="back-from-address" type="button">
+      <span aria-hidden="true">&#8592;</span> Back
+    </button>
+    <h2 class="step-title">What's your address?</h2>
+    <p class="step-subtitle">
+      We'll use your address to find your local<br>Aging Services Access Point (ASAP).
+    </p>
+
+    <div class="input-group">
+      <label class="input-label" for="address-input">Full Street Address</label>
+      <input
+        id="address-input"
+        class="input-field"
+        type="text"
+        placeholder="e.g. 2315 Washington St, Boston, MA 02119"
+        autocomplete="street-address"
+      />
+      <div class="error-msg" id="address-error" role="alert">
+        <span aria-hidden="true">&#9888;</span>
+        <span id="address-error-text">Please enter a complete address with city and state.</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="address-next-btn" type="button">
+      Find My ASAP <span aria-hidden="true">&#8594;</span>
+    </button>
+  </section>
+
+  <!-- ==========================================
+       STEP 2b — ZIP Code (Under 65)
+       ========================================== -->
+  <section class="step-panel" id="step-zip" aria-label="ZIP code entry">
+    <button class="btn-back" id="back-from-zip" type="button">
+      <span aria-hidden="true">&#8592;</span> Back
+    </button>
+    <h2 class="step-title">What's your ZIP code?</h2>
+    <p class="step-subtitle">
+      Enter your ZIP code to see services<br>and resources available near you.
+    </p>
+
+    <div class="input-group">
+      <label class="input-label" for="zip-input">ZIP Code</label>
+      <input
+        id="zip-input"
+        class="input-field"
+        type="text"
+        placeholder="e.g. 02119"
+        maxlength="5"
+        inputmode="numeric"
+        autocomplete="postal-code"
+      />
+      <div class="error-msg" id="zip-error" role="alert">
+        <span aria-hidden="true">&#9888;</span>
+        <span>Please enter a valid 5-digit ZIP code.</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="zip-next-btn" type="button">
+      Find Resources <span aria-hidden="true">&#8594;</span>
+    </button>
+  </section>
+
+  <!-- ==========================================
+       STEP 3 — Geocoding / Loading
+       ========================================== -->
+  <section class="step-panel" id="step-loading" aria-live="polite" aria-label="Loading">
+    <div class="spinner-wrap">
+      <div class="spinner" role="status" aria-label="Loading"></div>
+      <p class="spinner-label">Locating your address&hellip;</p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       STEP 3a — Results: 65+ with ASAP
+       ========================================== -->
+  <section class="step-panel" id="step-results-senior" aria-label="Your resources">
+    <button class="btn-back" id="back-from-results-senior" type="button">
+      <span aria-hidden="true">&#8592;</span> Start Over
+    </button>
+
+    <div class="address-tag" id="sr-address-tag" aria-label="Your address">
+      <span aria-hidden="true">&#128205;</span>
+      <span id="sr-address-display"></span>
+    </div>
+
+    <!-- Shown if geocode works but no polygon match -->
+    <div class="notice-box" id="sr-no-match-notice" role="alert">
+      <strong>&#9888; No ASAP region matched.</strong><br>
+      Your address may be outside Massachusetts or could not be matched to a service area.
+      Resources below are shown for your area. Contact CBES directly for personalized help.
+    </div>
+
+    <!-- ASAP info banner -->
+    <div class="asap-banner" id="sr-asap-banner">
+      <p class="asap-eyebrow">Your Aging Services Access Point</p>
+      <p class="asap-name" id="sr-asap-name"></p>
+      <p class="asap-details" id="sr-asap-details"></p>
+    </div>
+
+    <p class="resources-label">Community Resources Near You</p>
+    <div class="resources-grid" id="sr-resources-grid"></div>
+
+    <!-- CBES Contact Form — only shown when ASAP = Central Boston -->
+    <div id="cbes-intake-form" style="display:none; margin-top:2rem;">
+      <div class="form-card">
+        <div class="form-card-header">
+          <span class="form-card-icon">🤝</span>
+          <div>
+            <p class="form-card-title">Get Connected with CBES</p>
+            <p class="form-card-subtitle">A care manager will reach out to help you access services.</p>
+          </div>
+        </div>
+        <div id="intake-fields">
+          <div class="field-row">
+            <label class="field-label" for="intake-name">Full Name <span class="req">*</span></label>
+            <input class="field-input" id="intake-name" type="text" placeholder="Jane Smith" autocomplete="name">
+            <span class="field-error" id="intake-name-error"></span>
+          </div>
+          <div class="field-row two-col">
+            <div>
+              <label class="field-label" for="intake-phone">Phone Number</label>
+              <input class="field-input" id="intake-phone" type="tel" placeholder="(617) 000-0000" autocomplete="tel">
+            </div>
+            <div>
+              <label class="field-label" for="intake-email">Email Address</label>
+              <input class="field-input" id="intake-email" type="email" placeholder="you@email.com" autocomplete="email">
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="field-label">What do you need help with? <span class="req">*</span></label>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" value="Home Care"> <span>🏡 Home Care</span></label>
+              <label class="check-item"><input type="checkbox" value="Elder Protective Services"> <span>🛡️ Elder Protective Services</span></label>
+              <label class="check-item"><input type="checkbox" value="Elderly Housing"> <span>🏠 Elderly Housing</span></label>
+              <label class="check-item"><input type="checkbox" value="Senior Care Options (SCO)"> <span>💳 Senior Care Options</span></label>
+              <label class="check-item"><input type="checkbox" value="One Care Plans"> <span>🩺 One Care Plans</span></label>
+              <label class="check-item"><input type="checkbox" value="Veteran-Directed Services"> <span>🎖️ Veteran-Directed Services</span></label>
+              <label class="check-item"><input type="checkbox" value="Options Counseling"> <span>🗣️ Options Counseling</span></label>
+              <label class="check-item"><input type="checkbox" value="Clinical Assessment &amp; Eligibility"> <span>📋 Clinical Assessment</span></label>
+              <label class="check-item"><input type="checkbox" value="Community Transition (CTLP)"> <span>🔄 Community Transition</span></label>
+              <label class="check-item"><input type="checkbox" value="Residence Service Coordination"> <span>🏢 Residence Coordination</span></label>
+              <label class="check-item"><input type="checkbox" value="Nutrition / Project Bread"> <span>🍎 Nutrition / Project Bread</span></label>
+              <label class="check-item"><input type="checkbox" value="Little Necessities"> <span>🧴 Little Necessities</span></label>
+              <label class="check-item"><input type="checkbox" value="Computer Lab / Digital Literacy"> <span>💻 Computer Lab</span></label>
+              <label class="check-item"><input type="checkbox" value="Nursing &amp; Facility Placement"> <span>🏥 Nursing &amp; Placement</span></label>
+              <label class="check-item"><input type="checkbox" value="Boston Allied Partner"> <span>🤝 Boston Allied Partner</span></label>
+              <label class="check-item"><input type="checkbox" value="Other"> <span>📌 Other</span></label>
+            </div>
+            <span class="field-error" id="intake-needs-error"></span>
+          </div>
+          <span class="field-error" id="intake-general-error"></span>
+          <button class="btn-submit" id="intake-submit-btn" type="button">Submit &rarr;</button>
+        </div>
+        <div id="intake-success" style="display:none;" class="intake-success-msg">
+          <span class="success-icon">✅</span>
+          <p><strong>Thank you!</strong> A CBES care manager will be in touch soon.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       STEP 3b — Results: Under 65, ZIP only
+       ========================================== -->
+  <section class="step-panel" id="step-results-zip" aria-label="Your resources">
+    <button class="btn-back" id="back-from-results-zip" type="button">
+      <span aria-hidden="true">&#8592;</span> Start Over
+    </button>
+
+    <h2 class="step-title" id="zr-title">Resources Near You</h2>
+    <p class="step-subtitle" id="zr-zip-display">Resources for ZIP code <strong></strong></p>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <p class="resources-label">Select a Resource Category</p>
+    <div class="resources-grid" id="zr-resources-grid"></div>
+  </section>
+
+</main>
+
+<script>
+// ================================================================
+// Embedded GeoJSON Data — ASAP Catchment Areas (WGS84, simplified)
+// Source: MA Executive Office of Elder Affairs via ArcGIS Online
+// ================================================================
+const ASAP_GEOJSON = {"type":"FeatureCollection","crs":{"type":"name","properties":{"name":"EPSG:4326"}},"features":[{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.823,42.8],[-70.829,42.8],[-70.827,42.805],[-70.823,42.8]]],[[[-70.886,42.883],[-70.848,42.861],[-70.814,42.872],[-70.81,42.822],[-70.875,42.816],[-70.822,42.798],[-70.822,42.812],[-70.81,42.805],[-70.82,42.817],[-70.808,42.816],[-70.788,42.739],[-70.809,42.746],[-70.814,42.774],[-70.816,42.755],[-70.847,42.763],[-70.824,42.757],[-70.842,42.75],[-70.823,42.751],[-70.815,42.727],[-70.84,42.732],[-70.864,42.709],[-70.969,42.673],[-70.96,42.649],[-70.985,42.612],[-70.965,42.599],[-70.931,42.612],[-70.909,42.558],[-70.936,42.547],[-70.901,42.543],[-70.898,42.525],[-70.867,42.537],[-70.89,42.52],[-70.888,42.498],[-70.862,42.521],[-70.842,42.519],[-70.856,42.493],[-70.834,42.506],[-70.841,42.488],[-70.879,42.479],[-70.987,42.512],[-71.032,42.551],[-71.028,42.574],[-71.059,42.609],[-71.135,42.599],[-71.157,42.615],[-71.193,42.565],[-71.215,42.57],[-71.205,42.544],[-71.232,42.506],[-71.25,42.526],[-71.307,42.521],[-71.314,42.55],[-71.346,42.564],[-71.424,42.526],[-71.498,42.577],[-71.496,42.65],[-71.534,42.648],[-71.532,42.669],[-71.557,42.676],[-71.542,42.703],[-71.295,42.697],[-71.245,42.743],[-71.182,42.737],[-71.186,42.791],[-71.167,42.809],[-71.133,42.821],[-71.064,42.806],[-71.031,42.859],[-70.886,42.883]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"AgeSpan","ASAP_ADDRESS":"280 Merrimack Street, Suite 400, Lawrence, MA 01843","ASAP_PHONE_NUMBER":"(978) 683-7747","ASAP_WEBSITE":"http://www.agespan.org/","AREAS_SERVED":"Amesbury, Andover, Billerica, Boxford, Chelmsford, Danvers, Dracut, Dunstable, Georgetown, Groveland, Haverhill, Lawrence, Lowell, Marblehead, Merrimac, Methuen, Middleton, Newbury, Newburyport, North Andover, Peabody, Rowley, Salem, Salisbury, Tewksbury, Tyngsborough, West Newbury, Westford"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.534,42.648],[-71.496,42.65],[-71.498,42.577],[-71.539,42.543],[-71.62,42.553],[-71.639,42.531],[-71.626,42.499],[-71.636,42.477],[-71.549,42.447],[-71.559,42.412],[-71.604,42.398],[-71.58,42.387],[-71.625,42.35],[-71.678,42.365],[-71.671,42.387],[-71.701,42.396],[-71.742,42.387],[-71.818,42.404],[-71.832,42.432],[-71.888,42.395],[-71.965,42.447],[-72.007,42.421],[-72.1,42.485],[-72.08,42.499],[-72.139,42.624],[-72.117,42.627],[-72.111,42.717],[-71.542,42.703],[-71.557,42.676],[-71.532,42.669],[-71.534,42.648]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Aging Services of North Central Massachusetts","ASAP_ADDRESS":"680 Mechanic Street, Suite 120, Leominster, MA 01453","ASAP_PHONE_NUMBER":"(978) 537-7411","ASAP_WEBSITE":"https://www.agingservicesma.org/","AREAS_SERVED":"Ashburnham, Ashby, Ayer, Berlin, Bolton, Clinton, Fitchburg, Gardner, Groton, Hubbardston, Lancaster, Leominster, Lunenburg, Pepperell, Princeton, Shirley, Sterling, Templeton, Townsend, Westminster, Winchendon"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.966,42.357],[-70.956,42.354],[-70.953,42.344],[-70.966,42.357]]],[[[-71.069,42.367],[-71.07,42.366],[-71.071,42.367],[-71.069,42.367]]],[[[-71.069,42.368],[-71.069,42.369],[-71.067,42.369],[-71.069,42.368]]],[[[-71.052,42.369],[-71.061,42.343],[-71.045,42.355],[-71.022,42.344],[-71.042,42.34],[-71.008,42.336],[-71.046,42.328],[-71.033,42.313],[-71.053,42.306],[-71.037,42.288],[-71.062,42.267],[-71.092,42.285],[-71.095,42.313],[-71.068,42.322],[-71.073,42.364],[-71.052,42.369]]],[[[-71.074,42.391],[-71.049,42.384],[-71.05,42.372],[-71.072,42.373],[-71.074,42.391]]],[[[-71.067,42.393],[-71.071,42.39],[-71.071,42.392],[-71.067,42.393]]],[[[-70.995,42.394],[-70.987,42.387],[-71.02,42.377],[-71,42.378],[-71.01,42.365],[-70.991,42.354],[-71.008,42.347],[-71.042,42.364],[-71.041,42.384],[-70.995,42.394]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Boston Senior Home Care","ASAP_ADDRESS":"9 South Street, Lincoln Plaza Suite 501, Boston, MA 02111","ASAP_PHONE_NUMBER":"(617) 292-6211","ASAP_WEBSITE":"https://www.bshcinfo.org/","AREAS_SERVED":"Beacon Hill, Boston, Charlestown, Dorchester, Downtown, East Boston, North End, South Boston, South Cove, West End"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-70.995,41.915],[-70.974,41.861],[-71.037,41.817],[-71.015,41.8],[-71.026,41.779],[-70.922,41.791],[-70.907,41.764],[-71.077,41.687],[-71.037,41.624],[-71.045,41.588],[-71.022,41.504],[-71.038,41.481],[-71.063,41.507],[-71.12,41.497],[-71.142,41.613],[-71.133,41.66],[-71.196,41.675],[-71.102,41.793],[-71.079,41.793],[-71.09,41.81],[-71.112,41.783],[-71.119,41.794],[-71.113,41.848],[-71.094,41.873],[-71.115,41.855],[-71.119,41.776],[-71.136,41.747],[-71.194,41.707],[-71.187,41.744],[-71.204,41.71],[-71.224,41.727],[-71.203,41.744],[-71.226,41.731],[-71.226,41.713],[-71.282,41.772],[-71.328,41.781],[-71.34,41.797],[-71.339,41.899],[-71.381,41.894],[-71.381,41.985],[-71.169,42.061],[-71.156,42.001],[-71.055,41.985],[-71.049,41.963],[-70.995,41.915]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Bristol Aging & Wellness, Inc.","ASAP_ADDRESS":"1 Father DeValles Blvd., Unit 8, Fall River, MA 02723","ASAP_PHONE_NUMBER":"(508) 675-2101","ASAP_WEBSITE":"https://www.bristolelder.org/","AREAS_SERVED":"Attleboro, Berkley, Dighton, Fall River, Freetown, Mansfield, North Attleborough, Norton, Raynham, Rehoboth, Seekonk, Somerset, Swansea, Taunton, Westport"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.122,42.369],[-71.111,42.352],[-71.061,42.346],[-71.068,42.322],[-71.099,42.313],[-71.114,42.329],[-71.107,42.35],[-71.167,42.34],[-71.168,42.36],[-71.122,42.369]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Central Boston Elder Services","ASAP_ADDRESS":"2315 Washington Street, Boston, MA 02119","ASAP_PHONE_NUMBER":"(617) 277-7416","ASAP_WEBSITE":"https://centralboston.org/","AREAS_SERVED":"Allston, Back Bay, Brighton, Fenway, Mission Hill, Roxbury, South End"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.921,41.428],[-70.908,41.422],[-70.951,41.412],[-70.921,41.428]]],[[[-70.854,41.439],[-70.867,41.423],[-70.906,41.425],[-70.857,41.45],[-70.854,41.439]]],[[[-70.816,41.456],[-70.81,41.444],[-70.841,41.448],[-70.816,41.456]]],[[[-70.699,41.509],[-70.699,41.506],[-70.704,41.506],[-70.699,41.509]]],[[[-70.711,41.515],[-70.701,41.509],[-70.711,41.492],[-70.806,41.45],[-70.802,41.467],[-70.711,41.515]]],[[[-70.678,41.515],[-70.689,41.505],[-70.701,41.511],[-70.678,41.515]]],[[[-70.699,41.519],[-70.71,41.514],[-70.711,41.519],[-70.699,41.519]]],[[[-70.778,41.764],[-70.775,41.734],[-70.755,41.742],[-70.713,41.708],[-70.729,41.705],[-70.715,41.676],[-70.764,41.711],[-70.744,41.675],[-70.766,41.677],[-70.764,41.641],[-70.815,41.658],[-70.825,41.65],[-70.804,41.642],[-70.805,41.626],[-70.866,41.632],[-70.851,41.595],[-70.832,41.607],[-70.816,41.592],[-70.822,41.582],[-70.847,41.596],[-70.854,41.582],[-70.87,41.625],[-70.905,41.625],[-70.919,41.682],[-70.924,41.646],[-70.899,41.593],[-70.929,41.614],[-70.933,41.581],[-70.95,41.585],[-70.928,41.539],[-70.946,41.538],[-70.954,41.515],[-70.97,41.534],[-70.981,41.509],[-71.022,41.504],[-71.045,41.588],[-71.037,41.624],[-71.077,41.687],[-70.907,41.764],[-70.922,41.791],[-70.772,41.809],[-70.778,41.764]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Coastline Elderly Services, Inc.","ASAP_ADDRESS":"863 Belleville Avenue, New Bedford MA 02745","ASAP_PHONE_NUMBER":"(508) 999-6400","ASAP_WEBSITE":"https://coastlinenb.org/","AREAS_SERVED":"Acushnet, Dartmouth, Fairhaven, Gosnold, Marion, Mattapoisett, New Bedford, Rochester"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.104,42.326],[-71.085,42.305],[-71.093,42.285],[-71.069,42.272],[-71.112,42.261],[-71.131,42.228],[-71.191,42.283],[-71.169,42.301],[-71.136,42.298],[-71.124,42.323],[-71.104,42.326]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"ETHOS","ASAP_ADDRESS":"555 Amory Street, Jamaica Plain, MA 02130","ASAP_PHONE_NUMBER":"(617) 522-6700","ASAP_WEBSITE":"https://www.ethocare.org/","AREAS_SERVED":"Hyde Park, Jamaica Plain, Mattapan, Roslindale, West Roxbury"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-73.024,42.703],[-72.95,42.705],[-72.996,42.674],[-72.955,42.666],[-72.951,42.641],[-73.012,42.38],[-73.069,42.381],[-73.063,42.329],[-73.029,42.309],[-73,42.313],[-73.002,42.251],[-73.035,42.144],[-73.072,42.144],[-73.053,42.04],[-73.497,42.05],[-73.508,42.086],[-73.265,42.746],[-73.023,42.741],[-73.024,42.703]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Elder Services of Berkshire County, Inc.","ASAP_ADDRESS":"73 South Church Street, Pittsfield, MA 01201","ASAP_PHONE_NUMBER":"(413) 499-0524","ASAP_WEBSITE":"https://www.esbci.org/","AREAS_SERVED":"Adams, Alford, Becket, Cheshire, Clarksburg, Dalton, Egremont, Florida, Great Barrington, Hancock, Hinsdale, Lanesborough, Lee, Lenox, Monterey, Mount Washington, New Ashford, New Marlborough, North Adams, Otis, Peru, Pittsfield, Richmond, Sandisfield, Savoy, Sheffield, Stockbridge, Tyringham, Washington, West Stockbridge, Williamstown, Windsor"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.81,41.261],[-70.805,41.249],[-70.833,41.258],[-70.81,41.261]]],[[[-70.27,41.31],[-70.275,41.313],[-70.271,41.312],[-70.27,41.31]]],[[[-70.27,41.307],[-70.245,41.305],[-70.24,41.296],[-70.256,41.293],[-70.244,41.288],[-70.27,41.307]]],[[[-70.761,41.328],[-70.763,41.327],[-70.764,41.328],[-70.761,41.328]]],[[[-70.297,41.338],[-70.3,41.33],[-70.311,41.338],[-70.297,41.338]]],[[[-70.041,41.387],[-69.966,41.289],[-69.971,41.247],[-70.111,41.241],[-70.235,41.284],[-70.207,41.275],[-70.192,41.283],[-70.207,41.289],[-70.197,41.297],[-70.104,41.298],[-70.088,41.278],[-70.064,41.296],[-70.024,41.305],[-70.022,41.294],[-70.011,41.306],[-70.034,41.317],[-69.999,41.331],[-70.016,41.346],[-70.08,41.292],[-70.093,41.298],[-70.033,41.338],[-70.024,41.368],[-70.041,41.387]]],[[[-70.555,41.428],[-70.547,41.418],[-70.549,41.416],[-70.555,41.428]]],[[[-70.603,41.483],[-70.601,41.456],[-70.587,41.458],[-70.603,41.431],[-70.567,41.471],[-70.552,41.44],[-70.573,41.415],[-70.56,41.422],[-70.547,41.404],[-70.531,41.405],[-70.548,41.416],[-70.507,41.4],[-70.498,41.355],[-70.509,41.35],[-70.466,41.35],[-70.509,41.389],[-70.464,41.401],[-70.451,41.354],[-70.45,41.413],[-70.473,41.407],[-70.451,41.42],[-70.452,41.348],[-70.705,41.343],[-70.746,41.332],[-70.776,41.301],[-70.839,41.346],[-70.769,41.354],[-70.786,41.331],[-70.755,41.326],[-70.769,41.33],[-70.769,41.354],[-70.701,41.434],[-70.633,41.468],[-70.622,41.449],[-70.633,41.468],[-70.603,41.483]]],[[[-70.526,41.573],[-70.542,41.553],[-70.529,41.547],[-70.544,41.552],[-70.526,41.573]]],[[[-70.463,41.588],[-70.458,41.583],[-70.458,41.579],[-70.463,41.588]]],[[[-69.982,41.619],[-69.988,41.553],[-70.009,41.541],[-69.982,41.619]]],[[[-69.968,41.643],[-69.975,41.628],[-69.98,41.635],[-69.968,41.643]]],[[[-70.195,41.652],[-70.192,41.656],[-70.192,41.653],[-70.195,41.652]]],[[[-69.951,41.721],[-69.952,41.715],[-69.963,41.72],[-69.951,41.721]]],[[[-69.946,41.758],[-69.943,41.748],[-69.952,41.752],[-69.946,41.758]]],[[[-69.949,41.808],[-69.95,41.809],[-69.949,41.81],[-69.949,41.808]]],[[[-70.498,41.777],[-70.555,41.776],[-70.625,41.738],[-70.631,41.753],[-70.538,41.811],[-70.498,41.777]]],[[[-69.953,41.825],[-69.948,41.809],[-69.959,41.818],[-69.953,41.825]]],[[[-69.963,41.825],[-69.957,41.826],[-69.96,41.823],[-69.963,41.825]]],[[[-69.945,41.828],[-69.938,41.818],[-69.943,41.818],[-69.945,41.828]]],[[[-69.959,41.831],[-69.957,41.827],[-69.962,41.828],[-69.959,41.831]]],[[[-69.957,41.833],[-69.959,41.834],[-69.958,41.835],[-69.957,41.833]]],[[[-69.954,41.834],[-69.946,41.827],[-69.957,41.828],[-69.954,41.834]]],[[[-69.951,41.837],[-69.948,41.832],[-69.954,41.835],[-69.951,41.837]]],[[[-69.949,41.837],[-69.946,41.837],[-69.947,41.832],[-69.949,41.837]]],[[[-70.008,41.899],[-70.002,41.889],[-70.024,41.897],[-70.008,41.899]]],[[[-70.094,42.06],[-70.012,41.99],[-69.946,41.846],[-69.944,41.831],[-69.951,41.844],[-69.969,41.832],[-69.958,41.816],[-69.986,41.789],[-69.96,41.815],[-69.938,41.799],[-69.938,41.814],[-69.932,41.686],[-69.943,41.764],[-69.997,41.718],[-69.945,41.704],[-69.943,41.659],[-69.961,41.618],[-69.974,41.619],[-69.946,41.663],[-69.981,41.657],[-69.962,41.667],[-70.195,41.648],[-70.158,41.685],[-70.18,41.707],[-70.16,41.685],[-70.198,41.644],[-70.261,41.61],[-70.269,41.626],[-70.241,41.638],[-70.274,41.649],[-70.273,41.632],[-70.357,41.633],[-70.376,41.613],[-70.436,41.609],[-70.453,41.588],[-70.463,41.597],[-70.45,41.621],[-70.47,41.591],[-70.451,41.585],[-70.487,41.554],[-70.527,41.548],[-70.514,41.565],[-70.525,41.58],[-70.548,41.551],[-70.634,41.539],[-70.656,41.515],[-70.687,41.522],[-70.653,41.542],[-70.642,41.573],[-70.651,41.646],[-70.615,41.658],[-70.654,41.666],[-70.614,41.674],[-70.628,41.694],[-70.661,41.683],[-70.618,41.701],[-70.618,41.724],[-70.639,41.718],[-70.623,41.737],[-70.556,41.773],[-70.495,41.775],[-70.412,41.744],[-70.287,41.734],[-70.28,41.722],[-70.348,41.721],[-70.262,41.707],[-70.19,41.752],[-70.019,41.785],[-70.002,41.815],[-70.001,41.897],[-70.031,41.917],[-70.024,41.929],[-70.069,41.929],[-70.053,41.922],[-70.068,41.885],[-70.094,42.03],[-70.158,42.062],[-70.204,42.029],[-70.167,42.035],[-70.191,42.019],[-70.247,42.062],[-70.198,42.083],[-70.094,42.06]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Elder Services of Cape Cod and the Islands, Inc.","ASAP_ADDRESS":"68 Route 134, South Dennis, MA 02660","ASAP_PHONE_NUMBER":"(508) 394-4630","ASAP_WEBSITE":"https://escci.org/","AREAS_SERVED":"Aquinnah, Barnstable, Bourne, Brewster, Chatham, Chilmark, Dennis, Eastham, Edgartown, Falmouth, Harwich, Mashpee, Nantucket, Oak Bluffs, Orleans, Provincetown, Sandwich, Tisbury, Truro, Wellfleet, West Tisbury, Yarmouth"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.1,42.485],[-72.007,42.421],[-71.965,42.447],[-71.888,42.395],[-71.832,42.432],[-71.818,42.404],[-71.671,42.387],[-71.69,42.319],[-71.659,42.267],[-71.674,42.249],[-71.648,42.245],[-71.642,42.166],[-71.691,42.163],[-71.695,42.176],[-71.719,42.173],[-71.724,42.191],[-71.83,42.145],[-71.826,42.166],[-71.858,42.161],[-71.895,42.192],[-71.939,42.189],[-71.967,42.311],[-72.117,42.302],[-72.146,42.277],[-72.145,42.291],[-72.169,42.298],[-72.217,42.294],[-72.211,42.311],[-72.275,42.302],[-72.289,42.352],[-72.273,42.39],[-72.219,42.395],[-72.1,42.485]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Elder Services of Worcester Area, Inc.","ASAP_ADDRESS":"67 Millbrook Street, Suite 100, Worcester MA 01606","ASAP_PHONE_NUMBER":"(508) 756-1545","ASAP_WEBSITE":"https://eswa.org/","AREAS_SERVED":"Auburn, Barre, Boylston, Grafton, Hardwick, Holden, Leicester, Millbury, New Braintree, Oakham, Paxton, Rutland, Shrewsbury, West Boylston, Worcester"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.055,42.574],[-71.036,42.571],[-70.987,42.512],[-70.879,42.479],[-70.894,42.46],[-70.918,42.467],[-70.935,42.454],[-70.931,42.43],[-70.903,42.418],[-70.936,42.416],[-70.945,42.459],[-70.963,42.445],[-70.989,42.46],[-70.973,42.446],[-70.983,42.432],[-71.026,42.445],[-71.054,42.477],[-71.039,42.524],[-71.075,42.531],[-71.055,42.574]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Greater Lynn Senior Services, Inc.","ASAP_ADDRESS":"8 Silsbee St., Lynn, MA 01901","ASAP_PHONE_NUMBER":"(781) 599- 0110","ASAP_WEBSITE":"https://www.glss.net/","AREAS_SERVED":"Lynn, Lynnfield, Nahant, Saugus, Swampscott"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.221,42.245],[-72.264,42.184],[-72.199,42.154],[-72.135,42.162],[-72.136,42.03],[-72.582,42.025],[-72.715,42.037],[-72.685,42.163],[-72.627,42.162],[-72.621,42.124],[-72.521,42.161],[-72.412,42.153],[-72.41,42.178],[-72.358,42.19],[-72.365,42.207],[-72.343,42.219],[-72.221,42.245]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Greater Springfield Senior Services, Inc.","ASAP_ADDRESS":"66 Industry Ave., Springfield, MA 01104","ASAP_PHONE_NUMBER":"(413) 781-8800","ASAP_WEBSITE":"https://www.gsssi.org/","AREAS_SERVED":"Agawam, Brimfield, East Longmeadow, Hampden, Holland, Longmeadow, Monson, Palmer, Springfield, Wales, West Springfield, Wilbraham"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.183,42.276],[-71.147,42.256],[-71.143,42.236],[-71.067,42.164],[-71.149,42.139],[-71.132,42.107],[-71.139,42.073],[-71.364,41.985],[-71.381,41.985],[-71.381,42.019],[-71.458,42.018],[-71.456,42.035],[-71.388,42.041],[-71.359,42.09],[-71.404,42.188],[-71.344,42.201],[-71.347,42.216],[-71.271,42.216],[-71.27,42.2],[-71.251,42.203],[-71.229,42.264],[-71.183,42.276]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"HESSCO Elder Services","ASAP_ADDRESS":"546 South Street, Walpole, MA 02081","ASAP_PHONE_NUMBER":"(781) 784-4944","ASAP_WEBSITE":"http://www.hessco.org/","AREAS_SERVED":"Canton, Dedham, Foxborough, Medfield, Millis, Norfolk, Norwood, Plainville, Sharon, Walpole, Westwood, Wrentham"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.856,42.481],[-72.764,42.464],[-72.758,42.446],[-72.701,42.453],[-72.704,42.406],[-72.49,42.434],[-72.484,42.407],[-72.375,42.421],[-72.355,42.341],[-72.405,42.336],[-72.409,42.359],[-72.472,42.351],[-72.464,42.308],[-72.577,42.303],[-72.635,42.274],[-72.657,42.228],[-72.691,42.213],[-72.686,42.136],[-72.713,42.039],[-72.756,42.036],[-72.767,42.003],[-72.817,41.998],[-72.814,42.037],[-73.053,42.04],[-73.072,42.144],[-73.035,42.144],[-73.002,42.251],[-73,42.313],[-73.029,42.309],[-73.063,42.329],[-73.066,42.389],[-73.012,42.38],[-72.975,42.556],[-72.877,42.541],[-72.871,42.484],[-72.856,42.481]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Highland Valley Elder Services, Inc.","ASAP_ADDRESS":"320 Riverside Drive Suite B, Florence, MA 01062","ASAP_PHONE_NUMBER":"(413) 586-2000","ASAP_WEBSITE":"http://www.highlandvalley.org/","AREAS_SERVED":"Amherst, Blandford, Chester, Chesterfield, Cummington, Easthampton, Goshen, Granville, Hadley, Hatfield, Huntington, Middlefield, Montgomery, Northampton, Pelham, Plainfield, Russell, Southampton, Southwick, Tolland, Westfield, Westhampton, Williamsburg, Worthington"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.111,42.717],[-72.117,42.627],[-72.139,42.624],[-72.082,42.496],[-72.219,42.395],[-72.273,42.39],[-72.286,42.353],[-72.356,42.303],[-72.375,42.421],[-72.484,42.407],[-72.49,42.434],[-72.704,42.406],[-72.701,42.453],[-72.758,42.446],[-72.764,42.464],[-72.871,42.484],[-72.877,42.541],[-72.975,42.556],[-72.955,42.665],[-72.996,42.674],[-72.949,42.704],[-73.024,42.703],[-73.023,42.741],[-72.111,42.717]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"LifePath, Inc.","ASAP_ADDRESS":"101 Munson St., Suite 201, Greenfield, MA 01301","ASAP_PHONE_NUMBER":"(413) 773-5555","ASAP_WEBSITE":"http://lifepathma.org/","AREAS_SERVED":"Ashfield, Athol, Bernardston, Buckland, Charlemont, Colrain, Conway, Deerfield, Erving, Gill, Greenfield, Hawley, Heath, Leverett, Leyden, Monroe, Montague, New Salem, Northfield, Orange, Petersham, Phillipston, Rowe, Royalston, Shelburne, Shutesbury, Sunderland, Warwick, Wendell, Whately"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.131,42.583],[-71.135,42.53],[-71.11,42.474],[-71.122,42.44],[-71.15,42.436],[-71.132,42.415],[-71.144,42.397],[-71.267,42.424],[-71.283,42.399],[-71.322,42.393],[-71.43,42.437],[-71.443,42.407],[-71.473,42.39],[-71.527,42.396],[-71.559,42.412],[-71.549,42.447],[-71.636,42.477],[-71.626,42.499],[-71.639,42.531],[-71.62,42.553],[-71.539,42.543],[-71.498,42.577],[-71.424,42.526],[-71.346,42.564],[-71.314,42.55],[-71.307,42.521],[-71.25,42.526],[-71.232,42.506],[-71.205,42.544],[-71.213,42.573],[-71.193,42.565],[-71.154,42.615],[-71.131,42.583]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Minuteman Senior Services","ASAP_ADDRESS":"One Burlington Woods, Suite 101 Burlington, MA 01803","ASAP_PHONE_NUMBER":"(781) 272-7177","ASAP_WEBSITE":"http://www.minutemansenior.org/","AREAS_SERVED":"Acton, Arlington, Bedford, Boxborough, Burlington, Carlisle, Concord, Harvard, Lexington, Lincoln, Littleton, Maynard, Stow, Wilmington, Winchester, Woburn"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.978,42.366],[-70.981,42.364],[-70.983,42.366],[-70.978,42.366]]],[[[-70.998,42.378],[-70.999,42.366],[-71.01,42.365],[-70.998,42.378]]],[[[-70.967,42.377],[-70.967,42.378],[-70.967,42.377],[-70.967,42.377]]],[[[-71.028,42.574],[-71.057,42.574],[-71.075,42.531],[-71.039,42.524],[-71.054,42.477],[-71.026,42.445],[-71,42.428],[-70.958,42.44],[-70.99,42.409],[-70.967,42.389],[-70.969,42.356],[-70.972,42.372],[-70.997,42.372],[-70.988,42.393],[-71.018,42.403],[-71.027,42.385],[-71.07,42.39],[-71.073,42.417],[-71.077,42.397],[-71.1,42.396],[-71.149,42.431],[-71.122,42.44],[-71.11,42.474],[-71.135,42.53],[-71.135,42.599],[-71.059,42.609],[-71.028,42.574]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Mystic Valley Elder Services, Inc.","ASAP_ADDRESS":"300 Commercial Street, Suite #19, Malden, MA 02148","ASAP_PHONE_NUMBER":"(781) 324-7705","ASAP_WEBSITE":"http://www.mves.org/","AREAS_SERVED":"Chelsea, Everett, Malden, Medford, Melrose, North Reading, Reading, Revere, Stoneham, Wakefield, Winthrop"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.635,42.005],[-70.64,42.004],[-70.636,42.013],[-70.635,42.005]]],[[[-70.889,42.167],[-70.884,42.154],[-70.847,42.158],[-70.792,42.106],[-70.777,42.117],[-70.782,42.156],[-70.715,42.16],[-70.64,42.088],[-70.644,42.051],[-70.599,42.005],[-70.638,41.995],[-70.613,42.015],[-70.656,42.061],[-70.666,42.053],[-70.651,42.046],[-70.669,42.045],[-70.677,42.023],[-70.668,42.01],[-70.689,42.018],[-70.71,41.997],[-70.649,41.95],[-70.63,41.948],[-70.651,41.981],[-70.622,41.942],[-70.584,41.95],[-70.539,41.927],[-70.547,41.91],[-70.525,41.858],[-70.538,41.811],[-70.633,41.763],[-70.621,41.747],[-70.635,41.734],[-70.661,41.741],[-70.642,41.724],[-70.674,41.692],[-70.654,41.715],[-70.716,41.732],[-70.706,41.745],[-70.73,41.737],[-70.722,41.723],[-70.754,41.742],[-70.775,41.734],[-70.772,41.809],[-71.026,41.779],[-71.015,41.8],[-71.037,41.817],[-70.974,41.861],[-70.996,41.927],[-71.049,41.963],[-71.055,41.985],[-71.156,42.001],[-71.169,42.061],[-71.139,42.073],[-71.131,42.102],[-71.149,42.139],[-71.067,42.164],[-71.022,42.119],[-70.889,42.167]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Old Colony Elder Services, Inc.","ASAP_ADDRESS":"144 Main St., Brockton, MA 02301","ASAP_PHONE_NUMBER":"(508) 584-1561","ASAP_WEBSITE":"https://www.ocesma.org/","AREAS_SERVED":"Abington, Avon, Bridgewater, Brockton, Carver, Duxbury, East Bridgewater, Easton, Halifax, Hanover, Hanson, Kingston, Lakeville, Marshfield, Middleborough, Pembroke, Plymouth, Plympton, Rockland, Stoughton, Wareham, West Bridgewater, Whitman"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.695,42.641],[-70.696,42.639],[-70.696,42.641],[-70.695,42.641]]],[[[-70.69,42.641],[-70.688,42.635],[-70.697,42.632],[-70.69,42.641]]],[[[-70.688,42.645],[-70.686,42.642],[-70.692,42.642],[-70.688,42.645]]],[[[-70.683,42.646],[-70.685,42.643],[-70.686,42.646],[-70.683,42.646]]],[[[-70.744,42.661],[-70.742,42.654],[-70.749,42.652],[-70.744,42.661]]],[[[-70.764,42.661],[-70.754,42.659],[-70.76,42.657],[-70.764,42.661]]],[[[-70.767,42.669],[-70.767,42.667],[-70.769,42.668],[-70.767,42.669]]],[[[-70.759,42.674],[-70.75,42.664],[-70.767,42.664],[-70.759,42.674]]],[[[-70.628,42.692],[-70.624,42.662],[-70.596,42.661],[-70.591,42.64],[-70.665,42.58],[-70.656,42.603],[-70.688,42.622],[-70.682,42.662],[-70.628,42.692]]],[[[-70.82,42.729],[-70.816,42.707],[-70.727,42.667],[-70.779,42.674],[-70.765,42.648],[-70.72,42.649],[-70.718,42.664],[-70.686,42.655],[-70.702,42.637],[-70.673,42.609],[-70.71,42.573],[-70.793,42.567],[-70.879,42.539],[-70.911,42.547],[-70.908,42.573],[-70.931,42.612],[-70.965,42.599],[-70.985,42.612],[-70.96,42.649],[-70.969,42.673],[-70.82,42.729]]],[[[-70.777,42.719],[-70.77,42.705],[-70.785,42.702],[-70.799,42.733],[-70.788,42.739],[-70.777,42.719]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"SeniorCare, Inc.","ASAP_ADDRESS":"49 Blackburn Center, Gloucester, MA 01930","ASAP_PHONE_NUMBER":"(978) 281-1750","ASAP_WEBSITE":"https://seniorcareinc.org/","AREAS_SERVED":"Beverly, Essex, Gloucester, Hamilton, Ipswich, Manchester, Rockport, Topsfield, Wenham"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.127,42.416],[-71.076,42.395],[-71.081,42.381],[-71.064,42.369],[-71.104,42.352],[-71.129,42.374],[-71.144,42.365],[-71.158,42.395],[-71.127,42.416]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Somerville/Cambridge Elder Services, Inc.","ASAP_ADDRESS":"61 Medford Street, Somerville, MA 02143","ASAP_PHONE_NUMBER":"(617) 628-2601","ASAP_WEBSITE":"https://eldercare.org/","AREAS_SERVED":"Cambridge, Somerville"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.698,42.144],[-70.7,42.145],[-70.699,42.147],[-70.698,42.144]]],[[[-70.707,42.155],[-70.705,42.153],[-70.71,42.154],[-70.707,42.155]]],[[[-70.7,42.154],[-70.68,42.126],[-70.712,42.158],[-70.7,42.154]]],[[[-70.912,42.27],[-70.91,42.268],[-70.911,42.266],[-70.912,42.27]]],[[[-70.916,42.27],[-70.926,42.266],[-70.925,42.27],[-70.916,42.27]]],[[[-70.895,42.28],[-70.903,42.281],[-70.9,42.282],[-70.895,42.28]]],[[[-70.894,42.301],[-70.891,42.301],[-70.898,42.302],[-70.894,42.301]]],[[[-70.936,42.291],[-70.95,42.29],[-70.927,42.302],[-70.936,42.291]]],[[[-70.882,42.31],[-70.852,42.269],[-70.786,42.251],[-70.788,42.223],[-70.768,42.254],[-70.748,42.222],[-70.716,42.206],[-70.727,42.2],[-70.714,42.2],[-70.713,42.161],[-70.782,42.156],[-70.777,42.117],[-70.789,42.107],[-70.847,42.158],[-70.884,42.154],[-70.89,42.172],[-71.022,42.119],[-71.131,42.228],[-71.111,42.261],[-71.041,42.277],[-71.04,42.302],[-70.991,42.308],[-71.023,42.288],[-70.987,42.265],[-70.954,42.281],[-70.961,42.249],[-70.99,42.255],[-70.966,42.248],[-70.968,42.222],[-70.95,42.232],[-70.966,42.245],[-70.925,42.264],[-70.938,42.247],[-70.916,42.226],[-70.932,42.251],[-70.914,42.262],[-70.893,42.263],[-70.884,42.246],[-70.882,42.274],[-70.867,42.257],[-70.845,42.261],[-70.89,42.277],[-70.877,42.28],[-70.886,42.305],[-70.923,42.303],[-70.882,42.31]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"South Shore Elder Services, Inc.","ASAP_ADDRESS":"1515 Washington Street, Braintree, MA 02184","ASAP_PHONE_NUMBER":"(781) 848-3910","ASAP_WEBSITE":"http://www.sselder.org/","AREAS_SERVED":"Braintree, Cohasset, Hingham, Holbrook, Hull, Milton, Norwell, Quincy, Randolph, Scituate, Weymouth"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.335,42.396],[-71.283,42.399],[-71.267,42.424],[-71.211,42.406],[-71.194,42.415],[-71.152,42.401],[-71.16,42.387],[-71.14,42.374],[-71.174,42.353],[-71.167,42.34],[-71.107,42.35],[-71.136,42.298],[-71.169,42.301],[-71.197,42.269],[-71.229,42.264],[-71.251,42.203],[-71.27,42.2],[-71.271,42.216],[-71.347,42.216],[-71.344,42.201],[-71.478,42.157],[-71.497,42.167],[-71.503,42.191],[-71.556,42.183],[-71.599,42.226],[-71.644,42.227],[-71.65,42.248],[-71.674,42.249],[-71.659,42.267],[-71.69,42.319],[-71.676,42.365],[-71.625,42.35],[-71.58,42.387],[-71.604,42.398],[-71.585,42.407],[-71.473,42.39],[-71.443,42.407],[-71.43,42.437],[-71.335,42.396]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Springwell, Inc.","ASAP_ADDRESS":"307 Waverley Oaks Rd, Suite 205, Waltham, MA 02452","ASAP_PHONE_NUMBER":"(617) 926-4100","ASAP_WEBSITE":"http://www.springwell.com/","AREAS_SERVED":"Ashland, Belmont, Brookline, Chestnut Hill, Dover, Framingham, Holliston, Hopkinton, Hudson, Marlborough, Natick, Needham, Newton, Northborough, Sherborn, Southborough, Sudbury, Waltham, Watertown, Wayland, Wellesley, Westborough, Weston"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.961,42.281],[-71.939,42.189],[-71.895,42.192],[-71.858,42.161],[-71.826,42.166],[-71.83,42.145],[-71.724,42.191],[-71.719,42.173],[-71.695,42.176],[-71.691,42.163],[-71.642,42.166],[-71.644,42.227],[-71.621,42.231],[-71.556,42.183],[-71.503,42.191],[-71.497,42.167],[-71.478,42.157],[-71.402,42.179],[-71.359,42.09],[-71.388,42.041],[-71.456,42.035],[-71.458,42.018],[-71.799,42.008],[-71.801,42.024],[-72.136,42.03],[-72.135,42.162],[-72.199,42.154],[-72.264,42.184],[-72.261,42.205],[-72.21,42.247],[-72.211,42.294],[-72.169,42.298],[-72.145,42.291],[-72.146,42.277],[-72.117,42.302],[-71.967,42.311],[-71.961,42.281]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Tri-Valley, Inc.","ASAP_ADDRESS":"10 Mill Street, Dudley, MA 01571","ASAP_PHONE_NUMBER":"(508) 949-6640","ASAP_WEBSITE":"http://www.trivalleyinc.org/","AREAS_SERVED":"Bellingham, Blackstone, Brookfield, Charlton, Douglas, Dudley, East Brookfield, Franklin, Hopedale, Medway, Mendon, Milford, Millville, North Brookfield, Northbridge, Oxford, Southbridge, Spencer, Sturbridge, Sutton, Upton, Uxbridge, Warren, Webster, West Brookfield"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.409,42.359],[-72.405,42.336],[-72.354,42.34],[-72.356,42.303],[-72.29,42.352],[-72.275,42.302],[-72.211,42.311],[-72.21,42.247],[-72.343,42.219],[-72.365,42.207],[-72.358,42.19],[-72.41,42.178],[-72.412,42.153],[-72.521,42.161],[-72.621,42.124],[-72.627,42.162],[-72.685,42.163],[-72.691,42.213],[-72.657,42.228],[-72.635,42.274],[-72.577,42.303],[-72.464,42.308],[-72.472,42.351],[-72.409,42.359]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Access Care Partners","ASAP_ADDRESS":"4 Valley Mill Rd, Holyoke, MA 01040","ASAP_PHONE_NUMBER":"(413) 538-9020","ASAP_WEBSITE":"https://accesscarepartners.org/","AREAS_SERVED":"Belchertown, Chicopee, Granby, Holyoke, Ludlow, South Hadley, Ware"}}]};
+
+// ================================================================
+// Resource Definitions
+// {ZIP} placeholder is replaced with the user's ZIP code
+// ================================================================
+const RESOURCES = [
+  {
+    icon: '🍱',
+    title: 'Food Pantry',
+    sub: 'Find food assistance near you',
+    url: 'https://thrivecommunityresources.org/search/text?term=Food%20pantry&postal={ZIP}&language=en',
+    gradient: 'linear-gradient(135deg, rgba(255,130,40,0.2), rgba(200,70,10,0.1))'
+  },
+  {
+    icon: '🏠',
+    title: 'Housing Help',
+    sub: 'Rental & housing assistance',
+    url: 'https://thrivecommunityresources.org/housing/help-find-housing--roxbury-ma?postal={ZIP}',
+    gradient: 'linear-gradient(135deg, rgba(26,184,212,0.2), rgba(14,107,124,0.1))'
+  },
+  {
+    icon: '👕',
+    title: 'Clothing',
+    sub: 'Free or low-cost clothing',
+    url: 'https://thrivecommunityresources.org/goods/clothing--roxbury-ma?postal={ZIP}',
+    gradient: 'linear-gradient(135deg, rgba(170,90,255,0.2), rgba(110,40,200,0.1))'
+  },
+  {
+    icon: '🧠',
+    title: 'Mental Health Care',
+    sub: 'Counseling & support services',
+    url: 'https://thrivecommunityresources.org/health/mental-health-care--roxbury-ma?postal={ZIP}',
+    gradient: 'linear-gradient(135deg, rgba(80,210,130,0.2), rgba(30,150,70,0.1))'
+  },
+  {
+    icon: '💚',
+    title: 'Addiction & Recovery',
+    sub: 'Substance use support',
+    url: 'https://thrivecommunityresources.org/health/addiction-%26-recovery--roxbury-ma?postal={ZIP}',
+    gradient: 'linear-gradient(135deg, rgba(255,190,60,0.2), rgba(200,130,0,0.1))'
+  },
+  {
+    icon: '🏛',
+    title: 'CentralBoston.org',
+    sub: 'Full elder services directory & resources',
+    url: 'https://centralboston.org/',
+    fullWidth: true,
+    gradient: 'linear-gradient(135deg, rgba(240,165,0,0.15), rgba(240,165,0,0.06))'
+  }
+];
+
+// ================================================================
+// App State
+// ================================================================
+const state = { age: null, zip: '', address: '', asap: null };
+
+// ================================================================
+// DOM helpers
+// ================================================================
+const $ = id => document.getElementById(id);
+
+function showStep(id) {
+  document.querySelectorAll('.step-panel').forEach(el => el.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function setProgress(step) {
+  for (let n = 1; n <= 3; n++) {
+    const el = $('prog-' + n);
+    el.classList.remove('active', 'done');
+    if (n < step) el.classList.add('done');
+    else if (n === step) el.classList.add('active');
+  }
+  for (let n = 1; n <= 2; n++) {
+    const el = $('conn-' + n);
+    if (n < step) el.classList.add('filled');
+    else el.classList.remove('filled');
+  }
+}
+
+function showErr(fieldId, errorId, msg) {
+  $(fieldId).classList.add('has-error');
+  const errEl = $(errorId);
+  if (msg) {
+    const span = errEl.querySelector('span:last-child');
+    if (span) span.textContent = msg;
+  }
+  errEl.classList.add('visible');
+}
+
+function clearErr(fieldId, errorId) {
+  $(fieldId).classList.remove('has-error');
+  $(errorId).classList.remove('visible');
+}
+
+// ================================================================
+// Point-in-Polygon — Ray Casting (supports Polygon & MultiPolygon)
+// ================================================================
+function pip(point, ring) {
+  // point = [lng, lat], ring = array of [lng, lat]
+  const [px, py] = point;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (((yi > py) !== (yj > py)) && px < ((xj - xi) * (py - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function findASAP(lat, lng) {
+  const pt = [lng, lat]; // GeoJSON lon-first
+  for (const feature of ASAP_GEOJSON.features) {
+    const geom = feature.geometry;
+    if (!geom) continue;
+    let hit = false;
+    if (geom.type === 'Polygon') {
+      // geom.coordinates = [outerRing, ...holeRings]
+      // point-in-outer AND NOT in any hole
+      if (pip(pt, geom.coordinates[0])) {
+        hit = true;
+        for (let h = 1; h < geom.coordinates.length; h++) {
+          if (pip(pt, geom.coordinates[h])) { hit = false; break; }
+        }
+      }
+    } else if (geom.type === 'MultiPolygon') {
+      for (const poly of geom.coordinates) {
+        if (pip(pt, poly[0])) {
+          hit = true;
+          for (let h = 1; h < poly.length; h++) {
+            if (pip(pt, poly[h])) { hit = false; break; }
+          }
+          if (hit) break;
+        }
+      }
+    }
+    if (hit) return feature.properties;
+  }
+  return null;
+}
+
+// ================================================================
+// Build Resource Button Grid
+// ================================================================
+function buildGrid(gridId, zip) {
+  const grid = $(gridId);
+  grid.innerHTML = '';
+  RESOURCES.forEach(r => {
+    const url = r.url.replace('{ZIP}', encodeURIComponent(zip));
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'resource-btn' + (r.fullWidth ? ' full-width' : '');
+    a.style.setProperty('--btn-gradient', r.gradient);
+
+    if (r.fullWidth) {
+      a.innerHTML =
+        '<span class="resource-icon" aria-hidden="true">' + r.icon + '</span>' +
+        '<span class="resource-text">' +
+          '<span class="resource-title">' + r.title + '</span>' +
+          '<span class="resource-sub">' + r.sub + '</span>' +
+        '</span>' +
+        '<span class="resource-arrow" aria-hidden="true">&#8599;</span>';
+    } else {
+      a.innerHTML =
+        '<span class="resource-icon" aria-hidden="true">' + r.icon + '</span>' +
+        '<span class="resource-text">' +
+          '<span class="resource-title">' + r.title + '</span>' +
+          '<span class="resource-sub">' + r.sub + '</span>' +
+        '</span>';
+    }
+    grid.appendChild(a);
+  });
+}
+
+// ================================================================
+// Census Geocoding API
+// ================================================================
+function geocode(address) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_censusGeo_' + Date.now();
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('geocode_unavailable'));
+    }, 10000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function(data) {
+      cleanup();
+      try {
+        const matches = data?.result?.addressMatches;
+        if (!matches || !matches.length) { reject(new Error('address_not_found')); return; }
+        const { x: lng, y: lat } = matches[0].coordinates;
+        resolve({ lat, lng, matchedAddress: matches[0].matchedAddress });
+      } catch(e) {
+        reject(new Error('geocode_unavailable'));
+      }
+    };
+
+    script.onerror = () => { cleanup(); reject(new Error('geocode_unavailable')); };
+    script.src = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=' +
+      encodeURIComponent(address) + '&benchmark=Public_AR_Current&format=jsonp&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+function extractZIP(matchedAddress) {
+  const m = (matchedAddress || '').match(/\b(\d{5})(?:-\d{4})?\b/);
+  return m ? m[1] : null;
+}
+
+// ================================================================
+// Navigation
+// ================================================================
+
+// Step 1 → Step 2
+$('age-next-btn').addEventListener('click', () => {
+  clearErr('age-input', 'age-error');
+  const raw = $('age-input').value.trim();
+  const age = parseInt(raw, 10);
+  if (!raw || isNaN(age) || age < 1 || age > 120) {
+    showErr('age-input', 'age-error', 'Please enter a valid age between 1 and 120.');
+    return;
+  }
+  state.age = age;
+  setProgress(2);
+  showStep(age >= 65 ? 'step-address' : 'step-zip');
+});
+$('age-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('age-next-btn').click(); });
+
+// Back buttons → Step 1
+$('back-from-address').addEventListener('click', () => { setProgress(1); showStep('step-age'); });
+$('back-from-zip').addEventListener('click', () => { setProgress(1); showStep('step-age'); });
+
+// Start over from results
+['back-from-results-senior', 'back-from-results-zip'].forEach(id => {
+  $(id).addEventListener('click', () => {
+    setProgress(1);
+    $('age-input').value = '';
+    $('address-input').value = '';
+    $('zip-input').value = '';
+    showStep('step-age');
+  });
+});
+
+// ================================================================
+// CBES Intake Form — Power Automate submission
+// ================================================================
+const FLOW_URL = 'https://defaultea4caad54b33461b8faa9c22a94803.c0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/15304977ffcc47d19623c4dc751a9374/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xbutjSlsry5GzAKx0tkaMUJoaKJtqulAoSPRxYU67Ys';
+
+$('intake-submit-btn').addEventListener('click', async () => {
+  // Clear errors
+  $('intake-name-error').textContent = '';
+  $('intake-needs-error').textContent = '';
+  $('intake-general-error').textContent = '';
+
+  const name = $('intake-name').value.trim();
+  const phone = $('intake-phone').value.trim();
+  const email = $('intake-email').value.trim();
+  const checked = [...document.querySelectorAll('#cbes-intake-form input[type=checkbox]:checked')].map(c => c.value);
+
+  let valid = true;
+  if (!name) { $('intake-name-error').textContent = 'Please enter your full name.'; valid = false; }
+  if (!checked.length) { $('intake-needs-error').textContent = 'Please select at least one area.'; valid = false; }
+  if (!valid) return;
+
+  const btn = $('intake-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const payload = {
+    name,
+    phone: phone || null,
+    email: email || null,
+    needs: checked.join(', '),
+    address: state.address || null,
+    asap: state.asap?.AGING_SERVICES_ACCESS_POINT || null,
+    zip: state.zip || null,
+    submittedAt: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(FLOW_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    $('intake-fields').style.display = 'none';
+    $('intake-success').style.display = '';
+  } catch (e) {
+    $('intake-general-error').textContent = 'Submission failed: ' + (e.message || e);
+    btn.disabled = false;
+    btn.textContent = 'Submit →';
+  }
+});
+
+// Step 2a — Address → geocode → results
+$('address-next-btn').addEventListener('click', async () => {
+  clearErr('address-input', 'address-error');
+  const addr = $('address-input').value.trim();
+  if (addr.length < 6) {
+    showErr('address-input', 'address-error', 'Please enter a complete address including city and state.');
+    return;
+  }
+  state.address = addr;
+  setProgress(3);
+  showStep('step-loading');
+
+  try {
+    const { lat, lng, matchedAddress } = await geocode(addr);
+    const zip = extractZIP(matchedAddress) || '02119';
+    state.zip = zip;
+
+    const asapProps = findASAP(lat, lng);
+    state.asap = asapProps;
+
+    // Populate senior results
+    $('sr-address-display').textContent = matchedAddress;
+
+    if (asapProps) {
+      $('sr-no-match-notice').classList.remove('visible');
+      $('sr-asap-banner').style.display = '';
+      $('sr-asap-name').textContent = asapProps.AGING_SERVICES_ACCESS_POINT || '';
+      let det = '';
+      if (asapProps.ASAP_ADDRESS) det += asapProps.ASAP_ADDRESS;
+      if (asapProps.ASAP_PHONE_NUMBER) det += ' &bull; <a href="tel:' + asapProps.ASAP_PHONE_NUMBER.replace(/\s/g,'') + '">' + asapProps.ASAP_PHONE_NUMBER + '</a>';
+      if (asapProps.ASAP_WEBSITE) {
+        const display = asapProps.ASAP_WEBSITE.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        det += ' &bull; <a href="' + asapProps.ASAP_WEBSITE + '" target="_blank" rel="noopener">' + display + '</a>';
+      }
+      $('sr-asap-details').innerHTML = det;
+    } else {
+      $('sr-no-match-notice').classList.add('visible');
+      $('sr-asap-banner').style.display = 'none';
+    }
+
+    buildGrid('sr-resources-grid', zip);
+
+    // Show intake form only if matched ASAP is Central Boston
+    const asapName = (asapProps?.AGING_SERVICES_ACCESS_POINT || '').toLowerCase();
+    $('cbes-intake-form').style.display = asapName.includes('central boston') ? '' : 'none';
+    $('intake-fields').style.display = '';
+    $('intake-success').style.display = 'none';
+
+    showStep('step-results-senior');
+  } catch (err) {
+    setProgress(2);
+    showStep('step-address');
+    const msg = err.message === 'address_not_found'
+      ? 'We could not locate that address. Please check and try again.'
+      : 'The geocoding service is unavailable. Please try again shortly.';
+    showErr('address-input', 'address-error', msg);
+  }
+});
+$('address-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('address-next-btn').click(); });
+
+// Step 2b — ZIP → results
+$('zip-next-btn').addEventListener('click', () => {
+  clearErr('zip-input', 'zip-error');
+  const zip = $('zip-input').value.trim();
+  if (!/^\d{5}$/.test(zip)) {
+    showErr('zip-input', 'zip-error', null);
+    return;
+  }
+  state.zip = zip;
+  setProgress(3);
+  const strong = $('zr-zip-display').querySelector('strong');
+  if (strong) strong.textContent = zip;
+  buildGrid('zr-resources-grid', zip);
+  showStep('step-results-zip');
+});
+$('zip-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('zip-next-btn').click(); });
+
+// Sanitize ZIP input to digits only
+$('zip-input').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 5);
+});
+
+// ================================================================
+// Animated Particle Background
+// ================================================================
+(function () {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const COUNT = Math.min(60, Math.floor((W * H) / 18000));
+  const particles = Array.from({ length: COUNT }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 2.5 + 0.8,
+    dx: (Math.random() - 0.5) * 0.38,
+    dy: (Math.random() - 0.5) * 0.38,
+    alpha: Math.random() * 0.35 + 0.08,
+    hue: Math.random() > 0.7 ? 195 : 210
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + p.hue + ', 75%, 65%, ' + p.alpha + ')';
+      ctx.fill();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < -8) p.x = W + 8;
+      else if (p.x > W + 8) p.x = -8;
+      if (p.y < -8) p.y = H + 8;
+      else if (p.y > H + 8) p.y = -8;
+    }
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+}());
+</script>
+</body>
+</html>
