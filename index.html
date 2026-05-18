@@ -3832,6 +3832,617 @@
         rgba(232, 218, 190, 0.38) 100%
       );
   }
+
+  /* =============================================
+     Chatbot — floating assistant
+     ============================================= */
+  .cb-launcher {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 9000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: var(--cream);
+    box-shadow: 0 14px 32px -8px rgba(4,18,40,0.55), 0 0 0 0 rgba(76,184,207,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 240ms var(--ease-spring), box-shadow 240ms;
+    animation: cb-pulse 2.4s ease-out infinite;
+  }
+  .cb-launcher i { font-size: 1.6rem; }
+  .cb-launcher:hover { transform: translateY(-2px) scale(1.05); }
+  .cb-launcher.is-open { animation: none; transform: scale(0.92); }
+  .cb-launcher .cb-launcher-close { display: none; }
+  .cb-launcher.is-open .cb-launcher-open { display: none; }
+  .cb-launcher.is-open .cb-launcher-close { display: inline-block; }
+  @keyframes cb-pulse {
+    0%   { box-shadow: 0 14px 32px -8px rgba(4,18,40,0.55), 0 0 0 0 rgba(76,184,207,0.55); }
+    70%  { box-shadow: 0 14px 32px -8px rgba(4,18,40,0.55), 0 0 0 18px rgba(76,184,207,0); }
+    100% { box-shadow: 0 14px 32px -8px rgba(4,18,40,0.55), 0 0 0 0 rgba(76,184,207,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .cb-launcher { animation: none; } }
+
+  .cb-panel {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 6rem;
+    z-index: 9000;
+    width: min(420px, calc(100vw - 2rem));
+    height: min(620px, calc(100vh - 8rem));
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-origin: bottom right;
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 280ms var(--ease-spring), opacity 240ms var(--ease-out);
+  }
+  .cb-panel.is-open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  @media (max-width: 520px) {
+    .cb-panel { right: 0.75rem; left: 0.75rem; width: auto; bottom: 5.5rem; height: min(620px, calc(100vh - 7.5rem)); }
+  }
+
+  .cb-header {
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-bottom: 1px solid var(--glass-border);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+  }
+  .cb-header .cb-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal-light), var(--teal-dark));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream);
+    font-size: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .cb-header .cb-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1.05rem;
+    color: var(--text-high);
+    line-height: 1.1;
+  }
+  .cb-header .cb-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-med);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .cb-header .cb-subtitle::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+  }
+  .cb-header .cb-close {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--text-med);
+    cursor: pointer;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 180ms, color 180ms;
+  }
+  .cb-header .cb-close:hover { background: var(--glass-bg); color: var(--text-high); }
+
+  .cb-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    scroll-behavior: smooth;
+  }
+  .cb-log::-webkit-scrollbar { width: 6px; }
+  .cb-log::-webkit-scrollbar-thumb { background: var(--glass-hi); border-radius: 3px; }
+
+  .cb-msg {
+    max-width: 86%;
+    padding: 0.65rem 0.9rem;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    animation: cb-msg-in 320ms var(--ease-out);
+    word-wrap: break-word;
+  }
+  @keyframes cb-msg-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cb-msg.bot {
+    align-self: flex-start;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-high);
+    border-bottom-left-radius: 4px;
+  }
+  .cb-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: var(--cream);
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 14px -4px rgba(13,74,99,0.4);
+  }
+  .cb-msg.typing { display: flex; gap: 4px; align-items: center; padding: 0.75rem 1rem; }
+  .cb-msg.typing span {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text-med);
+    animation: cb-typing 1.2s infinite ease-in-out;
+  }
+  .cb-msg.typing span:nth-child(2) { animation-delay: 0.15s; }
+  .cb-msg.typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes cb-typing {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
+  }
+
+  .cb-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.2rem;
+    align-self: flex-start;
+    max-width: 100%;
+  }
+  .cb-chip {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-high);
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 180ms var(--ease-out);
+    font-family: inherit;
+  }
+  .cb-chip:hover {
+    background: var(--glass-hi);
+    border-color: var(--teal-light);
+    transform: translateY(-1px);
+  }
+  .cb-chip i { font-size: 0.95rem; color: var(--teal-light); }
+
+  .cb-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    align-self: stretch;
+    max-width: 100%;
+  }
+  .cb-result {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+    transition: all 200ms var(--ease-out);
+  }
+  .cb-result:hover {
+    background: var(--glass-hi);
+    border-color: var(--teal-light);
+  }
+  .cb-result-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: baseline;
+    margin-bottom: 0.25rem;
+  }
+  .cb-result-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text-high);
+  }
+  .cb-result-dist {
+    font-size: 0.74rem;
+    color: var(--accent-lt);
+    background: rgba(232,168,74,0.12);
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .cb-result-addr {
+    font-size: 0.78rem;
+    color: var(--text-med);
+    margin-bottom: 0.35rem;
+  }
+  .cb-result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+  }
+  .cb-result-actions a, .cb-result-actions button {
+    font-size: 0.76rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--teal-light);
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 160ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .cb-result-actions a:hover, .cb-result-actions button:hover {
+    background: var(--teal);
+    color: var(--cream);
+    border-color: var(--teal);
+  }
+
+  .cb-input-row {
+    padding: 0.65rem 0.7rem 0.75rem;
+    border-top: 1px solid var(--glass-border);
+    background: linear-gradient(0deg, rgba(0,0,0,0.12), rgba(0,0,0,0));
+    display: flex;
+    gap: 0.4rem;
+    align-items: flex-end;
+  }
+  .cb-input-row textarea {
+    flex: 1;
+    resize: none;
+    min-height: 42px;
+    max-height: 110px;
+    padding: 0.6rem 0.85rem;
+    border-radius: 14px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-high);
+    font-family: inherit;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    outline: none;
+    transition: border-color 180ms;
+  }
+  .cb-input-row textarea:focus { border-color: var(--teal-light); }
+  .cb-input-row textarea::placeholder { color: var(--text-low); }
+  .cb-input-row .cb-icon-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-high);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 180ms;
+    flex-shrink: 0;
+  }
+  .cb-input-row .cb-icon-btn:hover { background: var(--glass-hi); border-color: var(--teal-light); }
+  .cb-input-row .cb-icon-btn.listening {
+    background: var(--error);
+    border-color: var(--error);
+    color: var(--cream);
+    animation: cb-pulse-mic 1.1s ease-in-out infinite;
+  }
+  .cb-input-row .cb-icon-btn.send {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: var(--cream);
+    border-color: transparent;
+  }
+  .cb-input-row .cb-icon-btn.send:hover { transform: translateY(-1px); }
+  @keyframes cb-pulse-mic {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+
+  body.accessible .cb-launcher { width: 68px; height: 68px; }
+  body.accessible .cb-launcher i { font-size: 1.8rem; }
+  body.accessible .cb-msg { font-size: 1rem; }
+  body.accessible .cb-input-row textarea { font-size: 1rem; min-height: 50px; }
+  body.accessible .cb-input-row .cb-icon-btn { width: 50px; height: 50px; }
+  body.accessible .cb-chip { font-size: 0.92rem; padding: 0.55rem 0.9rem; }
+
+  @media print { .cb-launcher, .cb-panel { display: none !important; } }
+
+  /* =============================================
+     Live Intake Assistant — staff page
+     ============================================= */
+  .ia-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+  }
+  .ia-header .welcome {
+    font-family: 'Fraunces', serif;
+    font-size: 1.7rem;
+    font-weight: 500;
+    color: var(--text-high);
+    line-height: 1.1;
+    margin-top: 0.25rem;
+  }
+  .ia-header-actions { display: flex; gap: 0.55rem; flex-wrap: wrap; }
+  .ia-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-high);
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 180ms var(--ease-out);
+  }
+  .ia-btn:hover { background: var(--glass-hi); border-color: var(--teal-light); transform: translateY(-1px); }
+  .ia-btn.primary {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: var(--cream);
+    border-color: transparent;
+  }
+  .ia-btn.primary:hover { box-shadow: var(--shadow-md); }
+  .ia-btn.danger { color: var(--error); border-color: rgba(227,107,120,0.4); }
+  .ia-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .ia-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  @media (max-width: 900px) {
+    .ia-grid { grid-template-columns: 1fr; }
+  }
+
+  .ia-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    min-height: 480px;
+  }
+  .ia-card-title {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-med);
+    margin-bottom: 0.9rem;
+    font-weight: 600;
+  }
+
+  .ia-mic-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .ia-mic {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: var(--cream);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 28px -8px rgba(13,74,99,0.55);
+    transition: transform 200ms var(--ease-spring), box-shadow 200ms;
+  }
+  .ia-mic:hover { transform: scale(1.05); }
+  .ia-mic i { font-size: 2rem; }
+  .ia-mic.listening {
+    background: linear-gradient(135deg, var(--error) 0%, #b94a55 100%);
+    animation: ia-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ia-pulse {
+    0%, 100% { box-shadow: 0 12px 28px -8px rgba(227,107,120,0.55), 0 0 0 0 rgba(227,107,120,0.55); }
+    50% { box-shadow: 0 12px 28px -8px rgba(227,107,120,0.55), 0 0 0 14px rgba(227,107,120,0); }
+  }
+  .ia-mic-status {
+    font-size: 0.85rem;
+    color: var(--text-med);
+    text-align: center;
+  }
+  .ia-mic-status.live { color: var(--error); font-weight: 500; }
+
+  .ia-transcript {
+    flex: 1;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-high);
+    overflow-y: auto;
+    min-height: 180px;
+    max-height: 380px;
+    white-space: pre-wrap;
+    outline: none;
+    transition: border-color 180ms;
+  }
+  .ia-transcript:focus { border-color: var(--teal-light); }
+  .ia-transcript:empty::before {
+    content: 'Transcript appears here — click the mic to start listening, or type/paste directly.';
+    color: var(--text-low);
+    font-style: italic;
+  }
+  .ia-transcript .ia-interim { color: var(--text-med); font-style: italic; }
+  body[data-theme="light"] .ia-transcript { background: rgba(0,0,0,0.04); }
+
+  .ia-transcript-actions {
+    display: flex;
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .ia-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    overflow-y: auto;
+    max-height: 520px;
+  }
+  .ia-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+  .ia-field label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-med);
+    font-weight: 600;
+  }
+  .ia-field input, .ia-field textarea, .ia-field select {
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.75rem;
+    color: var(--text-high);
+    font-family: inherit;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 180ms;
+  }
+  .ia-field input:focus, .ia-field textarea:focus, .ia-field select:focus { border-color: var(--teal-light); }
+  .ia-field textarea { resize: vertical; min-height: 60px; }
+  body[data-theme="light"] .ia-field input,
+  body[data-theme="light"] .ia-field textarea,
+  body[data-theme="light"] .ia-field select { background: rgba(0,0,0,0.04); }
+  .ia-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+  @media (max-width: 540px) { .ia-field-row { grid-template-columns: 1fr; } }
+
+  .ia-empty {
+    text-align: center;
+    color: var(--text-low);
+    padding: 2rem 1rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .ia-empty i { font-size: 2.2rem; color: var(--teal-light); display: block; margin-bottom: 0.5rem; }
+
+  .ia-save-actions {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-top: 0.95rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .ia-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: ia-spin 0.7s linear infinite;
+  }
+  @keyframes ia-spin { to { transform: rotate(360deg); } }
+
+  .ia-status {
+    font-size: 0.82rem;
+    color: var(--text-med);
+    margin-top: 0.55rem;
+    min-height: 1.2em;
+  }
+  .ia-status.error { color: var(--error); }
+  .ia-status.success { color: var(--success); }
+
+  /* Modal for API key */
+  .ia-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(4,18,40,0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .ia-modal.is-open { display: flex; }
+  .ia-modal-body {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 460px;
+    width: 100%;
+  }
+  .ia-modal-body h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--text-high);
+    margin: 0 0 0.5rem;
+  }
+  .ia-modal-body p {
+    font-size: 0.9rem;
+    color: var(--text-med);
+    line-height: 1.5;
+    margin: 0 0 1rem;
+  }
+  .ia-modal-body p a { color: var(--teal-light); }
+  .ia-modal-body input {
+    width: 100%;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.9rem;
+    color: var(--text-high);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+  }
+  body[data-theme="light"] .ia-modal-body input { background: rgba(0,0,0,0.05); }
+  .ia-modal-body .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    margin-top: 1rem;
+  }
+
+  body.accessible .ia-mic { width: 100px; height: 100px; }
+  body.accessible .ia-mic i { font-size: 2.4rem; }
+  body.accessible .ia-transcript { font-size: 1rem; }
+  body.accessible .ia-field input, body.accessible .ia-field textarea { font-size: 1rem; padding: 0.7rem 0.85rem; }
 </style>
 </head>
 <body>
@@ -3843,6 +4454,9 @@
   </button>
   <button type="button" id="nav-home" class="rail-btn requires-auth" aria-label="Resource finder" title="Resource Finder">
     <i class="ph ph-house" aria-hidden="true"></i>
+  </button>
+  <button type="button" id="nav-intake-ai" class="rail-btn requires-auth" aria-label="Live intake AI" title="Live Intake AI">
+    <i class="ph ph-sparkle" aria-hidden="true"></i>
   </button>
   <div class="lang-wrap">
     <button type="button" id="lang-toggle" class="rail-btn" aria-label="Change language" aria-haspopup="menu" aria-expanded="false" title="Language">
@@ -4372,6 +4986,85 @@
       </button>
     </div>
   </section>
+
+  <!-- ==========================================
+       LIVE INTAKE AI — staff conversation listener + Gemini extraction
+       ========================================== -->
+  <section class="step-panel" id="step-intake-ai" aria-label="Live intake assistant">
+    <div class="ia-header">
+      <div>
+        <span class="eyebrow">CB Connects &middot; Live Intake AI</span>
+        <div class="welcome">Listen, extract, save.</div>
+      </div>
+      <div class="ia-header-actions">
+        <button type="button" class="ia-btn" id="ia-settings-btn" title="Gemini API key">
+          <i class="ph ph-gear" aria-hidden="true"></i> Settings
+        </button>
+        <button type="button" class="ia-btn" id="ia-back-btn">
+          <i class="ph ph-arrow-left" aria-hidden="true"></i> Dashboard
+        </button>
+      </div>
+    </div>
+
+    <div class="ia-grid">
+      <!-- LEFT: Transcript -->
+      <div class="ia-card">
+        <div class="ia-card-title">Conversation Transcript</div>
+        <div class="ia-mic-area">
+          <button type="button" class="ia-mic" id="ia-listen-btn" aria-label="Start listening" title="Click to listen">
+            <i class="ph ph-microphone" aria-hidden="true"></i>
+          </button>
+          <div class="ia-mic-status" id="ia-mic-status">Click the mic to start listening</div>
+        </div>
+        <div class="ia-transcript" id="ia-transcript" contenteditable="true" spellcheck="true" aria-label="Live transcript"></div>
+        <div class="ia-transcript-actions">
+          <button type="button" class="ia-btn" id="ia-clear-transcript">
+            <i class="ph ph-eraser" aria-hidden="true"></i> Clear
+          </button>
+          <button type="button" class="ia-btn primary" id="ia-analyze-btn">
+            <i class="ph ph-sparkle" aria-hidden="true"></i> Analyze with AI
+          </button>
+        </div>
+        <div class="ia-status" id="ia-analyze-status"></div>
+      </div>
+
+      <!-- RIGHT: Extracted fields -->
+      <div class="ia-card">
+        <div class="ia-card-title">Extracted Record</div>
+        <div class="ia-fields" id="ia-fields">
+          <div class="ia-empty" id="ia-fields-empty">
+            <i class="ph ph-list-checks" aria-hidden="true"></i>
+            Start a transcript on the left, then click <strong>Analyze with AI</strong> to extract structured intake data here.
+          </div>
+        </div>
+        <div class="ia-save-actions" id="ia-save-actions" hidden>
+          <button type="button" class="ia-btn primary" id="ia-save-contact">
+            <i class="ph ph-user-plus" aria-hidden="true"></i> Save as Contact
+          </button>
+          <button type="button" class="ia-btn" id="ia-save-ticket">
+            <i class="ph ph-ticket" aria-hidden="true"></i> Save as Ticket
+          </button>
+          <button type="button" class="ia-btn danger" id="ia-clear-all">
+            <i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> New session
+          </button>
+        </div>
+        <div class="ia-status" id="ia-save-status"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API key modal -->
+  <div class="ia-modal" id="ia-key-modal" role="dialog" aria-modal="true" aria-label="Gemini API key">
+    <div class="ia-modal-body">
+      <h3>Gemini API Key</h3>
+      <p>Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Stored only in your browser (localStorage).</p>
+      <input type="password" id="ia-key-input" placeholder="AIzaSy…" autocomplete="off" spellcheck="false">
+      <div class="actions">
+        <button type="button" class="ia-btn" id="ia-key-cancel">Cancel</button>
+        <button type="button" class="ia-btn primary" id="ia-key-save">Save key</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ==========================================
        PUBLIC TICKET TRACKER (?ticket=T-1042)
@@ -7951,6 +8644,870 @@ $('modal-share').addEventListener('click', () => {
 });
 
 // ================================================================
+// Chatbot — conversational resource finder
+// State machine: ASK_INTENT → ASK_ADDRESS → SHOW_RESULTS
+// ================================================================
+function _initChatbot() {
+  const launcher = document.getElementById('cb-launcher');
+  const panel    = document.getElementById('cb-panel');
+  const closeBtn = document.getElementById('cb-close');
+  const log      = document.getElementById('cb-log');
+  const input    = document.getElementById('cb-input');
+  const sendBtn  = document.getElementById('cb-send');
+  const micBtn   = document.getElementById('cb-mic');
+  if (!launcher || !panel || !log) return;
+
+  // Keyword index — maps user words/phrases to RESOURCES keys.
+  // Multi-word phrases tried before single words to avoid mis-matches.
+  const KEYWORDS = [
+    ['food',        ['food','eat','meal','meals','pantry','hungry','groceries','comida','manje','comida','еда','食物','thuc','thực']],
+    ['housing',     ['housing','house','home','rent','shelter','homeless','eviction','apartment','vivienda','logement','жильё','住房','nhà']],
+    ['healthcare',  ['health','doctor','clinic','medical','medicine','hospital','health care','healthcare','salud','santé','здоровье','医疗','y tế']],
+    ['mental',      ['mental','depression','anxiety','therapy','counseling','counselor','crisis','suicide','psychiatrist','psychologist','salud mental','santé mentale','心理','tinh thần','tâm lý']],
+    ['legal',       ['legal','lawyer','attorney','immigration lawyer','court','legal aid','abogado','avocat','юрист','法律','luật']],
+    ['employment',  ['job','jobs','employment','work','career','training','resume','unemployment','empleo','emploi','работа','工作','việc làm']],
+    ['financial',   ['financial','finance','coaching','money','budget','small business','financiera','financière','финансы','金融','tài chính']],
+    ['recovery',    ['addiction','recovery','substance','drug','drugs','alcohol','rehab','detox','sober','adicción','recuperación','addiction','зависимость','戒酒','戒毒','cai nghiện']],
+    ['senior',      ['senior','seniors','elder','elderly','older adult','homemaker','meals on wheels','case management','adulto mayor','sénior','пожилой','老年','người cao tuổi']],
+    ['youth',       ['youth','teen','teens','kids','after school','after-school','sports','niños','jeune','подросток','青年','thanh thiếu niên']],
+    ['childcare',   ['childcare','child care','daycare','day care','head start','preschool','guardería','garderie','детский сад','幼儿园','nhà trẻ']],
+    ['immigration', ['immigration','immigrant','citizenship','visa','green card','asylum','inmigración','immigration','иммиграция','移民','nhập cư']],
+    ['clothing',    ['clothing','clothes','coat','jacket','shoes','ropa','vêtements','одежда','衣服','quần áo']],
+    ['transport',   ['transport','transportation','ride','rides','the ride','shuttle','bus','transporte','transport','транспорт','交通','giao thông','xe']],
+    ['utilities',   ['utilities','utility','heat','heating','liheap','fuel','gas','electric','shut off','shut-off','calefacción','services publics','коммунальные','取暖','tiện ích']],
+    ['snow',        ['snow','shovel','shoveling','snow removal','quitanieves','déneigement','снег','除雪','dọn tuyết']],
+  ];
+
+  function findResourceByQuery(query) {
+    const q = ' ' + query.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ') + ' ';
+    for (const [key, words] of KEYWORDS) {
+      for (const w of words) {
+        const needle = ' ' + w.toLowerCase() + ' ';
+        if (q.indexOf(needle) !== -1) {
+          return RESOURCES.find(r => r.key === key);
+        }
+      }
+    }
+    return null;
+  }
+
+  function findZIP(text) {
+    const m = String(text).match(/\b(\d{5})\b/);
+    return m ? m[1] : null;
+  }
+
+  const cb = {
+    stage: 'ASK_INTENT',     // ASK_INTENT | ASK_ADDRESS | DONE
+    resource: null,
+    address: '',
+    zip: '',
+    coords: null,
+  };
+
+  function scrollLogToBottom() {
+    setTimeout(() => { log.scrollTop = log.scrollHeight; }, 30);
+  }
+
+  function escHTML(s) { return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function addMsg(text, who) {
+    const el = document.createElement('div');
+    el.className = 'cb-msg ' + (who || 'bot');
+    el.textContent = text;
+    log.appendChild(el);
+    scrollLogToBottom();
+    return el;
+  }
+
+  function addHTML(html, who) {
+    const el = document.createElement('div');
+    el.className = 'cb-msg ' + (who || 'bot');
+    el.innerHTML = html;
+    log.appendChild(el);
+    scrollLogToBottom();
+    return el;
+  }
+
+  function addTyping() {
+    const el = document.createElement('div');
+    el.className = 'cb-msg bot typing';
+    el.innerHTML = '<span></span><span></span><span></span>';
+    log.appendChild(el);
+    scrollLogToBottom();
+    return el;
+  }
+
+  function botSay(text, delay) {
+    const typing = addTyping();
+    return new Promise(res => {
+      setTimeout(() => {
+        typing.remove();
+        addMsg(text, 'bot');
+        res();
+      }, delay || 520);
+    });
+  }
+
+  function addCategoryChips() {
+    const wrap = document.createElement('div');
+    wrap.className = 'cb-msg bot';
+    wrap.style.background = 'transparent';
+    wrap.style.border = 'none';
+    wrap.style.padding = '0';
+
+    const chips = document.createElement('div');
+    chips.className = 'cb-chips';
+
+    // Top-of-mind picks (skip the CentralBoston.org footer link)
+    const picks = RESOURCES.filter(r => !r.fullWidth).slice(0, 10);
+    picks.forEach(r => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cb-chip';
+      b.innerHTML = r.icon + '<span>' + escHTML(r.title) + '</span>';
+      b.addEventListener('click', () => { handleUserInput(r.title, r); });
+      chips.appendChild(b);
+    });
+
+    wrap.appendChild(chips);
+    log.appendChild(wrap);
+    scrollLogToBottom();
+  }
+
+  async function greet() {
+    log.innerHTML = '';
+    cb.stage = 'ASK_INTENT';
+    cb.resource = null;
+    cb.address = '';
+    cb.zip = '';
+    cb.coords = null;
+    await botSay('Hi! I can help you find resources near you. What kind of help are you looking for?', 240);
+    addCategoryChips();
+  }
+
+  function renderResults(resource, items) {
+    if (!items.length) {
+      addHTML('I don\'t have any <b>' + escHTML(resource.title) + '</b> resources near that address yet. Try a different category?', 'bot');
+      addCategoryChips();
+      cb.stage = 'ASK_INTENT';
+      cb.resource = null;
+      return;
+    }
+
+    const top = items.slice(0, 5);
+    const cards = top.map((r, i) => {
+      const addr = [r.street, r.city, r.state].filter(Boolean).join(', ') + (r.zip ? ' ' + padZip(r.zip) : '');
+      const phoneHref = r.phone ? 'tel:' + r.phone.replace(/[^0-9+]/g,'') : '';
+      const dir = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr);
+      return (
+        '<div class="cb-result">' +
+          '<div class="cb-result-head">' +
+            '<div class="cb-result-name">' + escHTML(r.name) + '</div>' +
+            (typeof r._dist === 'number' ? '<div class="cb-result-dist">' + r._dist.toFixed(1) + ' mi</div>' : '') +
+          '</div>' +
+          '<div class="cb-result-addr">' + escHTML(addr) + '</div>' +
+          '<div class="cb-result-actions">' +
+            (phoneHref ? '<a href="' + phoneHref + '"><i class="ph ph-phone"></i> Call</a>' : '') +
+            (r.website ? '<a href="' + escHTML(r.website) + '" target="_blank" rel="noopener"><i class="ph ph-globe"></i> Website</a>' : '') +
+            '<a href="' + dir + '" target="_blank" rel="noopener"><i class="ph ph-navigation-arrow"></i> Directions</a>' +
+            '<button type="button" data-cb-detail="' + i + '"><i class="ph ph-info"></i> Details</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'cb-msg bot';
+    wrap.innerHTML = '<div class="cb-results">' + cards + '</div>';
+    log.appendChild(wrap);
+
+    wrap.querySelectorAll('[data-cb-detail]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-cb-detail'), 10);
+        const r = top[idx];
+        if (r && typeof openResourceModal === 'function') openResourceModal(r);
+      });
+    });
+
+    // Trailing actions row
+    const actions = document.createElement('div');
+    actions.className = 'cb-msg bot';
+    actions.style.background = 'transparent';
+    actions.style.border = 'none';
+    actions.style.padding = '0';
+    actions.innerHTML =
+      '<div class="cb-chips">' +
+        '<button type="button" class="cb-chip" id="cb-view-map"><i class="ph ph-map-pin"></i><span>View map</span></button>' +
+        '<button type="button" class="cb-chip" id="cb-new-search"><i class="ph ph-magnifying-glass"></i><span>New search</span></button>' +
+      '</div>';
+    log.appendChild(actions);
+    scrollLogToBottom();
+
+    document.getElementById('cb-view-map').addEventListener('click', () => {
+      // Push our address/coords into the global state so the map view uses it
+      if (cb.address) state.address = cb.address;
+      if (cb.zip)     state.zip     = cb.zip;
+      if (cb.coords)  { state.lat = cb.coords.lat; state.lng = cb.coords.lng; }
+      closePanel();
+      if (typeof showCategoryMap === 'function') showCategoryMap(resource);
+    });
+    document.getElementById('cb-new-search').addEventListener('click', () => { greet(); });
+
+    cb.stage = 'DONE';
+  }
+
+  async function lookupResults(resource) {
+    if (!DIRECTORY.length) { await loadDirectory(); }
+
+    // Geocode if we don't have coords yet
+    if (!cb.coords) {
+      const query = cb.address || (cb.zip ? cb.zip + ', USA' : '');
+      if (query) {
+        try {
+          const g = await geocode(query);
+          cb.coords = { lat: g.lat, lng: g.lng };
+          if (!cb.zip) {
+            const z = (typeof extractZIP === 'function') ? extractZIP(g.matchedAddress) : null;
+            if (z) cb.zip = z;
+          }
+        } catch (e) { /* fall back to Boston centroid */ }
+      }
+    }
+
+    const center = cb.coords ? [cb.coords.lat, cb.coords.lng] : BOSTON_CENTROID;
+    const items = DIRECTORY
+      .filter(r => r.category === resource.category)
+      .filter(r => (r.active || 'TRUE').toUpperCase() !== 'FALSE')
+      .filter(hasCoords)
+      .map(r => {
+        const pt = [parseFloat(r.lat), parseFloat(r.lng)];
+        return Object.assign({}, r, { _dist: haversineMiles(center, pt) });
+      })
+      .sort((a, b) => a._dist - b._dist);
+
+    renderResults(resource, items);
+  }
+
+  async function handleUserInput(text, preselectedResource) {
+    const clean = text.trim();
+    if (!clean) return;
+    addMsg(clean, 'user');
+
+    if (cb.stage === 'ASK_INTENT' || cb.stage === 'DONE') {
+      const resource = preselectedResource || findResourceByQuery(clean);
+      if (!resource) {
+        await botSay("I didn't catch a category. Try one of these:", 380);
+        addCategoryChips();
+        return;
+      }
+      cb.resource = resource;
+      cb.stage = 'ASK_ADDRESS';
+
+      // If they already gave an address/zip in the same message, jump ahead
+      const zip = findZIP(clean);
+      const looksLikeAddress = /\d+\s+\w+/.test(clean) && clean.length > 8;
+      if (zip || looksLikeAddress) {
+        if (zip) cb.zip = zip;
+        cb.address = looksLikeAddress ? clean : '';
+        await botSay('Got it — looking for ' + resource.title + ' near you…', 380);
+        await lookupResults(resource);
+        return;
+      }
+      await botSay('Got it — ' + resource.title + '. What\'s your address or ZIP code?', 380);
+      return;
+    }
+
+    if (cb.stage === 'ASK_ADDRESS') {
+      const zip = findZIP(clean);
+      const looksLikeAddress = /\d+\s+\w+/.test(clean) && clean.length > 8;
+      if (zip) cb.zip = zip;
+      cb.address = looksLikeAddress ? clean : '';
+      if (!zip && !looksLikeAddress) {
+        await botSay('I need a street address or 5-digit ZIP to find nearby help. Try again?', 380);
+        return;
+      }
+      await botSay('Searching for ' + cb.resource.title + ' near ' + (cb.address || cb.zip) + '…', 380);
+      await lookupResults(cb.resource);
+      return;
+    }
+  }
+
+  // ---- Voice input ----
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    let rec = null, listening = false;
+    const LANG_MAP = { 'en':'en-US','es':'es-US','ht':'fr-FR','pt':'pt-BR','vi':'vi-VN','zh-CN':'zh-CN','ru':'ru-RU' };
+    const currentBCP47 = () => LANG_MAP[(typeof _lang !== 'undefined' ? _lang : 'en')] || 'en-US';
+
+    function stopMic() {
+      if (rec) { try { rec.stop(); } catch (_) {} rec = null; }
+      listening = false;
+      micBtn.classList.remove('listening');
+    }
+
+    micBtn.addEventListener('click', () => {
+      if (listening) { stopMic(); return; }
+      try { rec = new SR(); } catch (_) { return; }
+      rec.lang = currentBCP47();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onresult = (e) => {
+        const transcript = (e.results[0][0].transcript || '').trim();
+        if (transcript) {
+          input.value = transcript;
+          handleUserInput(transcript);
+          input.value = '';
+        }
+      };
+      rec.onerror = () => stopMic();
+      rec.onend = () => stopMic();
+      try {
+        rec.start();
+        listening = true;
+        micBtn.classList.add('listening');
+      } catch (_) { stopMic(); }
+    });
+  } else {
+    micBtn.hidden = true;
+  }
+
+  // ---- Send / submit ----
+  function submit() {
+    const text = input.value;
+    input.value = '';
+    input.style.height = 'auto';
+    handleUserInput(text);
+  }
+  sendBtn.addEventListener('click', submit);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+  });
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(110, input.scrollHeight) + 'px';
+  });
+
+  // ---- Panel open/close ----
+  function openPanel() {
+    panel.classList.add('is-open');
+    panel.setAttribute('aria-hidden', 'false');
+    launcher.classList.add('is-open');
+    launcher.setAttribute('aria-label', 'Close resource assistant');
+    if (!log.children.length) greet();
+    setTimeout(() => input.focus(), 320);
+    if (typeof Tracker !== 'undefined' && Tracker.log) {
+      try { Tracker.log('chatbot_opened', {}); } catch (_) {}
+    }
+  }
+  function closePanel() {
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+    launcher.classList.remove('is-open');
+    launcher.setAttribute('aria-label', 'Open resource assistant');
+  }
+  launcher.addEventListener('click', () => {
+    if (panel.classList.contains('is-open')) closePanel(); else openPanel();
+  });
+  closeBtn.addEventListener('click', closePanel);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('is-open')) closePanel();
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initChatbot);
+} else {
+  _initChatbot();
+}
+
+// ================================================================
+// Live Intake AI — staff page wired to Gemini free tier
+// Flow: continuous mic → transcript → Gemini extracts JSON → editable
+//       fields → save as Contact (existing Apps Script) or Ticket
+// ================================================================
+const IntakeAI = {
+  KEY_STORAGE: 'cbes-connects-gemini-key',
+  MODEL: 'gemini-2.0-flash',
+  state: {
+    listening: false,
+    transcript: '',
+    interim: '',
+    rec: null,
+    extracted: null,
+    restartTimer: null,
+  },
+
+  getKey() {
+    try { return localStorage.getItem(this.KEY_STORAGE) || ''; } catch (_) { return ''; }
+  },
+  setKey(k) {
+    try { localStorage.setItem(this.KEY_STORAGE, (k || '').trim()); } catch (_) {}
+  },
+
+  // --- Continuous speech recognition ---
+  startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      this.setStatus('ia-mic-status', 'Voice input not supported in this browser. Type or paste into the transcript instead.', false);
+      return;
+    }
+    if (this.state.listening) return;
+
+    const LANG_MAP = { 'en':'en-US','es':'es-US','ht':'fr-FR','pt':'pt-BR','vi':'vi-VN','zh-CN':'zh-CN','ru':'ru-RU' };
+    const lang = LANG_MAP[(typeof _lang !== 'undefined' ? _lang : 'en')] || 'en-US';
+
+    const rec = new SR();
+    rec.lang = lang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    this.state.rec = rec;
+
+    rec.onresult = (e) => {
+      let finalChunk = '';
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) finalChunk += r[0].transcript + ' ';
+        else interim += r[0].transcript;
+      }
+      if (finalChunk) {
+        this.state.transcript = (this.state.transcript + ' ' + finalChunk).replace(/\s+/g, ' ').trim();
+      }
+      this.state.interim = interim;
+      this.renderTranscript();
+    };
+
+    rec.onerror = (e) => {
+      console.warn('[intake-ai] mic error', e.error);
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        this.setStatus('ia-mic-status', 'Microphone permission denied. Allow mic access in your browser settings.', false);
+        this.stopListening();
+      } else if (e.error === 'no-speech') {
+        // ignore — auto-restart will handle it
+      } else if (e.error === 'aborted') {
+        // ignore — we triggered the abort
+      } else {
+        this.setStatus('ia-mic-status', 'Mic error: ' + e.error, false);
+      }
+    };
+
+    rec.onend = () => {
+      // Chrome auto-stops every ~60s of silence. If we still want to listen, restart.
+      if (this.state.listening) {
+        this.state.restartTimer = setTimeout(() => {
+          if (this.state.listening) {
+            try { rec.start(); } catch (_) { /* already started */ }
+          }
+        }, 250);
+      }
+    };
+
+    try {
+      rec.start();
+      this.state.listening = true;
+      const btn = document.getElementById('ia-listen-btn');
+      if (btn) { btn.classList.add('listening'); btn.setAttribute('aria-label', 'Stop listening'); }
+      const status = document.getElementById('ia-mic-status');
+      if (status) { status.textContent = '● Listening — click again to stop'; status.classList.add('live'); }
+    } catch (err) {
+      console.warn('[intake-ai] start failed', err);
+      this.stopListening();
+    }
+  },
+
+  stopListening() {
+    this.state.listening = false;
+    if (this.state.restartTimer) { clearTimeout(this.state.restartTimer); this.state.restartTimer = null; }
+    if (this.state.rec) {
+      try { this.state.rec.stop(); } catch (_) {}
+      this.state.rec = null;
+    }
+    const btn = document.getElementById('ia-listen-btn');
+    if (btn) { btn.classList.remove('listening'); btn.setAttribute('aria-label', 'Start listening'); }
+    const status = document.getElementById('ia-mic-status');
+    if (status) { status.textContent = 'Click the mic to start listening'; status.classList.remove('live'); }
+    this.state.interim = '';
+    this.renderTranscript();
+  },
+
+  toggleListening() {
+    if (this.state.listening) this.stopListening();
+    else this.startListening();
+  },
+
+  renderTranscript() {
+    const el = document.getElementById('ia-transcript');
+    if (!el) return;
+    // Only repaint if user isn't typing into it right now
+    if (document.activeElement === el) return;
+    const final = this.state.transcript || '';
+    const interim = this.state.interim || '';
+    el.innerHTML = escapeHTML(final) + (interim ? ' <span class="ia-interim">' + escapeHTML(interim) + '</span>' : '');
+    el.scrollTop = el.scrollHeight;
+  },
+
+  // --- Gemini call ---
+  buildPrompt(transcript) {
+    return (
+      "You are an intake assistant for Central Boston Elder Services (CBES). " +
+      "Extract structured information from the following intake conversation transcript. " +
+      "Output ONLY valid JSON matching the provided schema. Use null for unknown fields. " +
+      "For services_needed, use short tags from this set when possible: Food, Housing, Healthcare, Mental Health, Legal, Employment, Financial Coaching, Addiction & Recovery, Seniors, Youth, Childcare, Immigration, Clothing, Transportation, Utilities, Snow Removal. " +
+      "Urgency: low for general info, normal for standard requests, high for soon-needed (eviction notice, no food), urgent for crisis (homeless tonight, suicidal, no heat in winter).\n\n" +
+      "TRANSCRIPT:\n" + transcript
+    );
+  },
+
+  GEMINI_SCHEMA: {
+    type: "object",
+    properties: {
+      name:             { type: "string", nullable: true },
+      phone:            { type: "string", nullable: true },
+      email:            { type: "string", nullable: true },
+      dob:              { type: "string", nullable: true, description: "YYYY-MM-DD if mentioned" },
+      age:              { type: "integer", nullable: true },
+      address:          { type: "string", nullable: true },
+      city:             { type: "string", nullable: true },
+      state:            { type: "string", nullable: true },
+      zip:              { type: "string", nullable: true },
+      primary_language: { type: "string", nullable: true },
+      household_size:   { type: "integer", nullable: true },
+      services_needed:  { type: "array", items: { type: "string" } },
+      urgency:          { type: "string", enum: ["low", "normal", "high", "urgent"] },
+      summary:          { type: "string" },
+      notes:            { type: "string" }
+    },
+    required: ["services_needed", "urgency", "summary", "notes"]
+  },
+
+  async callGemini(transcript) {
+    const key = this.getKey();
+    if (!key) throw new Error('NO_KEY');
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + this.MODEL + ':generateContent?key=' + encodeURIComponent(key);
+    const body = {
+      contents: [{ role: 'user', parts: [{ text: this.buildPrompt(transcript) }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: this.GEMINI_SCHEMA,
+        temperature: 0.1
+      }
+    };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error('HTTP ' + res.status + ': ' + text.slice(0, 200));
+    }
+    const data = await res.json();
+    const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!txt) throw new Error('Empty response from Gemini');
+    try { return JSON.parse(txt); }
+    catch (e) { throw new Error('Gemini returned non-JSON: ' + txt.slice(0, 200)); }
+  },
+
+  async analyze() {
+    const el = document.getElementById('ia-transcript');
+    const current = el ? (el.innerText || '').trim() : '';
+    // Capture any user edits made directly in the contenteditable transcript
+    if (current) this.state.transcript = current.replace(/\s+/g, ' ').trim();
+
+    if (!this.state.transcript) {
+      this.setStatus('ia-analyze-status', 'Add some transcript text first.', false);
+      return;
+    }
+    if (!this.getKey()) {
+      this.setStatus('ia-analyze-status', 'Add your Gemini API key in Settings first.', false);
+      this.openKeyModal();
+      return;
+    }
+
+    const btn = document.getElementById('ia-analyze-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Analyzing…'; }
+    this.setStatus('ia-analyze-status', 'Calling Gemini…', null);
+
+    try {
+      const json = await this.callGemini(this.state.transcript);
+      this.state.extracted = json;
+      this.renderFields(json);
+      this.setStatus('ia-analyze-status', 'Extracted ' + (json.services_needed || []).length + ' service tag(s). Review on the right.', true);
+      if (typeof Tracker !== 'undefined' && Tracker.log) {
+        try { Tracker.log('intake_ai_analyzed', { fields: Object.keys(json).length }); } catch (_) {}
+      }
+    } catch (e) {
+      console.warn('[intake-ai] gemini error', e);
+      if (String(e.message) === 'NO_KEY') {
+        this.setStatus('ia-analyze-status', 'No API key set. Click Settings.', false);
+        this.openKeyModal();
+      } else {
+        this.setStatus('ia-analyze-status', 'Gemini error: ' + e.message, false);
+      }
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-sparkle"></i> Analyze with AI'; }
+    }
+  },
+
+  renderFields(json) {
+    const wrap = document.getElementById('ia-fields');
+    const empty = document.getElementById('ia-fields-empty');
+    const saveRow = document.getElementById('ia-save-actions');
+    if (!wrap) return;
+    if (empty) empty.remove();
+
+    const v = (x) => (x === null || x === undefined ? '' : String(x));
+    const servicesStr = Array.isArray(json.services_needed) ? json.services_needed.join(', ') : '';
+
+    wrap.innerHTML =
+      this.fieldHTML('Name',            'name',     v(json.name)) +
+      '<div class="ia-field-row">' +
+        this.fieldHTML('Phone',         'phone',    v(json.phone)) +
+        this.fieldHTML('Email',         'email',    v(json.email)) +
+      '</div>' +
+      '<div class="ia-field-row">' +
+        this.fieldHTML('Age',           'age',      v(json.age),     'number') +
+        this.fieldHTML('Date of Birth', 'dob',      v(json.dob),     'text') +
+      '</div>' +
+      this.fieldHTML('Address',         'address',  v(json.address)) +
+      '<div class="ia-field-row">' +
+        this.fieldHTML('City',          'city',     v(json.city)) +
+        this.fieldHTML('State',         'state',    v(json.state)) +
+      '</div>' +
+      '<div class="ia-field-row">' +
+        this.fieldHTML('ZIP',           'zip',      v(json.zip)) +
+        this.fieldHTML('Primary Lang.', 'primary_language', v(json.primary_language)) +
+      '</div>' +
+      '<div class="ia-field-row">' +
+        this.fieldHTML('Household Size','household_size', v(json.household_size), 'number') +
+        this.selectHTML('Urgency',      'urgency',  v(json.urgency) || 'normal', ['low','normal','high','urgent']) +
+      '</div>' +
+      this.fieldHTML('Services Needed', 'services_needed', servicesStr, 'text', 'Comma-separated tags') +
+      this.textareaHTML('Summary',      'summary',  v(json.summary)) +
+      this.textareaHTML('Notes',        'notes',    v(json.notes));
+
+    if (saveRow) saveRow.hidden = false;
+  },
+
+  fieldHTML(label, name, value, type, placeholder) {
+    return (
+      '<div class="ia-field">' +
+        '<label for="ia-fld-' + name + '">' + label + '</label>' +
+        '<input id="ia-fld-' + name + '" data-ia-field="' + name + '" type="' + (type||'text') + '" value="' + escapeHTML(value) + '"' +
+          (placeholder ? ' placeholder="' + escapeHTML(placeholder) + '"' : '') + '>' +
+      '</div>'
+    );
+  },
+  textareaHTML(label, name, value) {
+    return (
+      '<div class="ia-field">' +
+        '<label for="ia-fld-' + name + '">' + label + '</label>' +
+        '<textarea id="ia-fld-' + name + '" data-ia-field="' + name + '" rows="2">' + escapeHTML(value) + '</textarea>' +
+      '</div>'
+    );
+  },
+  selectHTML(label, name, value, options) {
+    return (
+      '<div class="ia-field">' +
+        '<label for="ia-fld-' + name + '">' + label + '</label>' +
+        '<select id="ia-fld-' + name + '" data-ia-field="' + name + '">' +
+          options.map(o => '<option value="' + escapeHTML(o) + '"' + (o === value ? ' selected' : '') + '>' + escapeHTML(o) + '</option>').join('') +
+        '</select>' +
+      '</div>'
+    );
+  },
+
+  readFields() {
+    const out = {};
+    document.querySelectorAll('[data-ia-field]').forEach(el => {
+      out[el.getAttribute('data-ia-field')] = (el.value || '').trim();
+    });
+    return out;
+  },
+
+  async saveAsContact() {
+    const f = this.readFields();
+    if (!f.name) {
+      this.setStatus('ia-save-status', 'Name is required to save a contact.', false);
+      return;
+    }
+    const btn = document.getElementById('ia-save-contact');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Saving…'; }
+    this.setStatus('ia-save-status', 'Saving contact…', null);
+    try {
+      await Contacts.save({
+        name:     f.name,
+        phone:    f.phone || null,
+        email:    f.email || null,
+        needs:    f.services_needed || '',
+        address:  [f.address, f.city, f.state].filter(Boolean).join(', ') || null,
+        zip:      f.zip || null,
+        sessionId: null,
+        source:   'intake-ai',
+        notes:    [f.summary, f.notes].filter(Boolean).join('\n\n')
+      });
+      this.setStatus('ia-save-status', 'Contact saved.', true);
+      if (typeof Tracker !== 'undefined' && Tracker.log) {
+        try { Tracker.log('intake_ai_saved_contact', { name: f.name }); } catch (_) {}
+      }
+    } catch (e) {
+      this.setStatus('ia-save-status', 'Save failed: ' + e.message, false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-user-plus"></i> Save as Contact'; }
+    }
+  },
+
+  async saveAsTicket() {
+    const f = this.readFields();
+    if (!f.name && !f.summary) {
+      this.setStatus('ia-save-status', 'Add a name or summary before creating a ticket.', false);
+      return;
+    }
+    if (typeof Tickets === 'undefined' || !Tickets.create) {
+      this.setStatus('ia-save-status', 'Ticket system unavailable.', false);
+      return;
+    }
+    const btn = document.getElementById('ia-save-ticket');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Saving…'; }
+    this.setStatus('ia-save-status', 'Creating ticket…', null);
+    try {
+      const title = (f.name ? f.name + ' — ' : '') + (f.services_needed || f.summary || 'Intake').slice(0, 80);
+      const description = [
+        f.summary && ('Summary: ' + f.summary),
+        f.services_needed && ('Needs: ' + f.services_needed),
+        f.address && ('Address: ' + [f.address, f.city, f.state, f.zip].filter(Boolean).join(', ')),
+        f.phone && ('Phone: ' + f.phone),
+        f.email && ('Email: ' + f.email),
+        f.notes && ('Notes: ' + f.notes)
+      ].filter(Boolean).join('\n\n');
+      await Tickets.create({
+        kind: 'service_request',
+        title,
+        description,
+        priority: f.urgency === 'urgent' ? 'urgent' : (f.urgency === 'high' ? 'high' : 'normal'),
+        submitter_name:  f.name || '',
+        submitter_phone: f.phone || '',
+        submitter_email: f.email || '',
+        meta: JSON.stringify({ source: 'intake-ai', extracted: this.state.extracted })
+      });
+      this.setStatus('ia-save-status', 'Ticket created.', true);
+      if (typeof Tracker !== 'undefined' && Tracker.log) {
+        try { Tracker.log('intake_ai_saved_ticket', { name: f.name }); } catch (_) {}
+      }
+    } catch (e) {
+      this.setStatus('ia-save-status', 'Save failed: ' + e.message, false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-ticket"></i> Save as Ticket'; }
+    }
+  },
+
+  clearAll() {
+    this.stopListening();
+    this.state.transcript = '';
+    this.state.interim = '';
+    this.state.extracted = null;
+    const t = document.getElementById('ia-transcript');
+    if (t) t.innerHTML = '';
+    const wrap = document.getElementById('ia-fields');
+    if (wrap) {
+      wrap.innerHTML = '<div class="ia-empty" id="ia-fields-empty"><i class="ph ph-list-checks"></i>Start a transcript on the left, then click <strong>Analyze with AI</strong> to extract structured intake data here.</div>';
+    }
+    const saveRow = document.getElementById('ia-save-actions');
+    if (saveRow) saveRow.hidden = true;
+    this.setStatus('ia-analyze-status', '', null);
+    this.setStatus('ia-save-status', '', null);
+  },
+
+  setStatus(id, text, ok) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.remove('error', 'success');
+    if (ok === false) el.classList.add('error');
+    else if (ok === true) el.classList.add('success');
+  },
+
+  openKeyModal() {
+    const modal = document.getElementById('ia-key-modal');
+    const input = document.getElementById('ia-key-input');
+    if (!modal || !input) return;
+    input.value = this.getKey();
+    modal.classList.add('is-open');
+    setTimeout(() => input.focus(), 50);
+  },
+  closeKeyModal() {
+    const modal = document.getElementById('ia-key-modal');
+    if (modal) modal.classList.remove('is-open');
+  },
+
+  open() {
+    if (typeof showStep === 'function') showStep('step-intake-ai');
+    // Prompt for key on first visit
+    if (!this.getKey()) {
+      setTimeout(() => this.openKeyModal(), 350);
+    }
+  },
+
+  wire() {
+    const $ = id => document.getElementById(id);
+    const navBtn      = $('nav-intake-ai');
+    const listenBtn   = $('ia-listen-btn');
+    const clearTrans  = $('ia-clear-transcript');
+    const analyzeBtn  = $('ia-analyze-btn');
+    const backBtn     = $('ia-back-btn');
+    const settingsBtn = $('ia-settings-btn');
+    const saveContact = $('ia-save-contact');
+    const saveTicket  = $('ia-save-ticket');
+    const clearAll    = $('ia-clear-all');
+    const keyCancel   = $('ia-key-cancel');
+    const keySave     = $('ia-key-save');
+    const keyModal    = $('ia-key-modal');
+
+    if (!navBtn) return; // page not present
+
+    navBtn.addEventListener('click', () => this.open());
+    if (backBtn) backBtn.addEventListener('click', () => { this.stopListening(); if (typeof showStep === 'function') showStep('step-dashboard'); });
+    if (settingsBtn) settingsBtn.addEventListener('click', () => this.openKeyModal());
+
+    if (listenBtn) listenBtn.addEventListener('click', () => this.toggleListening());
+    if (clearTrans) clearTrans.addEventListener('click', () => {
+      this.state.transcript = ''; this.state.interim = '';
+      const t = $('ia-transcript'); if (t) t.innerHTML = '';
+    });
+    if (analyzeBtn) analyzeBtn.addEventListener('click', () => this.analyze());
+
+    if (saveContact) saveContact.addEventListener('click', () => this.saveAsContact());
+    if (saveTicket)  saveTicket.addEventListener('click',  () => this.saveAsTicket());
+    if (clearAll)    clearAll.addEventListener('click',    () => this.clearAll());
+
+    if (keyCancel) keyCancel.addEventListener('click', () => this.closeKeyModal());
+    if (keySave)   keySave.addEventListener('click', () => {
+      const input = $('ia-key-input');
+      if (input) {
+        const v = (input.value || '').trim();
+        if (!v || !/^AIza[\w-]{30,}$/.test(v)) {
+          this.setStatus('ia-analyze-status', 'That doesn\'t look like a Gemini key (AIza…).', false);
+          return;
+        }
+        this.setKey(v);
+        this.closeKeyModal();
+        this.setStatus('ia-analyze-status', 'API key saved. Ready to analyze.', true);
+      }
+    });
+    if (keyModal) keyModal.addEventListener('click', (e) => { if (e.target === keyModal) this.closeKeyModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && keyModal && keyModal.classList.contains('is-open')) this.closeKeyModal();
+    });
+  }
+};
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => IntakeAI.wire());
+} else {
+  IntakeAI.wire();
+}
+
+// ================================================================
 // Boot — gate, apply language, load directory, honor deep links
 // ================================================================
 applyAuthState();
@@ -7971,6 +9528,36 @@ loadDirectory().then(() => applyDeepLink()).catch(() => applyDeepLink());
   <span>Install: tap <span class="share-step" aria-label="Share"><i class="ph ph-share" aria-hidden="true"></i></span> then &ldquo;Add to Home Screen&rdquo;</span>
   <button type="button" class="install-hint-close" id="ios-install-hint-close" aria-label="Dismiss">&times;</button>
 </div>
+
+<!-- ==========================================
+     CHATBOT — floating assistant
+     ========================================== -->
+<button type="button" id="cb-launcher" class="cb-launcher" aria-label="Open resource assistant" title="Resource assistant">
+  <i class="ph ph-chat-circle-dots cb-launcher-open" aria-hidden="true"></i>
+  <i class="ph ph-x cb-launcher-close" aria-hidden="true"></i>
+</button>
+<aside id="cb-panel" class="cb-panel" role="dialog" aria-label="Resource assistant" aria-hidden="true">
+  <header class="cb-header">
+    <div class="cb-avatar"><i class="ph ph-sparkle" aria-hidden="true"></i></div>
+    <div>
+      <div class="cb-title">CB Assistant</div>
+      <div class="cb-subtitle">Online</div>
+    </div>
+    <button type="button" class="cb-close" id="cb-close" aria-label="Close assistant">
+      <i class="ph ph-x" aria-hidden="true"></i>
+    </button>
+  </header>
+  <div class="cb-log" id="cb-log" aria-live="polite"></div>
+  <div class="cb-input-row">
+    <textarea id="cb-input" rows="1" placeholder="Type or speak…" aria-label="Message"></textarea>
+    <button type="button" class="cb-icon-btn" id="cb-mic" aria-label="Voice input" title="Voice input">
+      <i class="ph ph-microphone" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="cb-icon-btn send" id="cb-send" aria-label="Send message" title="Send">
+      <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>
+    </button>
+  </div>
+</aside>
 
 </body>
 </html>
