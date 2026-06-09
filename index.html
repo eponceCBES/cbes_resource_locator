@@ -1230,6 +1230,291 @@
 
   .asap-details a:hover { color: var(--teal-glow); text-decoration: underline; text-underline-offset: 3px; }
 
+  /* ASAP referral — service-need checkboxes inside the banner */
+  .asap-services {
+    margin-top: 1.4rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(76,184,207,0.22);
+    text-align: left;
+  }
+  .asap-services-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.64rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--teal-glow);
+    margin-bottom: 0.85rem;
+  }
+  .svc-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+  .svc-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    font-size: 0.92rem;
+    color: var(--text-high);
+    cursor: pointer;
+    transition: background 180ms, border-color 180ms;
+  }
+  .svc-item:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.3); }
+  .svc-item input[type=checkbox] { accent-color: var(--teal-light); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+  .svc-item i { font-size: 1.1rem; color: var(--teal-light); flex-shrink: 0; line-height: 1; }
+  .svc-item:hover i { color: var(--teal-glow); }
+  .svc-item span { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .svc-parent { font-weight: 600; }
+  .svc-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: -0.1rem 0 0.25rem 1.4rem;
+    padding-left: 0.85rem;
+    border-left: 2px solid rgba(76,184,207,0.3);
+  }
+  .svc-sub .svc-item { font-size: 0.86rem; padding: 0.42rem 0.65rem; font-weight: 400; }
+  .svc-sub[hidden] { display: none; }
+
+  /* Make Referral — staff-only; only rendered for authenticated users */
+  .referral-btn {
+    display: none; /* default hidden; revealed for staff with a selection */
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.85rem 1.2rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: var(--ink-deep);
+    font-family: inherit;
+    font-size: 0.96rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    box-shadow: var(--shadow-btn);
+    transition: transform 180ms var(--ease-out), box-shadow 180ms, filter 180ms;
+  }
+  /* Show only when signed in AND not explicitly hidden by JS (no selection yet) */
+  body.is-authed .referral-btn:not([hidden]) { display: flex; }
+  .referral-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 26px -6px rgba(232,168,74,0.55); filter: brightness(1.04); }
+  .referral-btn:active { transform: translateY(0); }
+  .referral-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+  .referral-btn i { font-size: 1.2rem; }
+  .referral-success {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(52,181,132,0.14);
+    border: 1px solid rgba(52,181,132,0.35);
+    color: var(--text-high);
+    font-size: 0.92rem;
+    font-weight: 500;
+  }
+  .referral-success:not([hidden]) { display: flex; }
+  .referral-success .success-icon i { font-size: 1.3rem; color: var(--success); }
+  .referral-success #referral-ticket { color: var(--text-med); font-size: 0.85rem; }
+
+  /* Guest eligibility prompt — only for signed-out visitors */
+  .eligible-msg {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding: 0.9rem 1.05rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(232,168,74,0.14), rgba(76,184,207,0.10));
+    border: 1px solid rgba(232,168,74,0.32);
+    color: var(--text-high);
+    font-size: 0.94rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  body:not(.is-authed) .eligible-msg:not([hidden]) { display: flex; }
+  .eligible-msg .eligible-icon i { font-size: 1.4rem; color: var(--accent-lt); flex-shrink: 0; }
+
+  /* =============================================
+     Staff Intake — contact picker bar
+     ============================================= */
+  .ia-contactbar {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    margin-bottom: 1.4rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+  }
+  .ia-cb-step {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    color: #fff; font-weight: 700; font-size: 0.85rem;
+  }
+  .ia-cb-main { flex: 1; min-width: 0; }
+  .ia-cb-label { font-size: 0.82rem; font-weight: 600; color: var(--text-med); margin-bottom: 0.5rem; }
+  .ia-cb-pickwrap { position: relative; }
+  .ia-cb-search { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.8rem; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--glass-bg); }
+  .ia-cb-search i { color: var(--text-low); }
+  .ia-cb-search input { flex: 1; border: none; background: transparent; color: var(--text-high); font: inherit; font-size: 0.92rem; outline: none; }
+  .ia-cb-results {
+    position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; right: 0;
+    max-height: 240px; overflow-y: auto;
+    border: 1px solid var(--glass-border); border-radius: var(--radius-md);
+    background: var(--navy-mid); box-shadow: var(--shadow-md);
+  }
+  body[data-theme="light"] .ia-cb-results { background: #fff; }
+  .ia-cb-results[hidden] { display: none; }
+  .ia-cb-row {
+    display: flex; flex-direction: column; gap: 1px;
+    width: 100%; text-align: left;
+    padding: 0.55rem 0.8rem; border: none; background: transparent; cursor: pointer;
+    color: var(--text-high); font: inherit; border-bottom: 1px solid var(--glass-border);
+  }
+  .ia-cb-row:last-child { border-bottom: none; }
+  .ia-cb-row:hover { background: var(--glass-bg); }
+  .ia-cb-row .nm { font-weight: 600; font-size: 0.9rem; }
+  .ia-cb-row .meta { font-size: 0.78rem; color: var(--text-low); }
+  .ia-cb-row.empty { cursor: default; color: var(--text-low); font-size: 0.85rem; }
+  .ia-cb-row.empty:hover { background: transparent; }
+  .ia-cb-selected {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.7rem; border-radius: var(--radius-md);
+    background: rgba(52,181,132,0.14); border: 1px solid rgba(52,181,132,0.35);
+    color: var(--text-high); font-weight: 600; font-size: 0.9rem;
+  }
+  .ia-cb-selected[hidden] { display: none; }
+  .ia-cb-selected i { color: var(--success); font-size: 1.15rem; }
+  .ia-cb-clear { margin-left: 0.25rem; border: none; background: transparent; color: var(--text-med); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+  .ia-cb-clear:hover { color: var(--error); }
+  .enroll-results { position: static; max-height: 260px; margin-top: 0.6rem; }
+
+  /* =============================================
+     Dashboard — Referrals list
+     ============================================= */
+  .referral-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .referral-row {
+    display: flex; align-items: flex-start; gap: 0.8rem;
+    padding: 0.85rem 1rem; border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+  }
+  .referral-row .rr-icon i { font-size: 1.5rem; color: var(--accent-lt); }
+  .referral-row .rr-main { flex: 1; min-width: 0; }
+  .referral-row .rr-title { font-weight: 600; font-size: 0.92rem; color: var(--text-high); margin-bottom: 0.15rem; }
+  .referral-row .rr-sub { font-size: 0.8rem; color: var(--text-med); line-height: 1.45; }
+  .referral-row .rr-time { font-size: 0.74rem; color: var(--text-low); white-space: nowrap; }
+  .dash-empty-row { padding: 1rem; text-align: center; color: var(--text-low); font-size: 0.88rem; }
+
+  /* =============================================
+     Dashboard — Campaigns & Events
+     ============================================= */
+  .campaign-list { display: flex; flex-direction: column; gap: 0.7rem; }
+  .campaign-row {
+    padding: 0.9rem 1rem; border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+  }
+  .campaign-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .campaign-kind {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.18rem 0.5rem; border-radius: 999px;
+    background: rgba(76,184,207,0.16); color: var(--teal-glow); border: 1px solid rgba(76,184,207,0.3);
+  }
+  .campaign-kind.campaign { background: rgba(232,168,74,0.16); color: var(--accent-lt); border-color: rgba(232,168,74,0.3); }
+  .campaign-name { font-weight: 600; font-size: 0.96rem; color: var(--text-high); }
+  .campaign-meta { font-size: 0.78rem; color: var(--text-low); margin-top: 0.2rem; }
+  .campaign-desc { font-size: 0.84rem; color: var(--text-med); margin-top: 0.4rem; line-height: 1.5; }
+  .campaign-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; flex-wrap: wrap; }
+  .campaign-enrollees { margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .enrollee-chip {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.76rem; padding: 0.22rem 0.55rem; border-radius: 999px;
+    background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-med);
+  }
+  .enrollee-chip button { border: none; background: transparent; color: var(--text-low); cursor: pointer; font-size: 0.9rem; line-height: 1; }
+  .enrollee-chip button:hover { color: var(--error); }
+  .campaign-count { margin-left: auto; font-size: 0.78rem; color: var(--text-med); font-weight: 600; }
+
+  /* =============================================
+     Protective Services — report elder abuse
+     ============================================= */
+  .ps-card {
+    margin: 1.5rem 0 0.5rem;
+    padding: 1.5rem 1.6rem;
+    border-radius: var(--radius-lg);
+    background:
+      linear-gradient(135deg, rgba(227,107,120,0.12) 0%, rgba(185,125,36,0.12) 100%);
+    border: 1px solid rgba(227,107,120,0.32);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .ps-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--error) 30%, var(--accent) 70%, transparent);
+  }
+  .ps-card-head { display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 0.8rem; }
+  .ps-icon i { font-size: 2.1rem; color: var(--error); line-height: 1; }
+  .ps-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.64rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-lt);
+    margin-bottom: 0.3rem;
+  }
+  .ps-title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(1.15rem, 3.2vw, 1.45rem);
+    font-weight: 500;
+    color: var(--text-high);
+    line-height: 1.2;
+  }
+  .ps-body { font-size: 0.9rem; color: var(--text-med); line-height: 1.6; margin-bottom: 1.1rem; }
+  .ps-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+  .ps-call, .ps-web {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.1rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    transition: transform 180ms var(--ease-out), box-shadow 180ms, background 180ms;
+  }
+  .ps-call {
+    background: linear-gradient(135deg, var(--error), #c0505d);
+    color: #fff;
+    box-shadow: 0 6px 18px -4px rgba(227,107,120,0.45);
+  }
+  .ps-call:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -6px rgba(227,107,120,0.6); }
+  .ps-call span { display: flex; flex-direction: column; line-height: 1.2; }
+  .ps-call .ps-call-label { font-size: 0.7rem; font-weight: 500; opacity: 0.9; letter-spacing: 0.02em; }
+  .ps-call strong { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.01em; }
+  .ps-call i, .ps-web i { font-size: 1.25rem; flex-shrink: 0; }
+  .ps-web {
+    background: var(--glass-bg);
+    color: var(--text-high);
+    border: 1px solid var(--glass-border);
+  }
+  .ps-web:hover { transform: translateY(-2px); background: rgba(255,255,255,0.12); border-color: var(--glass-hi); }
+  body.accessible .ps-title { font-size: clamp(1.35rem, 4vw, 1.7rem); }
+  body.accessible .ps-body { font-size: 1.02rem; line-height: 1.7; }
+  body.accessible .svc-item { font-size: 1.02rem; }
+
   /* =============================================
      CBES Intake Form
      ============================================= */
@@ -1724,6 +2009,281 @@
     white-space: pre-wrap;
   }
   body[data-theme="light"] .drawer-section .desc { color: #0a1f3d; }
+
+  /* Contact drawer — sections, info grid, sessions timeline */
+  .cdr-section { display: flex; flex-direction: column; gap: 0.55rem; }
+  .cdr-section-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .cdr-section-title {
+    font: 600 0.72rem 'Geist', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-med);
+  }
+  .cdr-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1rem;
+  }
+  @media (max-width: 540px) { .cdr-info { grid-template-columns: 1fr; } }
+  .cdr-info-item { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .cdr-info-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-low);
+  }
+  .cdr-info-value {
+    font-size: 0.92rem;
+    color: var(--text-high);
+    word-break: break-word;
+  }
+  body[data-theme="light"] .cdr-info { background: rgba(10,31,61,0.03); }
+  body[data-theme="light"] .cdr-info-value { color: #0a1f3d; }
+
+  .cdr-sessions { display: flex; flex-direction: column; gap: 0.55rem; }
+  .cdr-session {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--glass-border);
+    border-left: 3px solid var(--teal-light);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.9rem;
+  }
+  body[data-theme="light"] .cdr-session { background: rgba(10,31,61,0.03); }
+  .cdr-session-meta {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem;
+    margin-bottom: 0.3rem;
+  }
+  .cdr-session-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--text-med);
+    letter-spacing: 0.04em;
+  }
+  .cdr-session-staff {
+    font-size: 0.72rem;
+    color: var(--text-low);
+  }
+  .cdr-session-summary {
+    font-size: 0.9rem;
+    color: var(--text-high);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  body[data-theme="light"] .cdr-session-summary { color: #0a1f3d; }
+  .cdr-session-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.45rem; }
+  .cdr-session-tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(76,184,207,0.16);
+    color: var(--teal-glow);
+  }
+  body[data-theme="light"] .cdr-session-tag { background: rgba(26,112,136,0.14); color: #0d4a63; }
+  .cdr-empty {
+    text-align: center;
+    padding: 1.25rem 0.5rem;
+    color: var(--text-low);
+    font-size: 0.88rem;
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--radius-md);
+  }
+  .cdr-empty i { display: block; font-size: 1.6rem; color: var(--teal-light); margin-bottom: 0.35rem; }
+
+  /* Inline "new session" form inside the contact drawer */
+  .cdr-session-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    background: rgba(76,184,207,0.06);
+    border: 1px solid rgba(76,184,207,0.28);
+    border-radius: var(--radius-md);
+    padding: 0.95rem 1rem;
+    margin-bottom: 0.2rem;
+  }
+  body[data-theme="light"] .cdr-session-form {
+    background: rgba(26,112,136,0.06);
+    border-color: rgba(26,112,136,0.25);
+  }
+  .csf-row { display: flex; flex-direction: column; gap: 0.3rem; }
+  .csf-label {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    font: 600 0.68rem 'Geist', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-low);
+  }
+  .csf-row input, .csf-row select, .csf-row textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    font: 400 0.9rem 'Geist', sans-serif;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-high);
+    border: 1px solid var(--glass-border);
+    border-radius: 7px;
+    transition: border-color 160ms, background 160ms;
+  }
+  .csf-row textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
+  .csf-row input:focus, .csf-row select:focus, .csf-row textarea:focus {
+    outline: none; border-color: var(--teal-glow); background: rgba(76,184,207,0.07);
+  }
+  body[data-theme="light"] .csf-row input,
+  body[data-theme="light"] .csf-row select,
+  body[data-theme="light"] .csf-row textarea {
+    background: rgba(255,255,255,0.85); color: #0a1f3d; border-color: rgba(10,31,61,0.14);
+  }
+  .csf-ai-btn {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font: 600 0.68rem 'Geist', sans-serif;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(76,184,207,0.4);
+    background: rgba(76,184,207,0.14);
+    color: var(--teal-glow);
+    cursor: pointer;
+    transition: background 160ms, transform 160ms;
+  }
+  .csf-ai-btn:hover { background: rgba(76,184,207,0.24); }
+  .csf-ai-btn:disabled { opacity: 0.6; cursor: default; }
+  body[data-theme="light"] .csf-ai-btn { color: #0d4a63; background: rgba(26,112,136,0.12); border-color: rgba(26,112,136,0.4); }
+
+  /* Talk-to-fill voice button */
+  .csf-mic {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    font: 600 0.92rem 'Geist', sans-serif;
+    color: #fff;
+    background: linear-gradient(135deg, var(--teal-glow), var(--teal-light));
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: transform 160ms var(--ease-spring), box-shadow 200ms, filter 160ms;
+    box-shadow: 0 4px 14px rgba(76,184,207,0.25);
+  }
+  .csf-mic i { font-size: 1.15rem; }
+  .csf-mic:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .csf-mic:disabled { opacity: 0.6; cursor: default; }
+  .csf-mic.listening {
+    background: linear-gradient(135deg, #e36b78, #c8505d);
+    box-shadow: 0 0 0 0 rgba(227,107,120,0.5);
+    animation: csf-pulse 1.4s ease-out infinite;
+  }
+  @keyframes csf-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(227,107,120,0.5); }
+    70%  { box-shadow: 0 0 0 12px rgba(227,107,120,0); }
+    100% { box-shadow: 0 0 0 0 rgba(227,107,120,0); }
+  }
+  .csf-mic-hint { font-size: 0.74rem; color: var(--text-low); text-align: center; margin-top: -0.2rem; }
+  .csf-transcript {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-med);
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed var(--glass-border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    max-height: 110px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  body[data-theme="light"] .csf-transcript { background: rgba(10,31,61,0.03); color: #33425a; }
+  .csf-transcript .csf-interim { color: var(--text-low); font-style: italic; }
+
+  /* ---- Full-screen contact profile (info left, sessions right) ---- */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    gap: 1.6rem;
+    align-items: start;
+    margin-top: 1rem;
+  }
+  @media (max-width: 820px) { .profile-grid { grid-template-columns: 1fr; gap: 1.1rem; } }
+  .profile-info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02) 70%),
+      rgba(255,255,255,0.028);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 1.3rem 1.25rem;
+    backdrop-filter: blur(12px) saturate(1.3);
+    position: sticky;
+    top: 1.2rem;
+  }
+  body[data-theme="light"] .profile-info-col {
+    background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.55) 80%), rgba(255,255,255,0.5);
+    border-color: rgba(10,31,61,0.14);
+  }
+  @media (max-width: 820px) { .profile-info-col { position: static; } }
+  .profile-id { display: flex; align-items: center; gap: 0.85rem; }
+  .profile-avatar {
+    flex: 0 0 auto;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font: 700 1.25rem 'Geist', sans-serif;
+    color: #fff;
+    background: linear-gradient(135deg, var(--teal-glow), var(--teal-light));
+    box-shadow: 0 4px 12px rgba(76,184,207,0.3);
+    text-transform: uppercase;
+  }
+  .profile-id-text { min-width: 0; }
+  .profile-name {
+    font: 700 1.25rem 'Geist', sans-serif;
+    color: var(--text-high);
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  body[data-theme="light"] .profile-name { color: #0a1f3d; }
+  .profile-sub { font-size: 0.85rem; color: var(--text-med); margin-top: 0.15rem; word-break: break-word; }
+  .profile-status-chip { align-self: flex-start; }
+  .profile-info-title { margin-top: 0.3rem; }
+  .profile-info { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 1100px) and (min-width: 821px) { .profile-info { grid-template-columns: 1fr; } }
+
+  .profile-sessions-col { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+  .profile-sessions-col .cdr-section-head { align-items: flex-start; }
+  .profile-sessions-meta { font-size: 0.78rem; color: var(--text-low); margin-top: 0.2rem; }
+
+  /* Session form inside the modal (no inner box — the modal is the box) */
+  .csf-form { display: flex; flex-direction: column; gap: 0.75rem; }
+  .session-modal-card { max-width: 520px; max-height: 88vh; overflow-y: auto; }
+
+  /* New Contact button + modal */
+  .cs-new-contact { flex: 0 0 auto; white-space: nowrap; }
+  .cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .csf-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+  .csf-status { font-size: 0.78rem; color: var(--text-med); min-height: 1rem; }
+  .csf-status.error { color: var(--error); }
+  .csf-status.ok { color: var(--teal-glow); }
+  .csf-spinner {
+    display: inline-block; width: 0.8rem; height: 0.8rem;
+    border: 2px solid rgba(76,184,207,0.3); border-top-color: var(--teal-glow);
+    border-radius: 50%; animation: csf-spin 0.7s linear infinite; vertical-align: -1px;
+  }
+  @keyframes csf-spin { to { transform: rotate(360deg); } }
+  /* session topic chip + per-session delete */
+  .cdr-session-topic {
+    font: 600 0.72rem 'Geist', sans-serif;
+    color: var(--teal-glow);
+    letter-spacing: 0.02em;
+  }
+  body[data-theme="light"] .cdr-session-topic { color: #0d4a63; }
+  .cdr-session-del {
+    background: transparent; border: 0; color: var(--text-low);
+    cursor: pointer; padding: 2px 5px; border-radius: 6px; font-size: 0.95rem;
+    transition: color 160ms, background 160ms;
+  }
+  .cdr-session-del:hover { color: var(--error); background: rgba(227,107,120,0.1); }
+
   .drawer-fields {
     display: grid;
     grid-template-columns: 110px 1fr;
@@ -3484,6 +4044,81 @@
   }
   .contact-del:hover { color: var(--error); background: rgba(227,107,120,0.1); }
 
+  /* Contacts screen (dedicated full-page list view) */
+  .cs-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.4rem;
+  }
+  .cs-search {
+    position: relative;
+    flex: 1 1 240px;
+    min-width: 200px;
+  }
+  .cs-search i {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-low);
+    font-size: 1.05rem;
+    pointer-events: none;
+  }
+  .cs-search input {
+    width: 100%;
+    padding: 0.7rem 0.9rem 0.7rem 2.4rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-high);
+    font-family: 'Geist', sans-serif;
+    font-size: 0.9rem;
+    transition: border-color 180ms, background 180ms;
+  }
+  .cs-search input:focus {
+    outline: none;
+    border-color: var(--teal-glow);
+    background: rgba(76,184,207,0.06);
+  }
+  body[data-theme="light"] .cs-search input {
+    background: rgba(10,31,61,0.04);
+    border-color: rgba(10,31,61,0.14);
+  }
+  .cs-filters {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .cs-pill {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-med);
+    cursor: pointer;
+    transition: background 180ms, color 180ms, border-color 180ms;
+    font-family: 'Geist', sans-serif;
+  }
+  .cs-pill:hover { color: var(--text-high); }
+  .cs-pill.active {
+    background: rgba(76,184,207,0.18);
+    color: var(--teal-glow);
+    border-color: rgba(76,184,207,0.4);
+  }
+  body[data-theme="light"] .cs-pill {
+    background: rgba(10,31,61,0.04);
+    border-color: rgba(10,31,61,0.12);
+  }
+  body[data-theme="light"] .cs-pill.active {
+    background: rgba(26,112,136,0.14);
+    color: #0d4a63;
+    border-color: rgba(26,112,136,0.4);
+  }
+
   /* Dashboard map */
   .dash-map-wrap {
     position: relative;
@@ -4185,6 +4820,20 @@
     margin-top: 0.25rem;
   }
   .ia-header-actions { display: flex; gap: 0.55rem; flex-wrap: wrap; }
+  .ia-session-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.6rem;
+    padding: 0.4rem 0.8rem;
+    background: rgba(76,184,207,0.14);
+    border: 1px solid var(--teal-light);
+    border-radius: 999px;
+    color: var(--teal-glow);
+    font-size: 0.8rem;
+  }
+  .ia-session-banner i { font-size: 1rem; }
+  body[data-theme="light"] .ia-session-banner { background: rgba(26,112,136,0.12); color: #0d4a63; }
   .ia-btn {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -4227,6 +4876,7 @@
     display: flex;
     flex-direction: column;
     min-height: 480px;
+    min-width: 0;
   }
   .ia-card-title {
     font-size: 0.74rem;
@@ -4319,6 +4969,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.28rem;
+    min-width: 0;
   }
   .ia-field label {
     font-size: 0.72rem;
@@ -4328,6 +4979,9 @@
     font-weight: 600;
   }
   .ia-field input, .ia-field textarea, .ia-field select {
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
     background: rgba(0,0,0,0.18);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
@@ -4454,6 +5108,9 @@
   </button>
   <button type="button" id="nav-home" class="rail-btn requires-auth" aria-label="Resource finder" title="Resource Finder">
     <i class="ph ph-house" aria-hidden="true"></i>
+  </button>
+  <button type="button" id="nav-contacts" class="rail-btn requires-auth" aria-label="Saved contacts" title="Contacts">
+    <i class="ph ph-address-book" aria-hidden="true"></i>
   </button>
   <button type="button" id="nav-intake-ai" class="rail-btn requires-auth" aria-label="Live intake AI" title="Live Intake AI">
     <i class="ph ph-sparkle" aria-hidden="true"></i>
@@ -4715,6 +5372,57 @@
       <p class="asap-eyebrow" data-i18n="results.asap_eyebrow">Your Aging Services Access Point</p>
       <p class="asap-name" id="sr-asap-name"></p>
       <p class="asap-details" id="sr-asap-details"></p>
+
+      <div class="asap-services" id="sr-asap-services">
+        <p class="asap-services-label" data-i18n="services.label">Services you may need — let your ASAP know</p>
+        <div class="svc-grid">
+          <label class="svc-item svc-parent">
+            <input type="checkbox" class="asap-svc" value="Home Maker" data-reveal="svc-homemaker">
+            <span><i class="ph ph-broom" aria-hidden="true"></i><span data-i18n="services.homemaker">Home Maker</span></span>
+          </label>
+          <div class="svc-sub" id="svc-homemaker" hidden>
+            <label class="svc-item"><input type="checkbox" class="asap-svc-sub" data-parent="Home Maker" value="Medical Escort"><span data-i18n="services.medical_escort">Medical Escort</span></label>
+            <label class="svc-item"><input type="checkbox" class="asap-svc-sub" data-parent="Home Maker" value="Cleaning"><span data-i18n="services.cleaning">Cleaning</span></label>
+            <label class="svc-item"><input type="checkbox" class="asap-svc-sub" data-parent="Home Maker" value="Laundry at home"><span data-i18n="services.laundry">Laundry at home</span></label>
+          </div>
+
+          <label class="svc-item">
+            <input type="checkbox" class="asap-svc" value="Home Delivered Meals">
+            <span><i class="ph ph-bowl-food" aria-hidden="true"></i><span data-i18n="services.hdm">Home Delivered Meals</span></span>
+          </label>
+
+          <label class="svc-item svc-parent">
+            <input type="checkbox" class="asap-svc" value="Personal Care" data-reveal="svc-personalcare">
+            <span><i class="ph ph-hand-soap" aria-hidden="true"></i><span data-i18n="services.personal_care">Personal Care</span></span>
+          </label>
+          <div class="svc-sub" id="svc-personalcare" hidden>
+            <label class="svc-item"><input type="checkbox" class="asap-svc-sub" data-parent="Personal Care" value="Bathing"><span data-i18n="services.bathing">Bathing</span></label>
+            <label class="svc-item"><input type="checkbox" class="asap-svc-sub" data-parent="Personal Care" value="Dressing"><span data-i18n="services.dressing">Dressing</span></label>
+          </div>
+
+          <label class="svc-item">
+            <input type="checkbox" class="asap-svc" value="Companion">
+            <span><i class="ph ph-users" aria-hidden="true"></i><span data-i18n="services.companion">Companion</span></span>
+          </label>
+        </div>
+
+        <!-- Staff-only: appears once a service is selected -->
+        <button type="button" class="referral-btn" id="make-referral-btn" hidden>
+          <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>
+          <span data-i18n="services.make_referral">Make Referral</span>
+        </button>
+        <div class="referral-success" id="referral-success" hidden>
+          <span class="success-icon" aria-hidden="true"><i class="ph-duotone ph-check-circle"></i></span>
+          <span data-i18n="services.referral_sent">Referral sent to the ASAP.</span>
+          <span id="referral-ticket"></span>
+        </div>
+
+        <!-- Guest message: shown to signed-out visitors once a service is selected -->
+        <div class="eligible-msg" id="eligible-msg" hidden>
+          <span class="eligible-icon" aria-hidden="true"><i class="ph-duotone ph-hand-heart"></i></span>
+          <span data-i18n="services.eligible">You may be eligible for services. Please contact us.</span>
+        </div>
+      </div>
     </div>
 
     <p class="resources-label" data-i18n="results.resources_near">Community Resources Near You</p>
@@ -4729,74 +5437,28 @@
     <div class="resources-grid" id="sr-resources-grid"></div>
     <div class="res-empty" id="sr-resources-empty" hidden data-i18n="results.filter_empty">No resources match your search.</div>
 
-    <!-- CBES Contact Form — only shown when ASAP = Central Boston -->
-    <div id="cbes-intake-form" style="display:none; margin-top:2rem;">
-      <div class="form-card">
-        <div class="form-card-header">
-          <span class="form-card-icon" aria-hidden="true"><i class="ph-duotone ph-handshake"></i></span>
-          <div>
-            <p class="form-card-title" data-i18n="intake.title">Get Connected with CBES</p>
-            <p class="form-card-subtitle" data-i18n="intake.subtitle">A care manager will reach out to help you access services.</p>
-          </div>
-        </div>
-        <div id="intake-fields">
-          <div class="field-row">
-            <label class="field-label" for="intake-name"><span data-i18n="intake.name">Full Name</span> <span class="req">*</span></label>
-            <input class="field-input" id="intake-name" type="text" placeholder="Jane Smith" data-i18n-placeholder="intake.name_placeholder" autocomplete="name">
-            <span class="field-error" id="intake-name-error"></span>
-          </div>
-          <div class="field-row two-col">
-            <div>
-              <label class="field-label" for="intake-phone" data-i18n="intake.phone">Phone Number</label>
-              <input class="field-input" id="intake-phone" type="tel" placeholder="(617) 000-0000" autocomplete="tel">
-            </div>
-            <div>
-              <label class="field-label" for="intake-email" data-i18n="intake.email">Email Address</label>
-              <input class="field-input" id="intake-email" type="email" placeholder="you@email.com" data-i18n-placeholder="intake.email_placeholder" autocomplete="email">
-            </div>
-          </div>
-          <div class="field-row">
-            <label class="field-label"><span data-i18n="intake.needs">What do you need help with?</span> <span class="req">*</span></label>
-            <div class="check-grid">
-              <label class="check-item"><input type="checkbox" value="Home Care"> <span><i class="ph ph-house-line" aria-hidden="true"></i>Home Care</span></label>
-              <label class="check-item"><input type="checkbox" value="Elder Protective Services"> <span><i class="ph ph-shield-check" aria-hidden="true"></i>Elder Protective Services</span></label>
-              <label class="check-item"><input type="checkbox" value="Elderly Housing"> <span><i class="ph ph-buildings" aria-hidden="true"></i>Elderly Housing</span></label>
-              <label class="check-item"><input type="checkbox" value="Senior Care Options (SCO)"> <span><i class="ph ph-identification-card" aria-hidden="true"></i>Senior Care Options</span></label>
-              <label class="check-item"><input type="checkbox" value="One Care Plans"> <span><i class="ph ph-stethoscope" aria-hidden="true"></i>One Care Plans</span></label>
-              <label class="check-item"><input type="checkbox" value="Veteran-Directed Services"> <span><i class="ph ph-medal" aria-hidden="true"></i>Veteran-Directed Services</span></label>
-              <label class="check-item"><input type="checkbox" value="Options Counseling"> <span><i class="ph ph-chats-circle" aria-hidden="true"></i>Options Counseling</span></label>
-              <label class="check-item"><input type="checkbox" value="Clinical Assessment &amp; Eligibility"> <span><i class="ph ph-clipboard-text" aria-hidden="true"></i>Clinical Assessment</span></label>
-              <label class="check-item"><input type="checkbox" value="Community Transition (CTLP)"> <span><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Community Transition</span></label>
-              <label class="check-item"><input type="checkbox" value="Residence Service Coordination"> <span><i class="ph ph-building-office" aria-hidden="true"></i>Residence Coordination</span></label>
-              <label class="check-item"><input type="checkbox" value="Nutrition / Project Bread"> <span><i class="ph ph-bowl-food" aria-hidden="true"></i>Nutrition / Project Bread</span></label>
-              <label class="check-item"><input type="checkbox" value="Little Necessities"> <span><i class="ph ph-hand-heart" aria-hidden="true"></i>Little Necessities</span></label>
-              <label class="check-item"><input type="checkbox" value="Computer Lab / Digital Literacy"> <span><i class="ph ph-laptop" aria-hidden="true"></i>Computer Lab</span></label>
-              <label class="check-item"><input type="checkbox" value="Nursing &amp; Facility Placement"> <span><i class="ph ph-first-aid-kit" aria-hidden="true"></i>Nursing &amp; Placement</span></label>
-              <label class="check-item"><input type="checkbox" value="Boston Allied Partner"> <span><i class="ph ph-users-three" aria-hidden="true"></i>Boston Allied Partner</span></label>
-              <label class="check-item"><input type="checkbox" value="Other"> <span><i class="ph ph-dots-three-circle" aria-hidden="true"></i>Other</span></label>
-            </div>
-            <span class="field-error" id="intake-needs-error"></span>
-          </div>
-          <div class="followup-card" id="followup-card">
-            <label class="followup-toggle">
-              <input type="checkbox" id="intake-followup">
-              <span class="followup-box" aria-hidden="true"><i class="ph ph-check"></i></span>
-              <span class="followup-text">
-                <span class="followup-title" data-i18n="intake.followup_title">Save my information for follow-up</span>
-                <span class="followup-sub" data-i18n="intake.followup_sub">A CBES care manager can check in with me about my needs. Optional — your search works without this.</span>
-              </span>
-            </label>
-          </div>
-
-          <span class="field-error" id="intake-general-error"></span>
-          <button class="btn-submit" id="intake-submit-btn" type="button"><span data-i18n="intake.submit">Submit</span> &rarr;</button>
-        </div>
-        <div id="intake-success" style="display:none;" class="intake-success-msg">
-          <span class="success-icon" aria-hidden="true"><i class="ph-duotone ph-check-circle"></i></span>
-          <p data-i18n-html="intake.success"><strong>Thank you!</strong> A CBES care manager will be in touch soon.</p>
+    <!-- Protective Services — report elder abuse / neglect / financial exploitation -->
+    <div class="ps-card" role="region" aria-label="Report elder abuse or neglect">
+      <div class="ps-card-head">
+        <span class="ps-icon" aria-hidden="true"><i class="ph-duotone ph-shield-warning"></i></span>
+        <div>
+          <p class="ps-eyebrow" data-i18n="ps.eyebrow">Protective Services</p>
+          <p class="ps-title" data-i18n="ps.title">Report abuse, neglect, or financial exploitation</p>
         </div>
       </div>
+      <p class="ps-body" data-i18n="ps.body">If you or an older adult (age 60+) is being abused, neglected, or financially exploited, you can make a confidential report. Help is available 24 hours a day, 7 days a week.</p>
+      <div class="ps-actions">
+        <a class="ps-call" href="tel:8009222275">
+          <i class="ph ph-phone-call" aria-hidden="true"></i>
+          <span><span class="ps-call-label" data-i18n="ps.call_label">Elder Abuse Hotline</span><strong>800-922-2275</strong></span>
+        </a>
+        <a class="ps-web" href="https://www.mass.gov/info-details/report-abuse-of-adults-aged-60" target="_blank" rel="noopener">
+          <i class="ph ph-globe" aria-hidden="true"></i>
+          <span data-i18n="ps.web">Report online at mass.gov</span>
+        </a>
+      </div>
     </div>
+
   </section>
 
   <!-- ==========================================
@@ -4823,6 +5485,28 @@
     </div>
     <div class="resources-grid" id="zr-resources-grid"></div>
     <div class="res-empty" id="zr-resources-empty" hidden data-i18n="results.filter_empty">No resources match your search.</div>
+
+    <!-- Protective Services — report elder abuse / neglect / financial exploitation -->
+    <div class="ps-card" role="region" aria-label="Report elder abuse or neglect">
+      <div class="ps-card-head">
+        <span class="ps-icon" aria-hidden="true"><i class="ph-duotone ph-shield-warning"></i></span>
+        <div>
+          <p class="ps-eyebrow" data-i18n="ps.eyebrow">Protective Services</p>
+          <p class="ps-title" data-i18n="ps.title">Report abuse, neglect, or financial exploitation</p>
+        </div>
+      </div>
+      <p class="ps-body" data-i18n="ps.body">If you or an older adult (age 60+) is being abused, neglected, or financially exploited, you can make a confidential report. Help is available 24 hours a day, 7 days a week.</p>
+      <div class="ps-actions">
+        <a class="ps-call" href="tel:8009222275">
+          <i class="ph ph-phone-call" aria-hidden="true"></i>
+          <span><span class="ps-call-label" data-i18n="ps.call_label">Elder Abuse Hotline</span><strong>800-922-2275</strong></span>
+        </a>
+        <a class="ps-web" href="https://www.mass.gov/info-details/report-abuse-of-adults-aged-60" target="_blank" rel="noopener">
+          <i class="ph ph-globe" aria-hidden="true"></i>
+          <span data-i18n="ps.web">Report online at mass.gov</span>
+        </a>
+      </div>
+    </div>
   </section>
 
   <!-- ==========================================
@@ -4919,6 +5603,24 @@
 
     <div class="chart-card" style="margin-bottom:1.8rem">
       <div class="chart-head">
+        <span class="chart-title">Referrals to CBES</span>
+        <span class="chart-meta" id="referrals-meta"></span>
+      </div>
+      <div class="referral-list" id="dash-referrals"></div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:1.8rem">
+      <div class="chart-head">
+        <span class="chart-title">Campaigns &amp; Events</span>
+        <button type="button" class="share-btn" id="new-campaign-btn" style="font-size:0.78rem; padding:0.35rem 0.7rem">
+          <i class="ph ph-plus" aria-hidden="true"></i> New
+        </button>
+      </div>
+      <div class="campaign-list" id="dash-campaigns"></div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:1.8rem">
+      <div class="chart-head">
         <span class="chart-title">Follow-up Contacts</span>
         <span class="chart-meta" id="contacts-meta"></span>
       </div>
@@ -4988,6 +5690,71 @@
   </section>
 
   <!-- ==========================================
+       CONTACTS — dedicated saved-contacts list view
+       ========================================== -->
+  <section class="step-panel" id="step-contacts" aria-label="Saved contacts">
+    <div class="dashboard-header">
+      <div>
+        <span class="eyebrow">CB Connects &middot; Contacts</span>
+        <div class="welcome">Saved <em>Contacts</em></div>
+      </div>
+      <div class="meta" id="cs-meta"></div>
+    </div>
+
+    <div class="cs-toolbar">
+      <div class="cs-search">
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" id="cs-search-input" placeholder="Search name, phone, email, ZIP…" aria-label="Search contacts" autocomplete="off">
+      </div>
+      <div class="cs-filters" id="cs-filters" role="tablist" aria-label="Filter by status"></div>
+      <button type="button" class="ia-btn primary cs-new-contact" id="cs-new-contact">
+        <i class="ph ph-user-plus" aria-hidden="true"></i> New Contact
+      </button>
+    </div>
+
+    <div class="contacts-table" id="cs-list"></div>
+  </section>
+
+  <!-- ==========================================
+       CONTACT PROFILE — full screen: info left, sessions right
+       ========================================== -->
+  <section class="step-panel" id="step-contact-profile" aria-label="Contact profile">
+    <button class="btn-back" id="profile-back" type="button">
+      <span aria-hidden="true">&#8592;</span> Back to Contacts
+    </button>
+
+    <div class="profile-grid">
+      <!-- LEFT: contact info -->
+      <aside class="profile-info-col">
+        <div class="profile-id">
+          <div class="profile-avatar" id="profile-avatar">–</div>
+          <div class="profile-id-text">
+            <div class="profile-name" id="profile-name">Contact</div>
+            <div class="profile-sub" id="profile-sub"></div>
+          </div>
+        </div>
+        <span class="contact-status profile-status-chip" id="profile-status" data-status="new"></span>
+        <div class="cdr-section-title profile-info-title">Contact Info</div>
+        <div id="profile-info" class="cdr-info profile-info"></div>
+      </aside>
+
+      <!-- RIGHT: sessions -->
+      <section class="profile-sessions-col">
+        <div class="cdr-section-head">
+          <div>
+            <div class="cdr-section-title">Sessions</div>
+            <div class="profile-sessions-meta" id="profile-sessions-meta"></div>
+          </div>
+          <button type="button" class="ia-btn primary" id="profile-new-session">
+            <i class="ph ph-plus" aria-hidden="true"></i> New Session
+          </button>
+        </div>
+        <div id="profile-sessions" class="cdr-sessions"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ==========================================
        LIVE INTAKE AI — staff conversation listener + Gemini extraction
        ========================================== -->
   <section class="step-panel" id="step-intake-ai" aria-label="Live intake assistant">
@@ -4995,6 +5762,10 @@
       <div>
         <span class="eyebrow">CB Connects &middot; Live Intake AI</span>
         <div class="welcome">Listen, extract, save.</div>
+        <div class="ia-session-banner" id="ia-session-banner" hidden>
+          <i class="ph ph-user-circle" aria-hidden="true"></i>
+          Recording session for <strong id="ia-session-contact-name">—</strong>
+        </div>
       </div>
       <div class="ia-header-actions">
         <button type="button" class="ia-btn" id="ia-settings-btn" title="Gemini API key">
@@ -5004,6 +5775,29 @@
           <i class="ph ph-arrow-left" aria-hidden="true"></i> Dashboard
         </button>
       </div>
+    </div>
+
+    <!-- STEP 1: who is this for — pick an existing contact or start a new one -->
+    <div class="ia-contactbar" id="ia-contactbar">
+      <div class="ia-cb-step">1</div>
+      <div class="ia-cb-main">
+        <div class="ia-cb-label">Who is this referral for?</div>
+        <div class="ia-cb-pickwrap" id="ia-cb-pickwrap">
+          <div class="ia-cb-search">
+            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+            <input type="text" id="ia-cb-search" placeholder="Search existing contacts by name, phone, email…" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="ia-cb-results" id="ia-cb-results" hidden></div>
+        </div>
+        <div class="ia-cb-selected" id="ia-cb-selected" hidden>
+          <i class="ph ph-user-circle-check" aria-hidden="true"></i>
+          <span id="ia-cb-selected-name">—</span>
+          <button type="button" class="ia-cb-clear" id="ia-cb-clear" aria-label="Clear selection">&times;</button>
+        </div>
+      </div>
+      <button type="button" class="ia-btn" id="ia-cb-new">
+        <i class="ph ph-user-plus" aria-hidden="true"></i> New contact
+      </button>
     </div>
 
     <div class="ia-grid">
@@ -5024,6 +5818,9 @@
           <button type="button" class="ia-btn primary" id="ia-analyze-btn">
             <i class="ph ph-sparkle" aria-hidden="true"></i> Analyze with AI
           </button>
+          <button type="button" class="ia-btn" id="ia-manual-btn" title="Fill the intake form by hand instead of using AI">
+            <i class="ph ph-pencil-simple-line" aria-hidden="true"></i> Enter manually
+          </button>
         </div>
         <div class="ia-status" id="ia-analyze-status"></div>
       </div>
@@ -5038,11 +5835,14 @@
           </div>
         </div>
         <div class="ia-save-actions" id="ia-save-actions" hidden>
-          <button type="button" class="ia-btn primary" id="ia-save-contact">
-            <i class="ph ph-user-plus" aria-hidden="true"></i> Save as Contact
+          <button type="button" class="ia-btn primary" id="ia-save-session">
+            <i class="ph ph-floppy-disk" aria-hidden="true"></i> Save Contact &amp; Session
           </button>
-          <button type="button" class="ia-btn" id="ia-save-ticket">
-            <i class="ph ph-ticket" aria-hidden="true"></i> Save as Ticket
+          <button type="button" class="ia-btn" id="ia-find-resources">
+            <i class="ph ph-map-trifold" aria-hidden="true"></i> Find Resources
+          </button>
+          <button type="button" class="ia-btn" id="ia-refer-cbes">
+            <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Refer to CBES
           </button>
           <button type="button" class="ia-btn danger" id="ia-clear-all">
             <i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> New session
@@ -5124,6 +5924,143 @@
     <div class="form-modal-actions">
       <button type="button" class="cancel" id="feedback-cancel">Cancel</button>
       <button type="button" class="submit" id="feedback-submit">Send Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Contact modal -->
+<div class="form-modal-backdrop" id="contact-modal">
+  <div class="form-modal" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+    <h3 id="contact-modal-title">New Contact</h3>
+    <p class="sub">Add someone to your contacts list.</p>
+    <label for="cm-name">Name</label>
+    <input type="text" id="cm-name" placeholder="Full name" autocomplete="off">
+    <div class="cm-grid">
+      <div>
+        <label for="cm-phone">Phone</label>
+        <input type="tel" id="cm-phone" placeholder="617-555-0100" autocomplete="off">
+      </div>
+      <div>
+        <label for="cm-zip">ZIP</label>
+        <input type="text" id="cm-zip" placeholder="02118" inputmode="numeric" autocomplete="off">
+      </div>
+    </div>
+    <label for="cm-email">Email</label>
+    <input type="email" id="cm-email" placeholder="name@example.com" autocomplete="off">
+    <label for="cm-address">Address</label>
+    <input type="text" id="cm-address" placeholder="Street, city" autocomplete="off">
+    <label for="cm-needs">Needs</label>
+    <input type="text" id="cm-needs" placeholder="e.g. Housing, SNAP" autocomplete="off">
+    <label for="cm-status">Status</label>
+    <select id="cm-status">
+      <option value="new">New</option>
+      <option value="contacted">Contacted</option>
+      <option value="active">Active</option>
+      <option value="closed">Closed</option>
+    </select>
+    <div class="csf-status" id="cm-status-msg"></div>
+    <div class="form-modal-actions">
+      <button type="button" class="cancel" id="cm-cancel">Cancel</button>
+      <button type="button" class="submit" id="cm-submit">Add Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Session modal (talk-to-fill · date · primary topic · notes) -->
+<div class="form-modal-backdrop" id="session-modal">
+  <div class="form-modal session-modal-card" role="dialog" aria-modal="true" aria-labelledby="session-modal-title">
+    <h3 id="session-modal-title">New Session</h3>
+    <p class="sub" id="session-modal-sub">Tap “Talk to fill” and describe the visit, or fill it in yourself.</p>
+
+    <div class="csf-form" id="cdr-session-form">
+      <button type="button" class="csf-mic" id="csf-mic">
+        <i class="ph ph-microphone" aria-hidden="true"></i>
+        <span id="csf-mic-label">Talk to fill</span>
+      </button>
+      <div class="csf-mic-hint" id="csf-mic-hint">Tap, describe the session out loud, tap again — AI fills the fields below.</div>
+      <div class="csf-transcript" id="csf-transcript" hidden></div>
+
+      <div class="csf-row">
+        <label class="csf-label" for="csf-date">Date</label>
+        <input type="date" id="csf-date">
+      </div>
+      <div class="csf-row">
+        <label class="csf-label" for="csf-topic">Primary Topic</label>
+        <select id="csf-topic"></select>
+      </div>
+      <div class="csf-row">
+        <label class="csf-label" for="csf-notes">
+          <span>Notes</span>
+          <button type="button" class="csf-ai-btn" id="csf-ai" title="Clean up notes &amp; suggest a topic with AI">
+            <i class="ph ph-sparkle" aria-hidden="true"></i> AI Assist
+          </button>
+        </label>
+        <textarea id="csf-notes" placeholder="What happened in this session? Jot rough notes — AI Assist can polish them."></textarea>
+      </div>
+      <div class="csf-status" id="csf-status"></div>
+      <div class="csf-actions">
+        <button type="button" class="ia-btn" id="csf-cancel">Cancel</button>
+        <button type="button" class="ia-btn primary" id="csf-save">
+          <i class="ph ph-check" aria-hidden="true"></i> Save Session
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Campaign / Event create modal (staff) -->
+<div class="form-modal-backdrop" id="campaign-modal">
+  <div class="form-modal session-modal-card" role="dialog" aria-modal="true" aria-labelledby="campaign-modal-title">
+    <h3 id="campaign-modal-title">New Campaign / Event</h3>
+    <p class="sub">Create an outreach campaign or event, then enroll contacts into it.</p>
+    <div class="csf-form">
+      <div class="csf-row">
+        <label class="csf-label" for="cmpf-kind">Type</label>
+        <select id="cmpf-kind">
+          <option value="event">Event</option>
+          <option value="campaign">Campaign</option>
+        </select>
+      </div>
+      <div class="csf-row">
+        <label class="csf-label" for="cmpf-name">Name</label>
+        <input type="text" id="cmpf-name" placeholder="e.g. Fall Flu Clinic, SNAP Enrollment Drive">
+      </div>
+      <div class="csf-row">
+        <label class="csf-label" for="cmpf-date">Date</label>
+        <input type="date" id="cmpf-date">
+      </div>
+      <div class="csf-row">
+        <label class="csf-label" for="cmpf-location">Location</label>
+        <input type="text" id="cmpf-location" placeholder="Optional — address or venue">
+      </div>
+      <div class="csf-row">
+        <label class="csf-label" for="cmpf-desc">Description</label>
+        <textarea id="cmpf-desc" placeholder="What is this campaign / event about?"></textarea>
+      </div>
+      <div class="csf-status" id="cmpf-status"></div>
+      <div class="csf-actions">
+        <button type="button" class="ia-btn" id="cmpf-cancel">Cancel</button>
+        <button type="button" class="ia-btn primary" id="cmpf-save"><i class="ph ph-check" aria-hidden="true"></i> Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enroll-into-campaign modal (contact picker) -->
+<div class="form-modal-backdrop" id="enroll-modal">
+  <div class="form-modal session-modal-card" role="dialog" aria-modal="true" aria-labelledby="enroll-modal-title">
+    <h3 id="enroll-modal-title">Enroll a Contact</h3>
+    <p class="sub" id="enroll-modal-sub">Search and select a contact to enroll.</p>
+    <div class="csf-form">
+      <div class="ia-cb-search">
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+        <input type="text" id="enroll-search" placeholder="Search contacts by name, phone, email…" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="ia-cb-results enroll-results" id="enroll-results"></div>
+      <div class="csf-status" id="enroll-status"></div>
+      <div class="csf-actions">
+        <button type="button" class="ia-btn" id="enroll-cancel">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5294,6 +6231,25 @@ const I18N = {
 
     'results.start_over': 'Start Over',
     'results.asap_eyebrow': 'Your Aging Services Access Point',
+    'services.label': 'Services you may need — let your ASAP know',
+    'services.homemaker': 'Home Maker',
+    'services.medical_escort': 'Medical Escort',
+    'services.cleaning': 'Cleaning',
+    'services.laundry': 'Laundry at home',
+    'services.hdm': 'Home Delivered Meals',
+    'services.personal_care': 'Personal Care',
+    'services.bathing': 'Bathing',
+    'services.dressing': 'Dressing',
+    'services.companion': 'Companion',
+    'services.make_referral': 'Make Referral',
+    'services.referral_sending': 'Sending…',
+    'services.referral_sent': 'Referral sent to the ASAP.',
+    'services.eligible': 'You may be eligible for services. Please contact us.',
+    'ps.eyebrow': 'Protective Services',
+    'ps.title': 'Report abuse, neglect, or financial exploitation',
+    'ps.body': 'If you or an older adult (age 60+) is being abused, neglected, or financially exploited, you can make a confidential report. Help is available 24 hours a day, 7 days a week.',
+    'ps.call_label': 'Elder Abuse Hotline',
+    'ps.web': 'Report online at mass.gov',
     'results.no_match_title': 'No ASAP region matched.',
     'results.no_match_body': 'Your address may be outside Massachusetts or could not be matched to a service area. Resources below are shown for your area. Contact CBES directly for personalized help.',
     'results.resources_near': 'Community Resources Near You',
@@ -5373,6 +6329,25 @@ const I18N = {
     'loading.label': 'Localizando su dirección…',
     'results.start_over': 'Empezar de Nuevo',
     'results.asap_eyebrow': 'Su Centro de Acceso a Servicios para Ancianos',
+    'services.label': 'Servicios que podría necesitar — infórmele a su ASAP',
+    'services.homemaker': 'Ayuda en el Hogar',
+    'services.medical_escort': 'Acompañamiento Médico',
+    'services.cleaning': 'Limpieza',
+    'services.laundry': 'Lavandería en casa',
+    'services.hdm': 'Comidas a Domicilio',
+    'services.personal_care': 'Cuidado Personal',
+    'services.bathing': 'Baño',
+    'services.dressing': 'Vestirse',
+    'services.companion': 'Compañía',
+    'services.make_referral': 'Hacer Referido',
+    'services.referral_sending': 'Enviando…',
+    'services.referral_sent': 'Referido enviado al ASAP.',
+    'services.eligible': 'Es posible que sea elegible para recibir servicios. Por favor, contáctenos.',
+    'ps.eyebrow': 'Servicios de Protección',
+    'ps.title': 'Reporte abuso, negligencia o explotación financiera',
+    'ps.body': 'Si usted o un adulto mayor (60+ años) está sufriendo abuso, negligencia o explotación financiera, puede hacer un reporte confidencial. La ayuda está disponible las 24 horas, los 7 días de la semana.',
+    'ps.call_label': 'Línea de Abuso de Ancianos',
+    'ps.web': 'Reporte en línea en mass.gov',
     'results.no_match_title': 'No se encontró una región ASAP.',
     'results.no_match_body': 'Su dirección puede estar fuera de Massachusetts o no se pudo localizar. Abajo aparecen recursos para su área. Contacte a CBES directamente para ayuda personalizada.',
     'results.resources_near': 'Recursos Comunitarios Cerca de Usted',
@@ -5444,6 +6419,25 @@ const I18N = {
     'loading.label': 'Ap chèche adrès ou…',
     'results.start_over': 'Rekòmanse',
     'results.asap_eyebrow': 'Sant Aksè Sèvis Ajin Ou',
+    'services.label': 'Sèvis ou ka bezwen — fè ASAP ou konnen',
+    'services.homemaker': 'Èd nan Kay la',
+    'services.medical_escort': 'Akonpayman Medikal',
+    'services.cleaning': 'Netwayaj',
+    'services.laundry': 'Lesiv nan kay la',
+    'services.hdm': 'Manje Livre nan Kay',
+    'services.personal_care': 'Swen Pèsonèl',
+    'services.bathing': 'Benyen',
+    'services.dressing': 'Abiye',
+    'services.companion': 'Konpayon',
+    'services.make_referral': 'Fè Referans',
+    'services.referral_sending': 'Ap voye…',
+    'services.referral_sent': 'Referans voye bay ASAP la.',
+    'services.eligible': 'Ou ka kalifye pou sèvis. Tanpri kontakte nou.',
+    'ps.eyebrow': 'Sèvis Pwoteksyon',
+    'ps.title': 'Rapòte abi, neglijans, oswa eksplwatasyon finansye',
+    'ps.body': 'Si ou menm oswa yon granmoun (60 lane oswa plis) ap sibi abi, neglijans, oswa eksplwatasyon finansye, ou ka fè yon rapò konfidansyèl. Èd disponib 24 sou 24, 7 jou sou 7.',
+    'ps.call_label': 'Liy Abi Granmoun Aje',
+    'ps.web': 'Rapòte sou entènèt nan mass.gov',
     'results.no_match_title': 'Pa jwenn okenn rejyon ASAP.',
     'results.no_match_body': "Adrès ou ka andeyò Massachusetts oswa nou pa ka jwenn li. Resous anba yo montre pou zòn ou. Kontakte CBES dirèkteman pou èd pèsonalize.",
     'results.resources_near': 'Resous Kominote Toupre Ou',
@@ -5515,6 +6509,25 @@ const I18N = {
     'loading.label': 'Localizando seu endereço…',
     'results.start_over': 'Recomeçar',
     'results.asap_eyebrow': 'Seu Centro de Acesso a Serviços para Idosos',
+    'services.label': 'Serviços que você pode precisar — avise seu ASAP',
+    'services.homemaker': 'Auxiliar Doméstico',
+    'services.medical_escort': 'Acompanhamento Médico',
+    'services.cleaning': 'Limpeza',
+    'services.laundry': 'Lavanderia em casa',
+    'services.hdm': 'Refeições em Domicílio',
+    'services.personal_care': 'Cuidado Pessoal',
+    'services.bathing': 'Banho',
+    'services.dressing': 'Vestir-se',
+    'services.companion': 'Acompanhante',
+    'services.make_referral': 'Fazer Encaminhamento',
+    'services.referral_sending': 'Enviando…',
+    'services.referral_sent': 'Encaminhamento enviado ao ASAP.',
+    'services.eligible': 'Você pode ser elegível para receber serviços. Entre em contato conosco.',
+    'ps.eyebrow': 'Serviços de Proteção',
+    'ps.title': 'Denuncie abuso, negligência ou exploração financeira',
+    'ps.body': 'Se você ou um idoso (60+ anos) está sofrendo abuso, negligência ou exploração financeira, você pode fazer uma denúncia confidencial. Ajuda disponível 24 horas por dia, 7 dias por semana.',
+    'ps.call_label': 'Linha de Abuso de Idosos',
+    'ps.web': 'Denuncie online em mass.gov',
     'results.no_match_title': 'Nenhuma região ASAP encontrada.',
     'results.no_match_body': 'Seu endereço pode estar fora de Massachusetts ou não foi localizado. Os recursos abaixo são para sua área. Contate o CBES diretamente para ajuda personalizada.',
     'results.resources_near': 'Recursos Comunitários Perto de Você',
@@ -5586,6 +6599,25 @@ const I18N = {
     'loading.label': 'Đang định vị địa chỉ…',
     'results.start_over': 'Bắt Đầu Lại',
     'results.asap_eyebrow': 'Điểm Tiếp Cận Dịch Vụ Người Cao Tuổi',
+    'services.label': 'Dịch vụ bạn có thể cần — hãy báo cho ASAP của bạn',
+    'services.homemaker': 'Người Giúp Việc Nhà',
+    'services.medical_escort': 'Hộ Tống Y Tế',
+    'services.cleaning': 'Dọn Dẹp',
+    'services.laundry': 'Giặt Giũ tại nhà',
+    'services.hdm': 'Giao Bữa Ăn Tận Nhà',
+    'services.personal_care': 'Chăm Sóc Cá Nhân',
+    'services.bathing': 'Tắm Rửa',
+    'services.dressing': 'Mặc Quần Áo',
+    'services.companion': 'Người Bầu Bạn',
+    'services.make_referral': 'Tạo Giới Thiệu',
+    'services.referral_sending': 'Đang gửi…',
+    'services.referral_sent': 'Đã gửi giới thiệu đến ASAP.',
+    'services.eligible': 'Quý vị có thể đủ điều kiện nhận dịch vụ. Vui lòng liên hệ với chúng tôi.',
+    'ps.eyebrow': 'Dịch Vụ Bảo Vệ',
+    'ps.title': 'Báo cáo lạm dụng, bỏ bê hoặc bóc lột tài chính',
+    'ps.body': 'Nếu bạn hoặc một người cao tuổi (từ 60 tuổi trở lên) đang bị lạm dụng, bỏ bê hoặc bóc lột tài chính, bạn có thể báo cáo một cách bảo mật. Hỗ trợ có sẵn 24 giờ mỗi ngày, 7 ngày mỗi tuần.',
+    'ps.call_label': 'Đường Dây Lạm Dụng Người Cao Tuổi',
+    'ps.web': 'Báo cáo trực tuyến tại mass.gov',
     'results.no_match_title': 'Không tìm thấy vùng ASAP.',
     'results.no_match_body': 'Địa chỉ của bạn có thể ngoài Massachusetts hoặc không tìm thấy. Dưới đây là nguồn lực cho khu vực bạn. Liên hệ CBES trực tiếp để được giúp đỡ cá nhân.',
     'results.resources_near': 'Nguồn Lực Cộng Đồng Gần Bạn',
@@ -5657,6 +6689,25 @@ const I18N = {
     'loading.label': '正在定位您的地址…',
     'results.start_over': '重新开始',
     'results.asap_eyebrow': '您的老年服务接入点',
+    'services.label': '您可能需要的服务 — 请告知您的 ASAP',
+    'services.homemaker': '家务助理',
+    'services.medical_escort': '就医陪同',
+    'services.cleaning': '清洁',
+    'services.laundry': '家中洗衣',
+    'services.hdm': '送餐到家',
+    'services.personal_care': '个人护理',
+    'services.bathing': '洗澡',
+    'services.dressing': '穿衣',
+    'services.companion': '陪伴',
+    'services.make_referral': '创建转介',
+    'services.referral_sending': '发送中…',
+    'services.referral_sent': '已将转介发送至 ASAP。',
+    'services.eligible': '您可能符合服务资格。请联系我们。',
+    'ps.eyebrow': '保护服务',
+    'ps.title': '举报虐待、忽视或经济剥削',
+    'ps.body': '如果您或一位长者（60岁及以上）正遭受虐待、忽视或经济剥削，您可以进行保密举报。每天24小时、每周7天均可获得帮助。',
+    'ps.call_label': '老人虐待热线',
+    'ps.web': '在 mass.gov 在线举报',
     'results.no_match_title': '未匹配到 ASAP 区域。',
     'results.no_match_body': '您的地址可能在马萨诸塞州以外或无法匹配到服务区域。以下是您所在地区的资源。请直接联系 CBES 获取个人帮助。',
     'results.resources_near': '您附近的社区资源',
@@ -5728,6 +6779,25 @@ const I18N = {
     'loading.label': 'Определяем ваш адрес…',
     'results.start_over': 'Начать заново',
     'results.asap_eyebrow': 'Ваш центр услуг для пожилых',
+    'services.label': 'Услуги, которые могут вам понадобиться — сообщите вашему ASAP',
+    'services.homemaker': 'Помощь по дому',
+    'services.medical_escort': 'Медицинское сопровождение',
+    'services.cleaning': 'Уборка',
+    'services.laundry': 'Стирка на дому',
+    'services.hdm': 'Доставка еды на дом',
+    'services.personal_care': 'Личный уход',
+    'services.bathing': 'Купание',
+    'services.dressing': 'Одевание',
+    'services.companion': 'Компаньон',
+    'services.make_referral': 'Создать направление',
+    'services.referral_sending': 'Отправка…',
+    'services.referral_sent': 'Направление отправлено в ASAP.',
+    'services.eligible': 'Возможно, вы имеете право на услуги. Пожалуйста, свяжитесь с нами.',
+    'ps.eyebrow': 'Служба защиты',
+    'ps.title': 'Сообщить о жестоком обращении, пренебрежении или финансовой эксплуатации',
+    'ps.body': 'Если вы или пожилой человек (60+ лет) подвергаетесь жестокому обращению, пренебрежению или финансовой эксплуатации, вы можете подать конфиденциальное заявление. Помощь доступна круглосуточно, 7 дней в неделю.',
+    'ps.call_label': 'Горячая линия по жестокому обращению с пожилыми',
+    'ps.web': 'Сообщить онлайн на mass.gov',
     'results.no_match_title': 'Район ASAP не найден.',
     'results.no_match_body': 'Ваш адрес может быть вне Массачусетса или не удалось его определить. Ниже показаны ресурсы для вашего района. Обратитесь напрямую в CBES для персональной помощи.',
     'results.resources_near': 'Общественные ресурсы рядом с вами',
@@ -5860,7 +6930,8 @@ function showStep(id) {
 // Replace USERS with a server call when you're ready to go live.
 // ================================================================
 const USERS = [
-  { email: 'eponce@centralboston.org', password: 'CBES123!', name: 'Enrique Ponce' }
+  { email: 'eponce@centralboston.org', password: 'CBES123!', name: 'Enrique Ponce' },
+  { email: 'staff@culpepper.gov',      password: 'Culpepper123!', name: 'Culpepper Office Staff' }
 ];
 
 const Session = {
@@ -5991,6 +7062,77 @@ const Tracker = {
 // ----------------------------------------------------------------
 const CONTACTS_API_URL = 'https://script.google.com/macros/s/AKfycbxl7dyOBC0fCK3LhfxT62rFqrNBC6hVYuQ7eqKOeDetz-o2pavWogQxcuRrfjCBHRjceg/exec';
 
+// ----------------------------------------------------------------
+// Sessions (placeholder) — localStorage-backed for demo.
+// Each session is tied to a contact via contactId and captures what
+// happened in a visit/call: AI summary, tags, staff member, date.
+// Real persistence will move to Apps Script "Sessions" sheet later.
+// ----------------------------------------------------------------
+const Sessions = {
+  KEY: 'cbes-connects-sessions',
+  all() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (_) { return []; } },
+  forContact(id) { return this.all().filter(s => s.contactId === id)
+                                       .sort((a,b) => String(b.createdAt||'').localeCompare(String(a.createdAt||''))); },
+  add(session) {
+    const list = this.all();
+    list.push(Object.assign({ id: 's-' + Date.now(), createdAt: new Date().toISOString() }, session));
+    try { localStorage.setItem(this.KEY, JSON.stringify(list)); } catch (_) {}
+  },
+  remove(id) {
+    const list = this.all().filter(s => s.id !== id);
+    try { localStorage.setItem(this.KEY, JSON.stringify(list)); } catch (_) {}
+  },
+};
+
+// ----------------------------------------------------------------
+// Campaigns & Events — staff create outreach campaigns / events and
+// enroll contacts into them. localStorage-backed (demo); mirrors the
+// Sessions pattern. Each campaign: { id, kind:'event'|'campaign',
+// name, date, location, description, enrollments:[{contactId,name,enrolledAt,staff}] }
+// ----------------------------------------------------------------
+const Campaigns = {
+  KEY: 'cbes-connects-campaigns',
+  all() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (_) { return []; } },
+  _write(list) { try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {} },
+  get(id) { return this.all().find(c => c.id === id) || null; },
+  add(c) {
+    const list = this.all();
+    const rec = Object.assign({
+      id: 'cmp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      kind: 'event',
+      enrollments: [],
+      createdAt: new Date().toISOString()
+    }, c);
+    list.unshift(rec);
+    this._write(list);
+    return rec;
+  },
+  remove(id) { this._write(this.all().filter(c => c.id !== id)); },
+  enroll(id, contact, staff) {
+    const list = this.all();
+    const c = list.find(x => x.id === id);
+    if (!c) return false;
+    if (!Array.isArray(c.enrollments)) c.enrollments = [];
+    // No double-enrollment of the same contact
+    if (c.enrollments.some(e => e.contactId && e.contactId === contact.id)) return false;
+    c.enrollments.push({
+      contactId: contact.id || null,
+      name: contact.name || 'Unknown',
+      enrolledAt: new Date().toISOString(),
+      staff: staff || ''
+    });
+    this._write(list);
+    return true;
+  },
+  unenroll(id, contactId) {
+    const list = this.all();
+    const c = list.find(x => x.id === id);
+    if (!c || !Array.isArray(c.enrollments)) return;
+    c.enrollments = c.enrollments.filter(e => e.contactId !== contactId);
+    this._write(list);
+  }
+};
+
 const Contacts = {
   KEY: 'cbes-connects-contacts',
 
@@ -6093,7 +7235,7 @@ const Contacts = {
 // ----------------------------------------------------------------
 const TICKET_STATUSES   = ['new', 'in_progress', 'waiting', 'resolved', 'closed'];
 const TICKET_PRIORITIES = ['low', 'normal', 'high', 'urgent'];
-const TICKET_KINDS      = ['service_request', 'staff_task', 'feedback'];
+const TICKET_KINDS      = ['service_request', 'staff_task', 'feedback', 'referral'];
 
 const Tickets = {
   KEY: 'cbes-connects-tickets',
@@ -6790,96 +7932,102 @@ $('back-from-map').addEventListener('click', () => {
 });
 
 // ================================================================
+// ASAP referral — service-need checkboxes inside the banner
+// ================================================================
+// Parent (Home Maker / Personal Care) toggles reveal their sub-options.
+document.querySelectorAll('.asap-svc[data-reveal]').forEach(parent => {
+  parent.addEventListener('change', () => {
+    const sub = document.getElementById(parent.dataset.reveal);
+    if (!sub) return;
+    sub.hidden = !parent.checked;
+    if (!parent.checked) {
+      sub.querySelectorAll('input[type=checkbox]').forEach(c => { c.checked = false; });
+    }
+  });
+});
+
+// Clear all ASAP service selections (called when a new search runs)
+function resetAsapServices() {
+  document.querySelectorAll('#sr-asap-services input[type=checkbox]').forEach(c => { c.checked = false; });
+  document.querySelectorAll('#sr-asap-services .svc-sub').forEach(s => { s.hidden = true; });
+  if ($('make-referral-btn')) $('make-referral-btn').hidden = true;
+  if ($('referral-success')) $('referral-success').hidden = true;
+  if ($('eligible-msg')) $('eligible-msg').hidden = true;
+}
+
+// Collect chosen services as readable strings, e.g. "Home Maker: Cleaning, Laundry at home"
+function getAsapServices() {
+  const out = [];
+  document.querySelectorAll('#sr-asap-services .asap-svc:checked').forEach(p => {
+    const subs = [...document.querySelectorAll('#sr-asap-services .asap-svc-sub:checked')]
+      .filter(s => s.dataset.parent === p.value)
+      .map(s => s.value);
+    out.push(subs.length ? p.value + ': ' + subs.join(', ') : p.value);
+  });
+  return out;
+}
+
+// ================================================================
 // CBES Intake Form — Power Automate submission
 // ================================================================
-const FLOW_URL = 'https://defaultea4caad54b33461b8faa9c22a94803.c0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/15304977ffcc47d19623c4dc751a9374/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xbutjSlsry5GzAKx0tkaMUJoaKJtqulAoSPRxYU67Ys';
+// Toggle the staff-only Make Referral button whenever a service is (de)selected.
+// CSS (body.is-authed .referral-btn) keeps it hidden for guests regardless.
+function updateReferralBtn() {
+  const btn = $('make-referral-btn');
+  if (!btn) return;
+  const anyChecked = document.querySelectorAll('#sr-asap-services .asap-svc:checked').length > 0;
+  // A fresh selection clears any prior "sent" confirmation
+  if (anyChecked && $('referral-success')) $('referral-success').hidden = true;
+  btn.hidden = !anyChecked;
+  btn.disabled = false;
+  btn.querySelector('span').textContent = t('services.make_referral', 'Make Referral');
+  // Guests get an eligibility prompt instead (CSS gates this to signed-out users)
+  if ($('eligible-msg')) $('eligible-msg').hidden = !anyChecked;
+}
+document.querySelectorAll('#sr-asap-services input[type=checkbox]').forEach(c => {
+  c.addEventListener('change', updateReferralBtn);
+});
 
-$('intake-submit-btn').addEventListener('click', async () => {
-  // Clear errors
-  $('intake-name-error').textContent = '';
-  $('intake-needs-error').textContent = '';
-  $('intake-general-error').textContent = '';
-
-  const name = $('intake-name').value.trim();
-  const phone = $('intake-phone').value.trim();
-  const email = $('intake-email').value.trim();
-  const checked = [...document.querySelectorAll('#cbes-intake-form input[type=checkbox]:checked')].map(c => c.value);
-
-  let valid = true;
-  if (!name) { $('intake-name-error').textContent = 'Please enter your full name.'; valid = false; }
-  if (!checked.length) { $('intake-needs-error').textContent = 'Please select at least one area.'; valid = false; }
-  if (!valid) return;
-
-  const btn = $('intake-submit-btn');
+// Make Referral — creates a referral ticket for the matched ASAP (staff action)
+$('make-referral-btn').addEventListener('click', () => {
+  const services = getAsapServices();
+  if (!services.length) return;
+  const asap = state.asap?.AGING_SERVICES_ACCESS_POINT || 'ASAP';
+  const btn = $('make-referral-btn');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.querySelector('span').textContent = t('services.referral_sending', 'Sending…');
 
-  const followUp = $('intake-followup') && $('intake-followup').checked;
+  const staff = (typeof Session !== 'undefined' && Session.current()) ? Session.current().email : 'staff';
 
-  const payload = {
-    name,
-    phone: phone || null,
-    email: email || null,
-    needs: checked.join(', '),
-    address: state.address || null,
-    asap: state.asap?.AGING_SERVICES_ACCESS_POINT || null,
-    zip: state.zip || null,
-    followUp: !!followUp,
-    submittedAt: new Date().toISOString()
-  };
-
-  // Promote to a Contact record + Ticket if the visitor opted in for follow-up.
-  if (followUp) {
-    Contacts.save({
-      name,
-      phone: phone || null,
-      email: email || null,
-      needs: checked.join(', '),
-      address: state.address || null,
-      asap:    state.asap?.AGING_SERVICES_ACCESS_POINT || null,
-      zip:     state.zip || null,
-      sessionId: (typeof SearchSession !== 'undefined') ? SearchSession.id() : null,
-      source: 'intake-form'
-    });
-    // Auto-create a service-request ticket so staff can track follow-up
-    Tickets.create({
-      kind: 'service_request',
-      title: name + ' — needs ' + (checked.slice(0, 2).join(', ') + (checked.length > 2 ? ' +' + (checked.length - 2) : '')),
-      description: 'Needs: ' + checked.join(', ') + (state.address ? '\n\nAddress: ' + state.address : '') + (state.zip ? '\nZIP: ' + state.zip : ''),
-      priority: 'normal',
-      submitterName:  name,
-      submitterPhone: phone || '',
-      submitterEmail: email || '',
-      submitterZip:   state.zip || '',
-      meta: { needs: checked, asap: state.asap?.AGING_SERVICES_ACCESS_POINT || null }
-    }).then(result => {
-      if (result && result.ticketNumber) {
-        // Stash the ticket number so the success message can show the tracking link
-        const successEl = $('intake-success');
-        if (successEl) {
-          const url = location.origin + location.pathname + '?ticket=' + encodeURIComponent(result.ticketNumber);
-          successEl.querySelector('p').innerHTML +=
-            '<br><span style="font-size:0.85rem; color:var(--text-med)">Track your request: <a href="' + url + '" style="color:var(--accent-lt)">' + result.ticketNumber + '</a></span>';
-        }
-        Tracker.log('ticket_created', { kind: 'service_request', ticketNumber: result.ticketNumber });
-      }
-    }).catch(() => {});
-  }
-
-  try {
-    const res = await fetch(FLOW_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    $('intake-fields').style.display = 'none';
-    $('intake-success').style.display = '';
-  } catch (e) {
-    $('intake-general-error').textContent = 'Submission failed: ' + (e.message || e);
+  Tickets.create({
+    kind: 'referral',
+    title: 'ASAP referral → ' + asap + ' — ' + services.join('; '),
+    description: 'Referred to: ' + asap +
+                 '\nServices: ' + services.join(', ') +
+                 (state.address ? '\nAddress: ' + state.address : '') +
+                 (state.zip ? '\nZIP: ' + state.zip : '') +
+                 '\nReferred by: ' + staff,
+    priority: 'normal',
+    submitterName:  '',
+    submitterPhone: '',
+    submitterEmail: '',
+    submitterZip:   state.zip || '',
+    meta: { type: 'asap_referral', asap, services, address: state.address || null, referredBy: staff }
+  }).then(result => {
+    const ok = $('referral-success');
+    if (ok) {
+      ok.hidden = false;
+      const tk = $('referral-ticket');
+      if (tk) tk.textContent = (result && result.ticketNumber) ? '(' + result.ticketNumber + ')' : '';
+    }
+    if (result && result.ticketNumber) Tracker.log('ticket_created', { kind: 'referral', ticketNumber: result.ticketNumber });
+    btn.hidden = true;
     btn.disabled = false;
-    btn.textContent = 'Submit →';
-  }
+    btn.querySelector('span').textContent = t('services.make_referral', 'Make Referral');
+  }).catch(() => {
+    btn.disabled = false;
+    btn.querySelector('span').textContent = t('services.make_referral', 'Make Referral');
+  });
 });
 
 // Step 2a — Address → geocode → results
@@ -6907,6 +8055,7 @@ $('address-next-btn').addEventListener('click', async () => {
     // Populate senior results
     $('sr-address-display').textContent = matchedAddress;
 
+    resetAsapServices();
     if (asapProps) {
       $('sr-no-match-notice').classList.remove('visible');
       $('sr-asap-banner').style.display = '';
@@ -6925,12 +8074,6 @@ $('address-next-btn').addEventListener('click', async () => {
     }
 
     buildGrid('sr-resources-grid', zip);
-
-    // Show intake form only if matched ASAP is Central Boston
-    const asapName = (asapProps?.AGING_SERVICES_ACCESS_POINT || '').toLowerCase();
-    $('cbes-intake-form').style.display = asapName.includes('central boston') ? '' : 'none';
-    $('intake-fields').style.display = '';
-    $('intake-success').style.display = 'none';
 
     showStep('step-results-senior');
   } catch (err) {
@@ -7472,6 +8615,15 @@ $('nav-dashboard').addEventListener('click', () => {
   Tickets.refresh().then(() => renderTickets()).catch(() => {});
 });
 
+$('nav-contacts').addEventListener('click', () => {
+  Tracker.log('contacts_viewed', {});
+  $('card').classList.add('wide');
+  renderContactsScreen();
+  showStep('step-contacts');
+  // Pull fresh contacts from the Google Sheet in the background
+  Contacts.refresh().then(() => renderContactsScreen()).catch(() => {});
+});
+
 // ----------------------------------------------------------------
 // Tickets — dashboard renderer + drawer + create flows
 // ----------------------------------------------------------------
@@ -7778,6 +8930,154 @@ function wireResourceFilter(inputId, clearId, gridId, emptyId) {
 wireResourceFilter('sr-resource-filter', 'sr-resource-filter-clear', 'sr-resources-grid', 'sr-resources-empty');
 wireResourceFilter('zr-resource-filter', 'zr-resource-filter-clear', 'zr-resources-grid', 'zr-resources-empty');
 
+// Seed a resource filter with keywords collected during intake, so the
+// grid narrows to the categories the client is interested in.
+function seedResourceFilter(inputId, interests) {
+  const input = $(inputId);
+  if (!input) return;
+  const kw = (interests && interests.length) ? String(interests[0]).trim() : '';
+  input.value = kw;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+// ----------------------------------------------------------------
+// Dashboard — Referrals to CBES (tickets with kind 'referral')
+// ----------------------------------------------------------------
+function renderReferrals() {
+  const wrap = $('dash-referrals');
+  const meta = $('referrals-meta');
+  if (!wrap) return;
+  const refs = (typeof Tickets !== 'undefined' ? Tickets.all() : [])
+    .filter(t => t.kind === 'referral')
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  if (meta) meta.textContent = refs.length ? (refs.length + ' referral' + (refs.length === 1 ? '' : 's')) : '';
+  if (!refs.length) {
+    wrap.innerHTML = '<div class="dash-empty-row">No referrals yet. Staff can refer from Live Intake AI or the ASAP banner.</div>';
+    return;
+  }
+  wrap.innerHTML = refs.slice(0, 30).map(t => {
+    const m = t.meta || {};
+    const svc = Array.isArray(m.services) ? m.services.join(', ') : '';
+    const sub = [svc && ('Interests: ' + svc), m.asap && ('ASAP: ' + m.asap), m.referredBy && ('by ' + m.referredBy)]
+      .filter(Boolean).join(' · ');
+    return '<div class="referral-row">' +
+        '<span class="rr-icon" aria-hidden="true"><i class="ph-duotone ph-paper-plane-tilt"></i></span>' +
+        '<div class="rr-main">' +
+          '<div class="rr-title">' + escapeHTML(t.title || 'Referral') + '</div>' +
+          (sub ? '<div class="rr-sub">' + escapeHTML(sub) + '</div>' : '') +
+        '</div>' +
+        '<span class="rr-time">' + escapeHTML(t.ticketNumber || '') +
+          (t.createdAt ? ' · ' + relTime(t.createdAt) : '') + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+// ----------------------------------------------------------------
+// Dashboard — Campaigns & Events (+ enrollment)
+// ----------------------------------------------------------------
+function renderCampaigns() {
+  const wrap = $('dash-campaigns');
+  if (!wrap) return;
+  const list = Campaigns.all();
+  if (!list.length) {
+    wrap.innerHTML = '<div class="dash-empty-row">No campaigns or events yet. Click “New” to create one.</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(c => {
+    const enr = Array.isArray(c.enrollments) ? c.enrollments : [];
+    const chips = enr.map(e =>
+      '<span class="enrollee-chip">' + escapeHTML(e.name || '—') +
+        '<button type="button" data-unenroll="' + escapeHTML(c.id) + '" data-cid="' + escapeHTML(e.contactId || '') + '" aria-label="Remove">&times;</button>' +
+      '</span>').join('');
+    return '<div class="campaign-row">' +
+        '<div class="campaign-head">' +
+          '<span class="campaign-kind ' + (c.kind === 'campaign' ? 'campaign' : '') + '">' + escapeHTML(c.kind || 'event') + '</span>' +
+          '<span class="campaign-name">' + escapeHTML(c.name || 'Untitled') + '</span>' +
+          '<span class="campaign-count">' + enr.length + ' enrolled</span>' +
+        '</div>' +
+        (([c.date, c.location].filter(Boolean).length) ? '<div class="campaign-meta">' + escapeHTML([c.date, c.location].filter(Boolean).join(' · ')) + '</div>' : '') +
+        (c.description ? '<div class="campaign-desc">' + escapeHTML(c.description) + '</div>' : '') +
+        (chips ? '<div class="campaign-enrollees">' + chips + '</div>' : '') +
+        '<div class="campaign-actions">' +
+          '<button type="button" class="ia-btn primary" data-enroll="' + escapeHTML(c.id) + '"><i class="ph ph-user-plus" aria-hidden="true"></i> Enroll contact</button>' +
+          '<button type="button" class="ia-btn danger" data-delcmp="' + escapeHTML(c.id) + '"><i class="ph ph-trash" aria-hidden="true"></i> Delete</button>' +
+        '</div>' +
+      '</div>';
+  }).join('');
+  wrap.querySelectorAll('[data-enroll]').forEach(b => b.addEventListener('click', () => openEnrollModal(b.dataset.enroll)));
+  wrap.querySelectorAll('[data-delcmp]').forEach(b => b.addEventListener('click', () => {
+    if (confirm('Delete this campaign / event?')) { Campaigns.remove(b.dataset.delcmp); renderCampaigns(); }
+  }));
+  wrap.querySelectorAll('[data-unenroll]').forEach(b => b.addEventListener('click', () => {
+    Campaigns.unenroll(b.dataset.unenroll, b.dataset.cid); renderCampaigns();
+  }));
+}
+
+function openCampaignModal() {
+  $('cmpf-name').value = '';
+  $('cmpf-kind').value = 'event';
+  $('cmpf-date').value = todayISO();
+  $('cmpf-location').value = '';
+  $('cmpf-desc').value = '';
+  $('cmpf-status').textContent = '';
+  openModal('campaign-modal');
+  setTimeout(() => $('cmpf-name').focus(), 60);
+}
+
+let _enrollCampaignId = null;
+function openEnrollModal(cid) {
+  _enrollCampaignId = cid;
+  const c = Campaigns.get(cid);
+  $('enroll-modal-sub').textContent = c ? ('Enroll a contact into “' + (c.name || '') + '”.') : 'Select a contact to enroll.';
+  $('enroll-search').value = '';
+  $('enroll-status').textContent = '';
+  renderEnrollResults('');
+  openModal('enroll-modal');
+  setTimeout(() => $('enroll-search').focus(), 60);
+}
+function renderEnrollResults(q) {
+  const wrap = $('enroll-results');
+  if (!wrap) return;
+  q = (q || '').trim().toLowerCase();
+  let list = Contacts.all();
+  if (q) list = list.filter(c => [c.name, c.phone, c.email, c.zip].filter(Boolean).join(' ').toLowerCase().includes(q));
+  list = list.slice(0, 20);
+  if (!list.length) { wrap.innerHTML = '<div class="ia-cb-row empty">No contacts found.</div>'; return; }
+  wrap.innerHTML = list.map(c =>
+    '<button type="button" class="ia-cb-row" data-cid="' + escapeHTML(c.id) + '">' +
+      '<span class="nm">' + escapeHTML(c.name || 'Unknown') + '</span>' +
+      '<span class="meta">' + escapeHTML([c.phone, c.email, c.zip].filter(Boolean).join(' · ')) + '</span>' +
+    '</button>').join('');
+  wrap.querySelectorAll('[data-cid]').forEach(b => b.addEventListener('click', () => {
+    const c = Contacts.all().find(x => x.id === b.dataset.cid);
+    if (!c || !_enrollCampaignId) return;
+    const cur = (typeof Session !== 'undefined') ? Session.current() : null;
+    const ok = Campaigns.enroll(_enrollCampaignId, c, cur ? (cur.name || cur.email) : '');
+    $('enroll-status').textContent = ok ? (c.name + ' enrolled.') : (c.name + ' is already enrolled.');
+    if (typeof Tracker !== 'undefined') Tracker.log('campaign_enroll', { campaignId: _enrollCampaignId, contact: c.name });
+    renderCampaigns();
+  }));
+}
+
+if ($('new-campaign-btn')) $('new-campaign-btn').addEventListener('click', openCampaignModal);
+if ($('cmpf-cancel')) $('cmpf-cancel').addEventListener('click', () => closeModal('campaign-modal'));
+if ($('cmpf-save')) $('cmpf-save').addEventListener('click', () => {
+  const name = $('cmpf-name').value.trim();
+  if (!name) { $('cmpf-status').textContent = 'Name is required.'; return; }
+  Campaigns.add({
+    kind: $('cmpf-kind').value || 'event',
+    name,
+    date: $('cmpf-date').value || '',
+    location: $('cmpf-location').value.trim(),
+    description: $('cmpf-desc').value.trim()
+  });
+  if (typeof Tracker !== 'undefined') Tracker.log('campaign_created', { name });
+  closeModal('campaign-modal');
+  renderCampaigns();
+});
+if ($('enroll-cancel')) $('enroll-cancel').addEventListener('click', () => closeModal('enroll-modal'));
+if ($('enroll-search')) $('enroll-search').addEventListener('input', e => renderEnrollResults(e.target.value));
+
 $('dash-export').addEventListener('click', () => {
   Tracker.log('export_json', { count: Tracker.all().length });
   Tracker.export();
@@ -7885,6 +9185,10 @@ function renderDashboard() {
 
   // Bars — activity trend (day/week/month/year picker)
   renderBars(events);
+
+  // Referrals to CBES + Campaigns/Events
+  renderReferrals();
+  renderCampaigns();
 
   // Follow-up contacts roster
   renderContacts();
@@ -8063,20 +9367,22 @@ function renderContacts() {
   meta.textContent = list.length + ' total · ' + newCount + ' new';
 
   el.innerHTML = sorted.map(c => {
-    const contact = [c.phone, c.email].filter(Boolean).join(' · ') || '—';
+    // Coerce every field to a string — the live Sheet can return numeric zip/phone
+    const str = v => (v === null || v === undefined) ? '' : String(v);
+    const contact = [str(c.phone), str(c.email)].filter(Boolean).join(' · ') || '—';
     const statusOpts = CONTACT_STATUSES.map(s =>
       '<option value="' + s + '"' + ((c.status || 'new') === s ? ' selected' : '') + '>'
         + s.charAt(0).toUpperCase() + s.slice(1) + '</option>'
     ).join('');
-    return '<div class="contact-row" data-id="' + escapeHTML(c.id) + '">'
+    return '<div class="contact-row" data-id="' + escapeHTML(str(c.id)) + '">'
          +   '<div>'
-         +     '<div class="contact-name">' + escapeHTML(c.name || '—') + '</div>'
+         +     '<div class="contact-name">' + escapeHTML(str(c.name) || '—') + '</div>'
          +     '<div class="contact-meta">' + escapeHTML(contact) + '</div>'
          +   '</div>'
-         +   '<div class="contact-meta" title="' + escapeHTML(c.address || '') + '">'
-         +     escapeHTML(c.needs || '')
+         +   '<div class="contact-meta" title="' + escapeHTML(str(c.address)) + '">'
+         +     escapeHTML(str(c.needs))
          +   '</div>'
-         +   '<span class="contact-zip">' + escapeHTML(c.zip || '—') + '</span>'
+         +   '<span class="contact-zip">' + escapeHTML(str(c.zip) || '—') + '</span>'
          +   '<select class="contact-status" data-status="' + (c.status || 'new') + '" aria-label="Change status">'
          +     statusOpts
          +   '</select>'
@@ -8086,23 +9392,574 @@ function renderContacts() {
          + '</div>';
   }).join('');
 
-  // Wire per-row status select + delete
+  // Wire per-row status select + delete + open detail drawer
   el.querySelectorAll('.contact-row').forEach(row => {
     const id = row.dataset.id;
     const sel = row.querySelector('.contact-status');
     const del = row.querySelector('.contact-del');
-    sel.addEventListener('change', () => {
+    sel.addEventListener('change', (e) => {
+      e.stopPropagation();
       Contacts.updateStatus(id, sel.value);
       sel.dataset.status = sel.value;
       renderContacts();
     });
-    del.addEventListener('click', () => {
+    sel.addEventListener('click', e => e.stopPropagation());
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (!confirm('Remove this contact? This cannot be undone.')) return;
       Contacts.remove(id);
       renderContacts();
     });
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => openContactProfile(id));
   });
 }
+
+// ---- Contacts screen (dedicated full-page list view) -------------
+let _csSearch = '';
+let _csStatusFilter = 'all';   // 'all' | one of CONTACT_STATUSES
+
+function renderContactsScreen() {
+  const listEl = $('cs-list');
+  const metaEl = $('cs-meta');
+  const filtersEl = $('cs-filters');
+  if (!listEl) return;
+
+  const all = Contacts.all();
+
+  // Status filter pills (with live counts)
+  if (filtersEl) {
+    const pills = [['all', 'All', all.length]].concat(
+      CONTACT_STATUSES.map(s => [
+        s,
+        s.charAt(0).toUpperCase() + s.slice(1),
+        all.filter(c => (c.status || 'new') === s).length
+      ])
+    );
+    filtersEl.innerHTML = pills.map(([val, label, n]) =>
+      '<button type="button" class="cs-pill' + (_csStatusFilter === val ? ' active' : '')
+        + '" data-filter="' + val + '" role="tab" aria-selected="' + (_csStatusFilter === val) + '">'
+        + escapeHTML(label) + ' <span style="opacity:0.6">' + n + '</span></button>'
+    ).join('');
+    filtersEl.querySelectorAll('.cs-pill').forEach(p => {
+      p.addEventListener('click', () => {
+        _csStatusFilter = p.dataset.filter;
+        renderContactsScreen();
+      });
+    });
+  }
+
+  // Apply search + status filters
+  const q = _csSearch.trim().toLowerCase();
+  let rows = all.filter(c => {
+    if (_csStatusFilter !== 'all' && (c.status || 'new') !== _csStatusFilter) return false;
+    if (!q) return true;
+    return [c.name, c.phone, c.email, c.zip, c.address, c.needs]
+      .some(v => String(v || '').toLowerCase().includes(q));
+  });
+
+  // Sort: status rank, then most recently updated
+  rows.sort((a, b) => {
+    const rank = s => CONTACT_STATUSES.indexOf(s || 'new');
+    if (rank(a.status) !== rank(b.status)) return rank(a.status) - rank(b.status);
+    return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+  });
+
+  if (metaEl) {
+    metaEl.textContent = rows.length + (rows.length === 1 ? ' contact' : ' contacts')
+      + (q || _csStatusFilter !== 'all' ? ' · filtered' : '');
+  }
+
+  if (!all.length) {
+    listEl.innerHTML = '<div class="dash-empty">No saved contacts yet — visitors who opt in on the intake form, or contacts you save from the Live Intake AI, will appear here.</div>';
+    return;
+  }
+  if (!rows.length) {
+    listEl.innerHTML = '<div class="dash-empty">No contacts match your search or filter.</div>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map(c => {
+    // Coerce every field to a string — the live Sheet can return numeric zip/phone
+    const str = v => (v === null || v === undefined) ? '' : String(v);
+    const contact = [str(c.phone), str(c.email)].filter(Boolean).join(' · ') || '—';
+    const statusOpts = CONTACT_STATUSES.map(s =>
+      '<option value="' + s + '"' + ((c.status || 'new') === s ? ' selected' : '') + '>'
+        + s.charAt(0).toUpperCase() + s.slice(1) + '</option>'
+    ).join('');
+    return '<div class="contact-row" data-id="' + escapeHTML(str(c.id)) + '">'
+         +   '<div>'
+         +     '<div class="contact-name">' + escapeHTML(str(c.name) || '—') + '</div>'
+         +     '<div class="contact-meta">' + escapeHTML(contact) + '</div>'
+         +   '</div>'
+         +   '<div class="contact-meta" title="' + escapeHTML(str(c.address)) + '">'
+         +     escapeHTML(str(c.needs))
+         +   '</div>'
+         +   '<span class="contact-zip">' + escapeHTML(str(c.zip) || '—') + '</span>'
+         +   '<select class="contact-status" data-status="' + (c.status || 'new') + '" aria-label="Change status">'
+         +     statusOpts
+         +   '</select>'
+         +   '<button type="button" class="contact-del" aria-label="Remove contact" title="Remove">'
+         +     '<i class="ph ph-trash"></i>'
+         +   '</button>'
+         + '</div>';
+  }).join('');
+
+  listEl.querySelectorAll('.contact-row').forEach(row => {
+    const id = row.dataset.id;
+    const sel = row.querySelector('.contact-status');
+    const del = row.querySelector('.contact-del');
+    sel.addEventListener('change', (e) => {
+      e.stopPropagation();
+      Contacts.updateStatus(id, sel.value);
+      sel.dataset.status = sel.value;
+      renderContactsScreen();
+      if (typeof renderContacts === 'function') renderContacts();
+    });
+    sel.addEventListener('click', e => e.stopPropagation());
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!confirm('Remove this contact? This cannot be undone.')) return;
+      Contacts.remove(id);
+      renderContactsScreen();
+      if (typeof renderContacts === 'function') renderContacts();
+    });
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => openContactProfile(id));
+  });
+}
+
+// Wire the search box once
+(function wireContactsSearch() {
+  const input = document.getElementById('cs-search-input');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    _csSearch = input.value;
+    renderContactsScreen();
+  });
+}());
+
+// ---- New Contact modal -------------------------------------------
+function openContactModal() {
+  ['cm-name', 'cm-phone', 'cm-email', 'cm-zip', 'cm-address', 'cm-needs'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  const st = document.getElementById('cm-status'); if (st) st.value = 'new';
+  const msg = document.getElementById('cm-status-msg'); if (msg) { msg.textContent = ''; msg.className = 'csf-status'; }
+  openModal('contact-modal');
+  setTimeout(() => { const n = document.getElementById('cm-name'); if (n) n.focus(); }, 60);
+}
+
+(function wireContactModal() {
+  const $ = id => document.getElementById(id);
+  const openBtn = $('cs-new-contact');
+  const cancelBtn = $('cm-cancel');
+  const submitBtn = $('cm-submit');
+  const modal = $('contact-modal');
+  if (openBtn) openBtn.addEventListener('click', openContactModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal('contact-modal'));
+  if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('contact-modal'); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && modal.classList.contains('open')) closeModal('contact-modal');
+  });
+
+  if (submitBtn) submitBtn.addEventListener('click', async () => {
+    const name = $('cm-name').value.trim();
+    const msg = $('cm-status-msg');
+    if (!name) {
+      if (msg) { msg.textContent = 'Name is required.'; msg.className = 'csf-status error'; }
+      $('cm-name').focus();
+      return;
+    }
+    const record = {
+      name,
+      phone:   $('cm-phone').value.trim(),
+      email:   $('cm-email').value.trim(),
+      zip:     $('cm-zip').value.trim(),
+      address: $('cm-address').value.trim(),
+      needs:   $('cm-needs').value.trim(),
+      status:  $('cm-status').value || 'new',
+      followUp: true
+    };
+    const oldHTML = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="csf-spinner"></span> Saving…';
+    if (msg) { msg.textContent = ''; msg.className = 'csf-status'; }
+    try {
+      await Contacts.save(record);  // optimistic cache write + server sync
+    } catch (e) {
+      console.warn('New contact save failed (kept locally)', e);
+    }
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = oldHTML;
+    closeModal('contact-modal');
+    renderContactsScreen();
+    if (typeof renderContacts === 'function') renderContacts();
+    if (typeof Tracker !== 'undefined' && Tracker.log) { try { Tracker.log('contact_created_manual', {}); } catch (_) {} }
+  });
+}());
+
+// ---- Full-screen contact profile (info left, sessions right) ----
+let _activeContactId = null;
+
+function openContactProfile(contactId) {
+  const c = Contacts.all().find(x => x.id === contactId);
+  if (!c) return;
+  _activeContactId = contactId;
+
+  const $ = id => document.getElementById(id);
+  // Coerce every field to a string — the live Sheet can return numeric zip/phone
+  const str = v => (v === null || v === undefined) ? '' : String(v);
+  const name = str(c.name) || '—';
+  const status = (c.status || 'new');
+
+  // Avatar initials
+  const initials = (str(c.name).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2) || '–').toUpperCase();
+  $('profile-avatar').textContent = initials;
+  $('profile-name').textContent = name;
+  $('profile-sub').textContent = [str(c.phone), str(c.email)].filter(Boolean).join(' · ') || '';
+  const chip = $('profile-status');
+  chip.textContent = status.toUpperCase();
+  chip.dataset.status = status;
+
+  const fields = [
+    ['Phone',   c.phone],
+    ['Email',   c.email],
+    ['ZIP',     c.zip],
+    ['Status',  status],
+    ['Address', c.address],
+    ['Needs',   c.needs],
+  ];
+  $('profile-info').innerHTML = fields.map(([label, value]) =>
+    '<div class="cdr-info-item">'
+    +   '<span class="cdr-info-label">' + escapeHTML(label) + '</span>'
+    +   '<span class="cdr-info-value">' + escapeHTML(str(value) || '—') + '</span>'
+    + '</div>'
+  ).join('');
+
+  hideSessionForm();
+  renderContactSessions(contactId);
+
+  $('card').classList.add('wide');
+  showStep('step-contact-profile');
+}
+
+function renderContactSessions(contactId) {
+  const wrap = document.getElementById('profile-sessions');
+  const metaEl = document.getElementById('profile-sessions-meta');
+  if (!wrap) return;
+  const fullList = Sessions.forContact(contactId);
+  if (metaEl) metaEl.textContent = fullList.length
+    ? (fullList.length === 1 ? '1 session logged' : fullList.length + ' sessions logged')
+    : '';
+  const list = fullList;
+  if (!list.length) {
+    wrap.innerHTML =
+      '<div class="cdr-empty">'
+      +   '<i class="ph ph-notebook" aria-hidden="true"></i>'
+      +   'No sessions yet. Click <strong>New Session</strong> to log a visit or call.'
+      + '</div>';
+    return;
+  }
+  const str = v => (v === null || v === undefined) ? '' : String(v);
+  wrap.innerHTML = list.map(s => {
+    // Prefer the explicit session date; fall back to created timestamp
+    const date = s.date
+      ? new Date(s.date + 'T00:00:00').toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+      : (s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '');
+    // New format uses notes; old placeholder records used summary
+    const body = str(s.notes) || str(s.summary) || '—';
+    const topic = str(s.topic);
+    const tags = Array.isArray(s.tags) && s.tags.length
+      ? '<div class="cdr-session-tags">' + s.tags.map(t => '<span class="cdr-session-tag">' + escapeHTML(str(t)) + '</span>').join('') + '</div>'
+      : '';
+    return '<div class="cdr-session" data-session-id="' + escapeHTML(str(s.id)) + '">'
+      +    '<div class="cdr-session-meta">'
+      +      '<span class="cdr-session-topic">' + escapeHTML(topic || 'Session') + '</span>'
+      +      '<span style="display:flex;align-items:center;gap:0.5rem">'
+      +        '<span class="cdr-session-date">' + escapeHTML(date) + '</span>'
+      +        '<button type="button" class="cdr-session-del" aria-label="Delete session" title="Delete session"><i class="ph ph-trash"></i></button>'
+      +      '</span>'
+      +    '</div>'
+      +    '<div class="cdr-session-summary">' + escapeHTML(body) + '</div>'
+      +    tags
+      +  '</div>';
+  }).join('');
+
+  wrap.querySelectorAll('.cdr-session-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const row = btn.closest('.cdr-session');
+      const sid = row && row.dataset.sessionId;
+      if (!sid) return;
+      if (!confirm('Delete this session? This cannot be undone.')) return;
+      Sessions.remove(sid);
+      renderContactSessions(contactId);
+    });
+  });
+}
+
+// Leave the profile and return to the Contacts list
+function backToContacts() {
+  hideSessionForm();
+  _activeContactId = null;
+  renderContactsScreen();
+  showStep('step-contacts');
+}
+
+// ---- New-session form (date · primary topic · notes + AI assist) ----
+const SESSION_TOPICS = ['Intake', 'Benefits Enrollment', 'Housing', 'Healthcare',
+  'Financial Coaching', 'Case Management', 'Food / Nutrition', 'Transportation',
+  'Follow-up', 'Other'];
+
+function todayISO() {
+  // Local calendar date as YYYY-MM-DD (avoids UTC off-by-one)
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function hideSessionForm() {
+  if (_sessionListening) { _sessionListening = false; stopSessionMic(); setSessionMicUI(false); }
+  if (typeof closeModal === 'function') closeModal('session-modal');
+  setSessionStatus('', null);
+}
+
+function openSessionForm() {
+  const form = document.getElementById('cdr-session-form');
+  if (!form) return;
+  const sel = document.getElementById('csf-topic');
+  if (sel && !sel.options.length) {
+    sel.innerHTML = SESSION_TOPICS.map(t => '<option value="' + t + '">' + t + '</option>').join('');
+  }
+  document.getElementById('csf-date').value = todayISO();
+  if (sel) sel.selectedIndex = 0;
+  document.getElementById('csf-notes').value = '';
+  setSessionStatus('', null);
+  // Reset the voice transcript for a fresh dictation
+  _sessionTranscript = ''; _sessionInterim = '';
+  setSessionMicUI(false);
+  renderSessionTranscript();
+  openModal('session-modal');
+  setTimeout(() => document.getElementById('csf-notes').focus(), 60);
+}
+
+function setSessionStatus(msg, kind) {
+  const el = document.getElementById('csf-status');
+  if (!el) return;
+  el.innerHTML = msg || '';
+  el.className = 'csf-status' + (kind ? ' ' + kind : '');
+}
+
+function saveSessionFromForm() {
+  if (!_activeContactId) return;
+  const date  = document.getElementById('csf-date').value || todayISO();
+  const topic = document.getElementById('csf-topic').value || 'Session';
+  const notes = document.getElementById('csf-notes').value.trim();
+  if (!notes) { setSessionStatus('Add some notes first.', 'error'); return; }
+  const cur = (typeof Session !== 'undefined' && Session.current) ? Session.current() : null;
+  const staff = cur ? (cur.name || cur.email || '') : '';
+  Sessions.add({ contactId: _activeContactId, date, topic, notes, staff });
+  if (typeof Tracker !== 'undefined' && Tracker.log) { try { Tracker.log('session_created', { topic }); } catch (_) {} }
+  hideSessionForm();
+  renderContactSessions(_activeContactId);
+}
+
+// Generic Gemini JSON call, reusing the Intake AI key + model
+async function sessionGeminiJSON(prompt, schema) {
+  const key = (typeof IntakeAI !== 'undefined' && IntakeAI.getKey) ? IntakeAI.getKey() : '';
+  const model = (typeof IntakeAI !== 'undefined' && IntakeAI.MODEL) ? IntakeAI.MODEL : 'gemini-2.5-flash-lite';
+  if (!key) throw new Error('NO_KEY');
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2 }
+    })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const txt = data && data.candidates && data.candidates[0] && data.candidates[0].content
+    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+    && data.candidates[0].content.parts[0].text;
+  if (!txt) throw new Error('Empty response');
+  return JSON.parse(txt);
+}
+
+async function aiAssistSession() {
+  const notesEl = document.getElementById('csf-notes');
+  const raw = (notesEl.value || '').trim();
+  if (!raw) { setSessionStatus('Type a few rough notes first, then AI Assist will polish them.', 'error'); return; }
+  const btn = document.getElementById('csf-ai');
+  if (btn) btn.disabled = true;
+  setSessionStatus('<span class="csf-spinner"></span> Polishing with AI…', null);
+  const prompt =
+    "You are a case-management assistant for Central Boston Elder Services (CBES). " +
+    "A case manager logged rough notes from a session with a client. " +
+    "Rewrite them into a clear, professional case note (2-4 sentences, factual, do not invent details). " +
+    "Also choose the single best primary topic from this list: " + SESSION_TOPICS.join(', ') + ". " +
+    'Return ONLY JSON {"topic": <one of the list>, "notes": <cleaned note>}.\n\nROUGH NOTES:\n' + raw;
+  const schema = {
+    type: 'object',
+    properties: {
+      topic: { type: 'string', enum: SESSION_TOPICS },
+      notes: { type: 'string' }
+    },
+    required: ['topic', 'notes']
+  };
+  try {
+    const out = await sessionGeminiJSON(prompt, schema);
+    if (out.notes) notesEl.value = out.notes;
+    const sel = document.getElementById('csf-topic');
+    if (sel && out.topic && SESSION_TOPICS.indexOf(out.topic) >= 0) sel.value = out.topic;
+    setSessionStatus('Polished by AI — review and edit before saving.', 'ok');
+  } catch (e) {
+    if (String(e.message) === 'NO_KEY') setSessionStatus('No Gemini API key set. Add one on the Live Intake AI page (Settings).', 'error');
+    else setSessionStatus('AI error: ' + e.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---- Voice "talk to fill" — dictate a session, AI fills the fields ----
+let _sessionRec = null, _sessionListening = false, _sessionTranscript = '', _sessionInterim = '';
+
+function renderSessionTranscript() {
+  const el = document.getElementById('csf-transcript');
+  if (!el) return;
+  const hasText = _sessionTranscript || _sessionInterim;
+  el.hidden = !hasText;
+  el.innerHTML = escapeHTML(_sessionTranscript)
+    + (_sessionInterim ? ' <span class="csf-interim">' + escapeHTML(_sessionInterim) + '</span>' : '');
+  el.scrollTop = el.scrollHeight;
+}
+
+function setSessionMicUI(listening) {
+  const btn = document.getElementById('csf-mic');
+  const label = document.getElementById('csf-mic-label');
+  if (!btn) return;
+  btn.classList.toggle('listening', listening);
+  if (label) label.textContent = listening ? 'Listening… tap to stop' : 'Talk to fill';
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = listening ? 'ph ph-stop-circle' : 'ph ph-microphone';
+}
+
+function stopSessionMic() {
+  if (_sessionRec) { try { _sessionRec.stop(); } catch (_) {} }
+  // onend does cleanup + triggers extraction
+}
+
+function startSessionMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { setSessionStatus("Voice input isn't supported in this browser — type your notes and use AI Assist.", 'error'); return; }
+  if (_sessionListening) return;
+  const LANG_MAP = { 'en':'en-US','es':'es-US','ht':'fr-FR','pt':'pt-BR','vi':'vi-VN','zh-CN':'zh-CN','ru':'ru-RU' };
+  const lang = LANG_MAP[(typeof _lang !== 'undefined' ? _lang : 'en')] || 'en-US';
+  const rec = new SR();
+  rec.lang = lang; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+  _sessionRec = rec;
+  rec.onresult = (e) => {
+    let finalChunk = '', interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) finalChunk += r[0].transcript + ' '; else interim += r[0].transcript;
+    }
+    if (finalChunk) _sessionTranscript = (_sessionTranscript + ' ' + finalChunk).replace(/\s+/g, ' ').trim();
+    _sessionInterim = interim;
+    renderSessionTranscript();
+  };
+  rec.onerror = (ev) => {
+    _sessionListening = false; _sessionRec = null; setSessionMicUI(false);
+    if (ev && ev.error === 'not-allowed') setSessionStatus('Microphone permission denied. Allow mic access, or type your notes.', 'error');
+  };
+  rec.onend = () => {
+    const wasListening = _sessionListening;
+    _sessionListening = false; _sessionRec = null; _sessionInterim = '';
+    setSessionMicUI(false); renderSessionTranscript();
+    if (wasListening && _sessionTranscript.trim()) extractSessionFromTranscript();
+  };
+  try {
+    rec.start();
+    _sessionListening = true;
+    setSessionMicUI(true);
+    setSessionStatus('Listening… describe the session, then tap to stop.', null);
+    renderSessionTranscript();
+  } catch (_) { _sessionListening = false; _sessionRec = null; setSessionMicUI(false); }
+}
+
+function toggleSessionMic() {
+  if (_sessionListening) stopSessionMic(); else startSessionMic();
+}
+
+// Send the spoken transcript to Gemini and fill date + topic + notes
+async function extractSessionFromTranscript() {
+  const transcript = (_sessionTranscript || '').trim();
+  if (!transcript) { setSessionStatus("I didn't catch anything — tap the mic and try again.", 'error'); return; }
+  setSessionStatus('<span class="csf-spinner"></span> Filling in from what you said…', null);
+  const prompt =
+    "You are a case-management assistant for Central Boston Elder Services (CBES). " +
+    "A case manager just spoke aloud describing a session with a client. " +
+    "From the transcript, extract structured session data:\n" +
+    "- date: the session date as YYYY-MM-DD. Resolve relative dates (today, yesterday, 'last Tuesday') using today = " + todayISO() + ". If no date is mentioned, use today.\n" +
+    "- topic: the single best primary topic from this list: " + SESSION_TOPICS.join(', ') + ".\n" +
+    "- notes: a clear, professional case note (2-4 sentences, factual, do not invent details).\n" +
+    'Return ONLY JSON {"date":..., "topic":..., "notes":...}.\n\nTRANSCRIPT:\n' + transcript;
+  const schema = {
+    type: 'object',
+    properties: {
+      date:  { type: 'string' },
+      topic: { type: 'string', enum: SESSION_TOPICS },
+      notes: { type: 'string' }
+    },
+    required: ['date', 'topic', 'notes']
+  };
+  try {
+    const out = await sessionGeminiJSON(prompt, schema);
+    if (out.date && /^\d{4}-\d{2}-\d{2}$/.test(out.date)) document.getElementById('csf-date').value = out.date;
+    const sel = document.getElementById('csf-topic');
+    if (sel && out.topic && SESSION_TOPICS.indexOf(out.topic) >= 0) sel.value = out.topic;
+    if (out.notes) document.getElementById('csf-notes').value = out.notes;
+    setSessionStatus('Filled in from your description — review and edit, then Save.', 'ok');
+  } catch (e) {
+    if (String(e.message) === 'NO_KEY') setSessionStatus('No Gemini API key set. Add one on the Live Intake AI page (Settings).', 'error');
+    else setSessionStatus('AI error: ' + e.message, 'error');
+  }
+}
+
+(function wireContactProfile() {
+  const $ = id => document.getElementById(id);
+
+  // Back to the contacts list
+  const backBtn = $('profile-back');
+  if (backBtn) backBtn.addEventListener('click', backToContacts);
+
+  // Hide the voice button entirely if the browser has no speech recognition
+  const micBtn = $('csf-mic');
+  if (micBtn && !(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+    micBtn.hidden = true;
+    const hint = $('csf-mic-hint'); if (hint) hint.hidden = true;
+  } else if (micBtn) {
+    micBtn.addEventListener('click', toggleSessionMic);
+  }
+
+  const newBtn    = $('profile-new-session');
+  const cancelBtn = $('csf-cancel');
+  const saveBtn   = $('csf-save');
+  const aiBtn     = $('csf-ai');
+  if (newBtn)    newBtn.addEventListener('click', openSessionForm);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideSessionForm);
+  if (saveBtn)   saveBtn.addEventListener('click', saveSessionFromForm);
+  if (aiBtn)     aiBtn.addEventListener('click', aiAssistSession);
+
+  // Click the modal backdrop (outside the card) to dismiss
+  const modal = $('session-modal');
+  if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) hideSessionForm(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && modal.classList.contains('open')) hideSessionForm();
+  });
+})();
 
 // ---- ASAP activity map ------------------------------------------
 // var (not let) so the theme-toggle IIFE that runs earlier at load
@@ -8482,20 +10339,6 @@ $('zip-next-btn').addEventListener('click', () => {
   if (!/^\d{5}$/.test(zip)) return;
   SearchSession.startOrResume(zip, null);
   Tracker.logOnce('zip_submitted', { zip }, 'zip:' + zip);
-});
-
-$('intake-submit-btn').addEventListener('click', () => {
-  const name = $('intake-name').value.trim();
-  const needs = [...document.querySelectorAll('#cbes-intake-form input[type=checkbox]:checked')].map(c => c.value).join(', ');
-  if (!name || !needs) return;
-  setTimeout(() => {
-    Tracker.logOnce('intake_submitted', {
-      name,
-      needs,
-      zip: state.zip || null,
-      asap: state.asap?.AGING_SERVICES_ACCESS_POINT || null
-    }, 'intake:' + name.toLowerCase());
-  }, 0);
 });
 
 // Wrap the two resource-entry functions — dedup by resource/category
@@ -9027,7 +10870,8 @@ if (document.readyState === 'loading') {
 // ================================================================
 const IntakeAI = {
   KEY_STORAGE: 'cbes-connects-gemini-key',
-  MODEL: 'gemini-2.0-flash',
+  DEFAULT_KEY: 'AQ.Ab8RN6K24RGPK9cM2dKpD9aLCLCirhNEr6JQeu5RbI4EvXUOhA',
+  MODEL: 'gemini-2.5-flash-lite',
   state: {
     listening: false,
     transcript: '',
@@ -9038,7 +10882,7 @@ const IntakeAI = {
   },
 
   getKey() {
-    try { return localStorage.getItem(this.KEY_STORAGE) || ''; } catch (_) { return ''; }
+    try { return localStorage.getItem(this.KEY_STORAGE) || this.DEFAULT_KEY; } catch (_) { return this.DEFAULT_KEY; }
   },
   setKey(k) {
     try { localStorage.setItem(this.KEY_STORAGE, (k || '').trim()); } catch (_) {}
@@ -9175,10 +11019,9 @@ const IntakeAI = {
       household_size:   { type: "integer", nullable: true },
       services_needed:  { type: "array", items: { type: "string" } },
       urgency:          { type: "string", enum: ["low", "normal", "high", "urgent"] },
-      summary:          { type: "string" },
-      notes:            { type: "string" }
+      summary:          { type: "string" }
     },
-    required: ["services_needed", "urgency", "summary", "notes"]
+    required: ["services_needed", "urgency", "summary"]
   },
 
   async callGemini(transcript) {
@@ -9284,8 +11127,7 @@ const IntakeAI = {
         this.selectHTML('Urgency',      'urgency',  v(json.urgency) || 'normal', ['low','normal','high','urgent']) +
       '</div>' +
       this.fieldHTML('Services Needed', 'services_needed', servicesStr, 'text', 'Comma-separated tags') +
-      this.textareaHTML('Summary',      'summary',  v(json.summary)) +
-      this.textareaHTML('Notes',        'notes',    v(json.notes));
+      this.textareaHTML('Summary',      'summary',  v(json.summary));
 
     if (saveRow) saveRow.hidden = false;
   },
@@ -9345,7 +11187,7 @@ const IntakeAI = {
         zip:      f.zip || null,
         sessionId: null,
         source:   'intake-ai',
-        notes:    [f.summary, f.notes].filter(Boolean).join('\n\n')
+        notes:    f.summary || ''
       });
       this.setStatus('ia-save-status', 'Contact saved.', true);
       if (typeof Tracker !== 'undefined' && Tracker.log) {
@@ -9378,8 +11220,7 @@ const IntakeAI = {
         f.services_needed && ('Needs: ' + f.services_needed),
         f.address && ('Address: ' + [f.address, f.city, f.state, f.zip].filter(Boolean).join(', ')),
         f.phone && ('Phone: ' + f.phone),
-        f.email && ('Email: ' + f.email),
-        f.notes && ('Notes: ' + f.notes)
+        f.email && ('Email: ' + f.email)
       ].filter(Boolean).join('\n\n');
       await Tickets.create({
         kind: 'service_request',
@@ -9417,6 +11258,12 @@ const IntakeAI = {
     if (saveRow) saveRow.hidden = true;
     this.setStatus('ia-analyze-status', '', null);
     this.setStatus('ia-save-status', '', null);
+    // Reset the contact picker for a fresh intake
+    this.clearSelection();
+    const cbSearch = document.getElementById('ia-cb-search');
+    if (cbSearch) cbSearch.value = '';
+    const cbResults = document.getElementById('ia-cb-results');
+    if (cbResults) { cbResults.hidden = true; cbResults.innerHTML = ''; }
   },
 
   setStatus(id, text, ok) {
@@ -9443,9 +11290,257 @@ const IntakeAI = {
 
   open() {
     if (typeof showStep === 'function') showStep('step-intake-ai');
+    const card = document.getElementById('card');
+    if (card) card.classList.add('wide');
+
+    // Show "recording for <contact>" banner if a contact is pinned
+    const banner = document.getElementById('ia-session-banner');
+    const nameEl = document.getElementById('ia-session-contact-name');
+    const pinnedId = window._sessionForContactId;
+    if (banner && nameEl) {
+      if (pinnedId && typeof Contacts !== 'undefined') {
+        const c = Contacts.all().find(x => x.id === pinnedId);
+        if (c) {
+          nameEl.textContent = c.name || '—';
+          banner.hidden = false;
+        } else {
+          banner.hidden = true;
+        }
+      } else {
+        banner.hidden = true;
+      }
+    }
+
     // Prompt for key on first visit
     if (!this.getKey()) {
       setTimeout(() => this.openKeyModal(), 350);
+    }
+
+    // Reset the contact picker to its default (search) state
+    const cbSearch = document.getElementById('ia-cb-search');
+    if (cbSearch) cbSearch.value = '';
+    const cbResults = document.getElementById('ia-cb-results');
+    if (cbResults) { cbResults.hidden = true; cbResults.innerHTML = ''; }
+    this.renderPicker();
+  },
+
+  // ---- Contact picker (select existing or start new) ----
+  contactId: null,
+
+  renderPicker() {
+    const sel = document.getElementById('ia-cb-selected');
+    const nameEl = document.getElementById('ia-cb-selected-name');
+    const pickwrap = document.getElementById('ia-cb-pickwrap');
+    const c = this.contactId ? (Contacts.all().find(x => x.id === this.contactId)) : null;
+    if (c) {
+      if (nameEl) nameEl.textContent = c.name || 'Contact';
+      if (sel) sel.hidden = false;
+      if (pickwrap) pickwrap.style.display = 'none';
+    } else {
+      if (sel) sel.hidden = true;
+      if (pickwrap) pickwrap.style.display = '';
+    }
+  },
+
+  searchContacts(q) {
+    const results = document.getElementById('ia-cb-results');
+    if (!results) return;
+    q = (q || '').trim().toLowerCase();
+    if (!q) { results.hidden = true; results.innerHTML = ''; return; }
+    const matches = Contacts.all().filter(c =>
+      [c.name, c.phone, c.email, c.zip].filter(Boolean).join(' ').toLowerCase().includes(q)
+    ).slice(0, 8);
+    if (!matches.length) {
+      results.innerHTML = '<div class="ia-cb-row empty">No matches — use “New contact” to create one.</div>';
+    } else {
+      results.innerHTML = matches.map(c =>
+        '<button type="button" class="ia-cb-row" data-cid="' + escapeHTML(c.id) + '">' +
+          '<span class="nm">' + escapeHTML(c.name || 'Unknown') + '</span>' +
+          '<span class="meta">' + escapeHTML([c.phone, c.email, c.zip].filter(Boolean).join(' · ')) + '</span>' +
+        '</button>'
+      ).join('');
+    }
+    results.hidden = false;
+    results.querySelectorAll('.ia-cb-row[data-cid]').forEach(btn =>
+      btn.addEventListener('click', () => this.selectContact(btn.dataset.cid)));
+  },
+
+  selectContact(id) {
+    const c = Contacts.all().find(x => x.id === id);
+    if (!c) return;
+    this.contactId = id;
+    window._sessionForContactId = id;
+    const results = document.getElementById('ia-cb-results');
+    const search = document.getElementById('ia-cb-search');
+    if (results) { results.hidden = true; results.innerHTML = ''; }
+    if (search) search.value = '';
+    this.renderPicker();
+    this.prefillFromContact(c);
+    const banner = document.getElementById('ia-session-banner');
+    const nm = document.getElementById('ia-session-contact-name');
+    if (banner && nm) { nm.textContent = c.name || '—'; banner.hidden = false; }
+  },
+
+  clearSelection() {
+    this.contactId = null;
+    window._sessionForContactId = null;
+    const banner = document.getElementById('ia-session-banner');
+    if (banner) banner.hidden = true;
+    this.renderPicker();
+  },
+
+  newContact() {
+    this.clearSelection();
+    const search = document.getElementById('ia-cb-search');
+    if (search) search.value = '';
+    const results = document.getElementById('ia-cb-results');
+    if (results) { results.hidden = true; results.innerHTML = ''; }
+    this.enterManual(true); // open a blank form ready to type
+  },
+
+  prefillFromContact(c) {
+    const json = {
+      name: c.name || '', phone: c.phone || '', email: c.email || '',
+      address: c.address || '', zip: c.zip || '',
+      services_needed: c.needs ? String(c.needs).split(/,\s*/).filter(Boolean) : [],
+      urgency: 'normal', summary: c.notes || ''
+    };
+    this.state.extracted = json;
+    this.renderFields(json);
+  },
+
+  enterManual(force) {
+    if (!this.state.extracted || force) {
+      this.state.extracted = { services_needed: [], urgency: 'normal', summary: '' };
+    }
+    this.renderFields(this.state.extracted);
+    this.setStatus('ia-analyze-status', 'Manual entry — fill the fields on the right, then save.', null);
+  },
+
+  // ---- Save the captured intake as a Contact + a Session ----
+  async saveContactAndSession() {
+    const f = this.readFields();
+    if (!f.name) { this.setStatus('ia-save-status', 'Name is required to save.', false); return; }
+    const btn = document.getElementById('ia-save-session');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Saving…'; }
+    this.setStatus('ia-save-status', 'Saving contact & session…', null);
+    const address = [f.address, f.city, f.state].filter(Boolean).join(', ') || null;
+    try {
+      await Contacts.save({
+        name: f.name, phone: f.phone || null, email: f.email || null,
+        needs: f.services_needed || '', address, zip: f.zip || null,
+        sessionId: SearchSession.id(),
+        source: this.contactId ? 'staff-intake' : 'staff-intake-new',
+        notes: f.summary || ''
+      });
+      const norm = s => String(s || '').trim().toLowerCase();
+      const saved = Contacts.all().find(c =>
+        norm(c.name) === norm(f.name) && (norm(c.phone) === norm(f.phone) || norm(c.email) === norm(f.email)));
+      const cid = saved ? saved.id : this.contactId;
+      this.contactId = cid;
+      const cur = (typeof Session !== 'undefined') ? Session.current() : null;
+      Sessions.add({
+        contactId: cid,
+        date: (new Date()).toISOString().slice(0, 10),
+        topic: 'Intake',
+        notes: (f.summary || '') + (f.services_needed ? '\n\nInterests: ' + f.services_needed : ''),
+        staff: cur ? (cur.name || cur.email || '') : ''
+      });
+      if (typeof Tracker !== 'undefined') Tracker.log('staff_intake_saved', { name: f.name });
+      this.renderPicker();
+      this.setStatus('ia-save-status', 'Saved — contact and session recorded.', true);
+    } catch (e) {
+      this.setStatus('ia-save-status', 'Save failed: ' + e.message, false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Save Contact & Session'; }
+    }
+  },
+
+  // ---- Jump into the resource finder for this client's address + interests ----
+  async findResources() {
+    const f = this.readFields();
+    const addr = [f.address, f.city, f.state, f.zip].filter(Boolean).join(', ');
+    if (!addr || addr.length < 5) { this.setStatus('ia-save-status', 'Add an address to find nearby resources.', false); return; }
+    const interests = (f.services_needed || '').split(/,\s*/).map(s => s.trim()).filter(Boolean);
+    const btn = document.getElementById('ia-find-resources');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Locating…'; }
+    this.setStatus('ia-save-status', 'Finding resources near ' + addr + '…', null);
+    try {
+      const { lat, lng, matchedAddress } = await geocode(addr);
+      const zip = extractZIP(matchedAddress) || f.zip || '02119';
+      state.address = matchedAddress; state.zip = zip; state.lat = lat; state.lng = lng;
+      const age = parseInt(f.age, 10);
+      state.age = Number.isFinite(age) ? age : 65;
+      const asapProps = findASAP(lat, lng);
+      state.asap = asapProps;
+      if (typeof SearchSession !== 'undefined') SearchSession.startOrResume(zip, matchedAddress);
+      this.stopListening();
+      if (state.age >= 65) {
+        $('sr-address-display').textContent = matchedAddress;
+        resetAsapServices();
+        if (asapProps) {
+          $('sr-no-match-notice').classList.remove('visible');
+          $('sr-asap-banner').style.display = '';
+          $('sr-asap-name').textContent = asapProps.AGING_SERVICES_ACCESS_POINT || '';
+          let det = '';
+          if (asapProps.ASAP_ADDRESS) det += asapProps.ASAP_ADDRESS;
+          if (asapProps.ASAP_PHONE_NUMBER) det += ' &bull; <a href="tel:' + asapProps.ASAP_PHONE_NUMBER.replace(/\s/g, '') + '">' + asapProps.ASAP_PHONE_NUMBER + '</a>';
+          $('sr-asap-details').innerHTML = det;
+        } else {
+          $('sr-no-match-notice').classList.add('visible');
+          $('sr-asap-banner').style.display = 'none';
+        }
+        buildGrid('sr-resources-grid', zip);
+        seedResourceFilter('sr-resource-filter', interests);
+        showStep('step-results-senior');
+      } else {
+        const strong = $('zr-zip-display').querySelector('strong');
+        if (strong) strong.textContent = zip;
+        buildGrid('zr-resources-grid', zip);
+        seedResourceFilter('zr-resource-filter', interests);
+        showStep('step-results-zip');
+      }
+      const card = document.getElementById('card'); if (card) card.classList.remove('wide');
+    } catch (e) {
+      this.setStatus('ia-save-status', 'Could not locate that address: ' + (e.message || e), false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-map-trifold"></i> Find Resources'; }
+    }
+  },
+
+  // ---- Create a referral record (kind 'referral') routed to CBES ----
+  async referToCBES() {
+    const f = this.readFields();
+    if (!f.name && !f.summary) { this.setStatus('ia-save-status', 'Add a name or summary first.', false); return; }
+    const btn = document.getElementById('ia-refer-cbes');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Referring…'; }
+    this.setStatus('ia-save-status', 'Creating CBES referral…', null);
+    const cur = (typeof Session !== 'undefined') ? Session.current() : null;
+    const staff = cur ? (cur.name || cur.email) : 'staff';
+    const services = f.services_needed || '';
+    try {
+      const result = await Tickets.create({
+        kind: 'referral',
+        title: 'CBES referral — ' + (f.name || 'Client') + (services ? ' (' + services + ')' : ''),
+        description: [
+          f.summary && ('Summary: ' + f.summary),
+          services && ('Interests: ' + services),
+          (f.address || f.zip) && ('Address: ' + [f.address, f.city, f.state, f.zip].filter(Boolean).join(', ')),
+          f.phone && ('Phone: ' + f.phone),
+          f.email && ('Email: ' + f.email),
+          'Referred by: ' + staff
+        ].filter(Boolean).join('\n'),
+        priority: f.urgency === 'urgent' ? 'urgent' : (f.urgency === 'high' ? 'high' : 'normal'),
+        submitterName: f.name || '', submitterPhone: f.phone || '', submitterEmail: f.email || '', submitterZip: f.zip || '',
+        meta: { type: 'cbes_referral', services: services.split(/,\s*/).map(s => s.trim()).filter(Boolean), referredBy: staff, contactId: this.contactId || null, asap: (state.asap && state.asap.AGING_SERVICES_ACCESS_POINT) || null }
+      });
+      const tnum = (result && result.ticketNumber) ? result.ticketNumber : '';
+      if (typeof Tracker !== 'undefined') Tracker.log('ticket_created', { kind: 'referral', ticketNumber: tnum });
+      this.setStatus('ia-save-status', 'Referred to CBES.' + (tnum ? ' (' + tnum + ')' : '') + ' It will appear on the dashboard.', true);
+    } catch (e) {
+      this.setStatus('ia-save-status', 'Referral failed: ' + e.message, false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Refer to CBES'; }
     }
   },
 
@@ -9477,8 +11572,29 @@ const IntakeAI = {
     });
     if (analyzeBtn) analyzeBtn.addEventListener('click', () => this.analyze());
 
-    if (saveContact) saveContact.addEventListener('click', () => this.saveAsContact());
-    if (saveTicket)  saveTicket.addEventListener('click',  () => this.saveAsTicket());
+    // Manual entry — reveal a blank editable form without AI
+    const manualBtn = $('ia-manual-btn');
+    if (manualBtn) manualBtn.addEventListener('click', () => this.enterManual(false));
+
+    // Contact picker
+    const cbSearch = $('ia-cb-search');
+    const cbNew    = $('ia-cb-new');
+    const cbClear  = $('ia-cb-clear');
+    if (cbSearch) {
+      cbSearch.addEventListener('input', () => this.searchContacts(cbSearch.value));
+      cbSearch.addEventListener('focus', () => { if (cbSearch.value.trim()) this.searchContacts(cbSearch.value); });
+    }
+    if (cbNew)   cbNew.addEventListener('click', () => this.newContact());
+    if (cbClear) cbClear.addEventListener('click', () => this.clearSelection());
+
+    // Workflow actions
+    const saveSession   = $('ia-save-session');
+    const findResources = $('ia-find-resources');
+    const referCbes     = $('ia-refer-cbes');
+    if (saveSession)   saveSession.addEventListener('click',   () => this.saveContactAndSession());
+    if (findResources) findResources.addEventListener('click', () => this.findResources());
+    if (referCbes)     referCbes.addEventListener('click',     () => this.referToCBES());
+
     if (clearAll)    clearAll.addEventListener('click',    () => this.clearAll());
 
     if (keyCancel) keyCancel.addEventListener('click', () => this.closeKeyModal());
@@ -9506,6 +11622,95 @@ if (document.readyState === 'loading') {
 } else {
   IntakeAI.wire();
 }
+
+// ================================================================
+// Tenant config — demo multi-tenant SaaS, brand swap by hostname
+// or ?tenant=<key> query param. Same backend across tenants.
+// ================================================================
+const TENANTS = {
+  cbes: {
+    name:         'CB Connects',
+    title:        'CB Connects — Resource Finder',
+    primary:      '#1a7088',
+    primaryDark:  '#0d4a63',
+    primaryLight: '#4cb8cf',
+    accent:       '#e8a84a',
+    demoEmail:    'eponce@centralboston.org',
+    demoPassword: 'CBES123!',
+  },
+  culpepper: {
+    name:         'Culpepper Connects',
+    title:        'Councilor Culpepper — Constituent Resources',
+    primary:      '#7a2a3c',
+    primaryDark:  '#4f1825',
+    primaryLight: '#c97a8c',
+    accent:       '#e8a84a',
+    demoEmail:    'staff@culpepper.gov',
+    demoPassword: 'Culpepper123!',
+  },
+  suffolk7: {
+    name:         'Suffolk 7th Connects',
+    title:        'Suffolk 7th District — Community Resources',
+    primary:      '#2d5a3f',
+    primaryDark:  '#1a3a28',
+    primaryLight: '#7ec299',
+    accent:       '#d4a032',
+    demoEmail:    'staff@suffolk7.gov',
+    demoPassword: 'Suffolk7!',
+  },
+};
+const HOST_TO_TENANT = {
+  // Map real domains here once deployed. Defaults to 'cbes' if no match.
+  // e.g. 'cbconnects.org': 'cbes',
+  //      'culpepper.example': 'culpepper',
+};
+function resolveTenant() {
+  try {
+    const qp = new URLSearchParams(location.search).get('tenant');
+    if (qp && TENANTS[qp]) return TENANTS[qp];
+  } catch (_) {}
+  const key = HOST_TO_TENANT[location.hostname] || 'cbes';
+  return TENANTS[key] || TENANTS.cbes;
+}
+function applyTenant(t) {
+  document.title = t.title;
+  // Strings to swap in i18n tables + static text: brand name + demo creds.
+  const swaps = [
+    ['CB Connects', t.name],
+    ['eponce@centralboston.org', t.demoEmail || 'eponce@centralboston.org'],
+    ['CBES123!', t.demoPassword || 'CBES123!'],
+  ].filter(([from, to]) => from !== to);
+
+  if (typeof I18N !== 'undefined' && swaps.length) {
+    Object.keys(I18N).forEach(lang => {
+      const dict = I18N[lang];
+      Object.keys(dict).forEach(k => {
+        if (typeof dict[k] !== 'string') return;
+        swaps.forEach(([from, to]) => {
+          if (dict[k].indexOf(from) !== -1) dict[k] = dict[k].split(from).join(to);
+        });
+      });
+    });
+  }
+  if (swaps.length) {
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) {
+      if (!n.nodeValue) continue;
+      swaps.forEach(([from, to]) => {
+        if (n.nodeValue.indexOf(from) !== -1) n.nodeValue = n.nodeValue.split(from).join(to);
+      });
+    }
+  }
+  // Brand color overrides via CSS vars
+  const r = document.documentElement.style;
+  if (t.primary)      r.setProperty('--teal',        t.primary);
+  if (t.primaryDark)  r.setProperty('--teal-dark',   t.primaryDark);
+  if (t.primaryLight) r.setProperty('--teal-light',  t.primaryLight);
+  if (t.accent)       r.setProperty('--accent',      t.accent);
+}
+const TENANT = resolveTenant();
+applyTenant(TENANT);
 
 // ================================================================
 // Boot — gate, apply language, load directory, honor deep links
