@@ -26,6 +26,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin="" defer></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   /* =============================================
      CSS Custom Properties — CBES Brand Palette
@@ -760,16 +762,24 @@
     .modal-body { padding: 1rem 0 !important; }
     .modal-row { border-color: #bbb !important; page-break-inside: avoid; }
     .modal-value, .modal-value a { color: #000 !important; text-decoration: none !important; }
-    .modal-map {
-      height: 3in !important;
+    /* The live Leaflet tiles don't render reliably when printing, so we hide
+       the interactive map and print the pre-rendered static snapshot instead. */
+    .modal-map { display: none !important; }
+    .modal-map-img {
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
       margin: 0.5rem 0 !important;
       border: 1px solid #888 !important;
+      border-radius: 6px !important;
       page-break-inside: avoid;
     }
     .leaflet-control-attribution { font-size: 8px !important; }
     .leaflet-control-zoom { display: none !important; }
     @page { margin: 0.75in; }
   }
+  /* On screen the static snapshot stays hidden; the live map is shown. */
+  .modal-map-img { display: none; }
 
   .map-empty {
     padding: 2.75rem 1.25rem;
@@ -796,6 +806,8 @@
     border: 2px solid #fff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.35);
   }
+  /* selected (added to list) — green pin */
+  .marker-pin.marker-green::before { background: var(--success); box-shadow: 0 2px 8px rgba(52,181,132,0.55); }
   /* User pin — larger, gold, with animated halo, always on top */
   .marker-user {
     width: 34px; height: 44px;
@@ -1230,6 +1242,17 @@
 
   .asap-details a:hover { color: var(--teal-glow); text-decoration: underline; text-underline-offset: 3px; }
 
+  /* "Make Referral" button — appears once an ASAP service is checked */
+  .wiz-asap-refer {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    margin-top: 0.9rem; padding: 0.55rem 1rem;
+    border: 1px solid var(--teal); border-radius: var(--radius-md); cursor: pointer;
+    background: var(--teal); color: #fff; font-weight: 600; font-size: 0.86rem;
+    transition: background 150ms, border-color 150ms;
+  }
+  .wiz-asap-refer:hover { background: var(--teal-dark, #0e3352); border-color: var(--teal-dark, #0e3352); }
+  .wiz-asap-refer-status { margin-top: 0.6rem; font-size: 0.82rem; font-weight: 600; color: var(--success); }
+
   /* ASAP referral — service-need checkboxes inside the banner */
   .asap-services {
     margin-top: 1.4rem;
@@ -1412,6 +1435,15 @@
   .referral-row .rr-title { font-weight: 600; font-size: 0.92rem; color: var(--text-high); margin-bottom: 0.15rem; }
   .referral-row .rr-sub { font-size: 0.8rem; color: var(--text-med); line-height: 1.45; }
   .referral-row .rr-time { font-size: 0.74rem; color: var(--text-low); white-space: nowrap; }
+  .rr-toggle {
+    align-self: center; margin-top: 0.2rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.45rem 0.9rem; border-radius: 999px;
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    color: var(--accent-lt); font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    transition: border-color 160ms, background 160ms, color 160ms;
+  }
+  .rr-toggle:hover { border-color: var(--accent-lt); color: var(--text-high); }
   .dash-empty-row { padding: 1rem; text-align: center; color: var(--text-low); font-size: 0.88rem; }
 
   /* =============================================
@@ -1442,6 +1474,140 @@
   .enrollee-chip button { border: none; background: transparent; color: var(--text-low); cursor: pointer; font-size: 0.9rem; line-height: 1; }
   .enrollee-chip button:hover { color: var(--error); }
   .campaign-count { margin-left: auto; font-size: 0.78rem; color: var(--text-med); font-weight: 600; }
+
+  /* =============================================
+     Staff Intake Wizard
+     ============================================= */
+  #step-wizard { position: relative; }
+  .wiz-close {
+    position: absolute; top: -0.4rem; right: -0.4rem; z-index: 5;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center;
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    color: var(--text-high); font-size: 1.7rem; line-height: 1; cursor: pointer;
+    transition: background 160ms, border-color 160ms, transform 160ms;
+  }
+  .wiz-close:hover { background: var(--error); border-color: var(--error); color: #fff; transform: rotate(90deg); }
+  .wiz-top { display: flex; align-items: center; justify-content: flex-start; gap: 1rem; margin-bottom: 1.2rem; padding-right: 3rem; }
+  .wiz-progress { display: flex; gap: 0.4rem; }
+  .wiz-progress .dot { width: 26px; height: 5px; border-radius: 3px; background: var(--glass-border); transition: background 220ms; }
+  .wiz-progress .dot.done { background: var(--teal); }
+  .wiz-progress .dot.active { background: var(--accent); }
+  .wiz-step { display: none; }
+  .wiz-step.active { display: block; animation: wizFade 280ms var(--ease-out); }
+  @keyframes wizFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .wiz-form { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.6rem; }
+  .wiz-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.6rem; }
+  .wiz-nav .btn-submit { width: auto; }
+  /* Top nav on the resources step — keeps Continue visible above the map */
+  .wiz-nav-top { margin-top: 0.6rem; margin-bottom: 0.4rem; }
+
+  .wiz-interests { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.6rem; margin-top: 0.6rem; }
+  @media(max-width:540px) { .wiz-interests { grid-template-columns: 1fr 1fr; } }
+  .wiz-int {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.7rem 0.85rem; border: 1px solid var(--glass-border); border-radius: var(--radius-md);
+    background: var(--glass-bg); color: var(--text-high); cursor: pointer; font-size: 0.92rem;
+    transition: background 160ms, border-color 160ms;
+  }
+  .wiz-int:hover { background: rgba(255,255,255,0.10); border-color: var(--glass-hi); }
+  .wiz-int input { accent-color: var(--teal-light); width: 16px; height: 16px; flex-shrink: 0; }
+  .wiz-int i { font-size: 1.2rem; color: var(--teal-light); }
+  .wiz-int.checked { border-color: var(--teal); background: rgba(26,112,136,0.18); }
+
+  /* resources layout: map/list on the left, ASAP + category icons on the right */
+  /* MAP is the hero — big on the right; compact controls/list on the left */
+  /* 3 columns: selected + ASAP + report-abuse (left) · map (center) · category list (right) */
+  .wiz-res-layout { display: grid; grid-template-columns: 290px 1fr 290px; gap: 1.1rem; margin-top: 0.6rem; align-items: start; }
+  @media(max-width:1080px) { .wiz-res-layout { grid-template-columns: 260px 1fr; } .wiz-res-right { grid-column: 1 / -1; } }
+  @media(max-width:820px) { .wiz-res-layout { grid-template-columns: 1fr; } .wiz-res-right { grid-column: auto; } }
+  .wiz-res-side, .wiz-res-right { display: flex; flex-direction: column; gap: 1rem; }
+  @media(min-width:821px) { .wiz-res-main { position: sticky; top: 1rem; } }
+  /* selected-resources panel (top-left) */
+  .wiz-selected { display: flex; flex-direction: column; gap: 0.5rem; }
+  .wiz-selected-empty { font-size: 0.82rem; color: var(--text-low); line-height: 1.5; padding: 0.3rem 0; }
+  .wiz-sel-row {
+    display: flex; align-items: flex-start; gap: 0.55rem;
+    padding: 0.6rem 0.7rem; border-radius: var(--radius-md);
+    border: 1px solid var(--success); background: rgba(52,181,132,0.12);
+  }
+  .wiz-sel-row .smain { flex: 1; min-width: 0; }
+  .wiz-sel-row .sname { font-weight: 700; font-size: 0.84rem; color: var(--text-high); line-height: 1.25; }
+  .wiz-sel-row .smeta { font-size: 0.72rem; color: var(--text-med); line-height: 1.35; }
+  .wiz-sel-row .srm { border: none; background: transparent; color: var(--text-med); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 0.15rem; }
+  .wiz-sel-row .srm:hover { color: var(--error); }
+  .wiz-sel-check { color: var(--success); font-size: 1rem; margin-top: 1px; }
+  /* compact Central Boston card — slim right-hand column */
+  .wiz-cbes-card { margin-bottom: 0; }
+  .wiz-cbes-row {
+    display: flex; align-items: flex-start; gap: 0.55rem;
+    padding: 0.65rem 0.75rem; border-radius: var(--radius-md); cursor: pointer;
+    border: 1px solid rgba(232,168,74,0.32);
+    background: linear-gradient(135deg, rgba(232,168,74,0.14), rgba(76,184,207,0.08));
+    transition: border-color 160ms, background 160ms;
+  }
+  .wiz-cbes-row .cname { font-size: 0.82rem; line-height: 1.25; }
+  .wiz-cbes-row .csub { font-size: 0.72rem; line-height: 1.35; }
+  .wiz-cbes-row i { font-size: 1.25rem; margin-top: 1px; }
+  .wiz-cbes-row:hover { border-color: var(--accent); }
+  .wiz-cbes-row.in-cart { border-color: var(--success); background: rgba(52,181,132,0.14); }
+  .wiz-cbes-row input { accent-color: var(--success); width: 17px; height: 17px; flex-shrink: 0; }
+  .wiz-cbes-row i { font-size: 1.5rem; color: var(--accent-lt); }
+  .wiz-cbes-row .cmain { flex: 1; min-width: 0; }
+  .wiz-cbes-row .cname { font-weight: 700; font-size: 0.9rem; color: var(--text-high); }
+  .wiz-cbes-row .csub { font-size: 0.76rem; color: var(--text-med); }
+  .wiz-cbes-row a { color: var(--teal-light); text-decoration: none; }
+  .wiz-res-side { display: flex; flex-direction: column; gap: 1rem; }
+  .wiz-side-title { font-family: 'JetBrains Mono', monospace; font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-low); }
+  /* big category icon tiles — one active at a time */
+  .wiz-cat-icons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .wiz-cat-icon {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem;
+    padding: 1rem 0.6rem; min-height: 92px; cursor: pointer; text-align: center;
+    border: 1px solid var(--glass-border); border-radius: var(--radius-md);
+    background: var(--glass-bg); color: var(--text-high);
+    transition: transform 160ms var(--ease-out), border-color 160ms, background 160ms;
+  }
+  .wiz-cat-icon:hover { transform: translateY(-2px); border-color: var(--glass-hi); background: rgba(255,255,255,0.08); }
+  .wiz-cat-icon i { font-size: 1.9rem; color: var(--teal-light); line-height: 1; }
+  .wiz-cat-icon span { font-size: 0.82rem; font-weight: 600; line-height: 1.2; }
+  .wiz-cat-icon.active { border-color: var(--teal); background: rgba(26,112,136,0.22); box-shadow: var(--shadow-sm); }
+  .wiz-cat-icon.active i { color: var(--teal-glow); }
+  .wiz-map-hint { display: grid; place-items: center; height: 100%; padding: 1.5rem; text-align: center; color: var(--text-low); font-size: 0.9rem; }
+  .wiz-map { height: 640px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--glass-border); box-shadow: var(--shadow-md); }
+  @media(max-width:820px) { .wiz-map { height: 380px; } }
+  /* list fills the same height as the map and scrolls */
+  .wiz-res-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 596px; overflow-y: auto; padding-right: 0.3rem; }
+  @media(max-width:820px) { .wiz-res-list { max-height: 380px; } }
+  /* checkbox + add-to-list control inside Leaflet popups */
+  .wiz-pop-add { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem; padding: 0.35rem 0.6rem; border-radius: 6px; border: 1px solid var(--teal); background: var(--teal); color: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+  .wiz-pop-add.added { background: var(--success); border-color: var(--success); }
+  .wiz-res-row {
+    display: flex; align-items: flex-start; gap: 0.7rem;
+    padding: 0.7rem 0.85rem; border: 1px solid var(--glass-border); border-radius: var(--radius-md);
+    background: var(--glass-bg); cursor: pointer; transition: border-color 160ms, background 160ms;
+  }
+  .wiz-res-row:hover { border-color: var(--glass-hi); background: rgba(255,255,255,0.07); }
+  .wiz-res-row.in-cart { border-color: var(--success); background: rgba(52,181,132,0.12); }
+  /* clicked (highlighted) row — its marker is centred/opened on the map */
+  .wiz-res-row.active { border-color: var(--accent); background: rgba(240,165,0,0.14); box-shadow: var(--shadow-sm); }
+  .wiz-res-row input { accent-color: var(--success); width: 17px; height: 17px; margin-top: 2px; flex-shrink: 0; }
+  .wiz-res-row .rmain { flex: 1; min-width: 0; }
+  .wiz-res-row .rname { font-weight: 600; font-size: 0.9rem; color: var(--text-high); }
+  .wiz-res-row .rmeta { font-size: 0.78rem; color: var(--text-med); line-height: 1.4; margin-top: 0.15rem; }
+  .wiz-res-row .rcat { display: inline-block; font-size: 0.68rem; color: var(--teal-glow); margin-top: 0.2rem; }
+  .wiz-res-row .rdist { font-size: 0.74rem; color: var(--text-low); white-space: nowrap; }
+  .wiz-res-empty { padding: 1rem; text-align: center; color: var(--text-low); font-size: 0.86rem; }
+
+  /* share cart */
+  .wiz-cart { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
+  .wiz-cart-row { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.7rem 0.85rem; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--glass-bg); }
+  .wiz-cart-row .cmain { flex: 1; min-width: 0; }
+  .wiz-cart-row .cname { font-weight: 600; font-size: 0.9rem; }
+  .wiz-cart-row .cmeta { font-size: 0.78rem; color: var(--text-med); line-height: 1.45; }
+  .wiz-cart-row button { border: none; background: transparent; color: var(--text-low); font-size: 1.15rem; cursor: pointer; }
+  .wiz-cart-row button:hover { color: var(--error); }
+  .wiz-share-actions { display: flex; gap: 0.7rem; margin-top: 1rem; flex-wrap: wrap; }
 
   /* =============================================
      Protective Services — report elder abuse
@@ -1567,7 +1733,8 @@
   }
   .field-row { margin-bottom: 1.25rem; }
   .field-row.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  @media(max-width:540px) { .field-row.two-col { grid-template-columns: 1fr; } }
+  .field-row.three-col { display: grid; grid-template-columns: 1.4fr 0.8fr 0.8fr; gap: 1rem; }
+  @media(max-width:540px) { .field-row.two-col, .field-row.three-col { grid-template-columns: 1fr; } }
   .field-label {
     display: block;
     font-family: 'JetBrains Mono', monospace;
@@ -2256,6 +2423,14 @@
   /* Session form inside the modal (no inner box — the modal is the box) */
   .csf-form { display: flex; flex-direction: column; gap: 0.75rem; }
   .session-modal-card { max-width: 520px; max-height: 88vh; overflow-y: auto; }
+  /* Big two-panel session editor — uses (almost) the whole screen */
+  .session-edit-card { width: min(1180px, 96vw) !important; max-width: 96vw !important; max-height: 92vh; overflow-y: auto; }
+  .se-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; margin-top: 0.8rem; align-items: stretch; }
+  @media (max-width: 800px) { .se-grid { grid-template-columns: 1fr; } }
+  .se-col { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+  .se-col .referral-list { max-height: 60vh; overflow-y: auto; padding-right: 0.3rem; }
+  .se-notes-row { flex: 1; }
+  .se-notes-row textarea { min-height: 300px; height: 100%; resize: vertical; }
 
   /* New Contact button + modal */
   .cs-new-contact { flex: 0 0 auto; white-space: nowrap; }
@@ -3268,6 +3443,20 @@
   @media (max-width: 720px) {
     .chart-row { grid-template-columns: 1fr; }
   }
+
+  /* Consumer Insights (contacts-table analytics) */
+  .ci-section { margin-bottom: 1.8rem; }
+  .ci-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.1rem; }
+  .ci-kpi { padding: 0.95rem 1.05rem; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--glass-bg); }
+  .ci-kpi .v { font-family: 'Fraunces', serif; font-size: 1.7rem; font-weight: 800; color: var(--text-high); line-height: 1; }
+  .ci-kpi .l { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-low); margin-top: 0.35rem; }
+  .ci-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+  @media (max-width: 860px) { .ci-grid { grid-template-columns: 1fr; } }
+  .ci-canvas-wrap { position: relative; height: 250px; }
+  .ci-map { height: 380px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-border); }
+  .ci-select { background: var(--glass-bg); color: var(--text-high); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.3rem 0.55rem; font-size: 0.78rem; cursor: pointer; }
+  .ci-empty { display: grid; place-items: center; height: 100%; color: var(--text-low); font-size: 0.85rem; text-align: center; padding: 1rem; }
+  body[data-theme="light"] .ci-select { color: #0a1f3d; }
 
   .chart-card {
     position: relative;
@@ -5106,13 +5295,13 @@
   <button type="button" id="nav-dashboard" class="rail-btn requires-auth" aria-label="Open dashboard" title="Dashboard">
     <i class="ph ph-chart-line-up" aria-hidden="true"></i>
   </button>
-  <button type="button" id="nav-home" class="rail-btn requires-auth" aria-label="Resource finder" title="Resource Finder">
+  <button type="button" id="nav-home" class="rail-btn requires-auth" aria-label="Resource finder" title="Resource Finder" hidden>
     <i class="ph ph-house" aria-hidden="true"></i>
   </button>
   <button type="button" id="nav-contacts" class="rail-btn requires-auth" aria-label="Saved contacts" title="Contacts">
     <i class="ph ph-address-book" aria-hidden="true"></i>
   </button>
-  <button type="button" id="nav-intake-ai" class="rail-btn requires-auth" aria-label="Live intake AI" title="Live Intake AI">
+  <button type="button" id="nav-intake-ai" class="rail-btn requires-auth" aria-label="Live intake AI" title="Live Intake AI" hidden>
     <i class="ph ph-sparkle" aria-hidden="true"></i>
   </button>
   <div class="lang-wrap">
@@ -5553,6 +5742,39 @@
 
     <div class="tile-grid" id="dash-tiles"></div>
 
+    <!-- ============ CONSUMER INSIGHTS (from the Contacts table) ============ -->
+    <div class="ci-section">
+      <div class="dash-section-title" style="margin-bottom:0.85rem">
+        Consumer Insights <span class="chart-meta" id="ci-meta" style="margin-left:0.5rem"></span>
+      </div>
+      <div class="ci-kpis" id="ci-kpis"></div>
+      <div class="ci-grid">
+        <div class="chart-card">
+          <div class="chart-head"><span class="chart-title">Needs / Interests</span><span class="chart-meta" id="ci-needs-meta"></span></div>
+          <div class="ci-canvas-wrap"><canvas id="ci-needs-donut"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><span class="chart-title">Age Distribution</span><span class="chart-meta" id="ci-age-meta"></span></div>
+          <div class="ci-canvas-wrap"><canvas id="ci-age-bars"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <span class="chart-title">Top 5 Resources Referred</span>
+            <select id="ci-ref-filter" class="ci-select" aria-label="Filter referrals by need category"></select>
+          </div>
+          <div class="ci-canvas-wrap"><canvas id="ci-ref-bars"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><span class="chart-title">Contacts by ZIP</span><span class="chart-meta" id="ci-zip-meta"></span></div>
+          <div class="ci-canvas-wrap"><canvas id="ci-zip-bars"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-top:1.1rem">
+        <div class="chart-head"><span class="chart-title">Consumer Locations</span><span class="chart-meta" id="ci-map-meta"></span></div>
+        <div id="ci-map" class="ci-map" role="img" aria-label="Map of consumer locations"></div>
+      </div>
+    </div>
+
     <div class="chart-row">
       <div class="chart-card">
         <div class="chart-head">
@@ -5708,7 +5930,7 @@
       </div>
       <div class="cs-filters" id="cs-filters" role="tablist" aria-label="Filter by status"></div>
       <button type="button" class="ia-btn primary cs-new-contact" id="cs-new-contact">
-        <i class="ph ph-user-plus" aria-hidden="true"></i> New Contact
+        <i class="ph ph-user-plus" aria-hidden="true"></i> New Intake
       </button>
     </div>
 
@@ -5734,7 +5956,10 @@
           </div>
         </div>
         <span class="contact-status profile-status-chip" id="profile-status" data-status="new"></span>
-        <div class="cdr-section-title profile-info-title">Contact Info</div>
+        <div class="cdr-section-title profile-info-title" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
+          <span>Contact Info</span>
+          <button type="button" class="ia-btn" id="profile-edit-contact" style="padding:0.3rem 0.65rem;font-size:0.76rem"><i class="ph ph-pencil-simple" aria-hidden="true"></i> Edit</button>
+        </div>
         <div id="profile-info" class="cdr-info profile-info"></div>
       </aside>
 
@@ -5750,7 +5975,110 @@
           </button>
         </div>
         <div id="profile-sessions" class="cdr-sessions"></div>
+
+        <div class="cdr-section-head" style="margin-top:1.4rem">
+          <div>
+            <div class="cdr-section-title">Related Referrals</div>
+            <div class="profile-sessions-meta" id="profile-referrals-meta"></div>
+          </div>
+        </div>
+        <div id="profile-referrals" class="referral-list"></div>
       </section>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       STAFF INTAKE WIZARD — single contact-creation flow
+       ========================================== -->
+  <section class="step-panel" id="step-wizard" aria-label="New intake">
+    <button type="button" class="wiz-close" id="wiz-exit" aria-label="Close" title="Close">&times;</button>
+    <div class="wiz-top">
+      <div class="wiz-progress" id="wiz-progress" aria-hidden="true"></div>
+    </div>
+
+    <!-- 1 · Person info -->
+    <div class="wiz-step active" data-wiz="info">
+      <h2 class="step-title">New Intake &mdash; About the Person</h2>
+      <p class="step-subtitle">Collect the basics. Only a name is required.</p>
+      <div class="wiz-form">
+        <div class="field-row"><label class="field-label" for="wz-name">Full Name <span class="req">*</span></label><input class="field-input" id="wz-name" type="text" autocomplete="name" placeholder="Jane Smith"></div>
+        <div class="field-row two-col">
+          <div><label class="field-label" for="wz-phone">Phone</label><input class="field-input" id="wz-phone" type="tel" placeholder="(617) 000-0000"></div>
+          <div><label class="field-label" for="wz-email">Email</label><input class="field-input" id="wz-email" type="email" placeholder="jane@email.com"></div>
+        </div>
+        <div class="field-row two-col">
+          <div><label class="field-label" for="wz-age">Age</label><input class="field-input" id="wz-age" type="number" min="0" max="120" placeholder="72"></div>
+          <div></div>
+        </div>
+        <div class="field-row"><label class="field-label" for="wz-address">Street Address</label><input class="field-input" id="wz-address" type="text" autocomplete="street-address" placeholder="123 Washington St"></div>
+        <div class="field-row three-col">
+          <div><label class="field-label" for="wz-city">City</label><input class="field-input" id="wz-city" type="text" placeholder="Boston"></div>
+          <div><label class="field-label" for="wz-state">State</label><input class="field-input" id="wz-state" type="text" value="MA"></div>
+          <div><label class="field-label" for="wz-zip">ZIP</label><input class="field-input" id="wz-zip" type="text" inputmode="numeric" placeholder="02119"></div>
+        </div>
+      </div>
+      <div class="wiz-nav"><span></span><button class="btn-submit wiz-next" data-next="interests" type="button">Continue &rarr;</button></div>
+    </div>
+
+    <!-- 2 · Interests -->
+    <div class="wiz-step" data-wiz="interests">
+      <h2 class="step-title">What do they need help with?</h2>
+      <p class="step-subtitle">Pick the categories of interest. These drive the resources we show next.</p>
+      <div class="wiz-interests" id="wiz-interests"></div>
+      <div class="field-row" style="margin-top:1rem"><label class="field-label" for="wz-other">Other (not listed)</label><input class="field-input" id="wz-other" type="text" placeholder="Describe any other need"></div>
+      <div class="wiz-nav"><button class="ia-btn wiz-back" data-back="info" type="button">&larr; Back</button><button class="btn-submit wiz-next" data-next="resources" type="button">Find Resources &rarr;</button></div>
+    </div>
+
+    <!-- 3 · Resources: map + filter + ASAP + protective services + cart -->
+    <div class="wiz-step" data-wiz="resources">
+      <h2 class="step-title">Resources Near Them</h2>
+      <p class="step-subtitle" id="wiz-res-sub"></p>
+      <!-- Primary nav moved to the top so "Continue" isn't missed below the map -->
+      <div class="wiz-nav wiz-nav-top">
+        <button class="ia-btn wiz-back" data-back="interests" type="button">&larr; Back</button>
+        <button class="btn-submit wiz-next" data-next="share" type="button">Continue&nbsp;&middot;&nbsp;Selected&nbsp;(<span id="wiz-cart-count">0</span>)&nbsp;&rarr;</button>
+      </div>
+      <div class="wiz-res-layout">
+        <aside class="wiz-res-side">
+          <div class="wiz-side-title">Tap a category</div>
+          <div class="wiz-cat-icons" id="wiz-cat-icons"></div>
+          <div id="wiz-asap-wrap"></div>
+          <div id="wiz-ps-wrap"></div>
+        </aside>
+        <div class="wiz-res-main">
+          <div id="wiz-map" class="wiz-map" role="region" aria-label="Map of nearby resources"></div>
+        </div>
+        <aside class="wiz-res-right">
+          <div class="wiz-side-title">Resources</div>
+          <div class="wiz-res-list" id="wiz-res-list"></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- 4 · Share -->
+    <div class="wiz-step" data-wiz="share">
+      <h2 class="step-title">Share Selected Resources</h2>
+      <p class="step-subtitle">Review the list, then print it or email it to the client.</p>
+      <div class="wiz-cart" id="wiz-cart"></div>
+      <div class="field-row two-col" style="margin-top:1rem">
+        <div><label class="field-label" for="wz-share-email">Email to</label><input class="field-input" id="wz-share-email" type="email" placeholder="client@email.com"></div>
+        <div></div>
+      </div>
+      <div class="wiz-share-actions">
+        <button class="ia-btn" id="wiz-print" type="button"><i class="ph ph-printer" aria-hidden="true"></i> Print list</button>
+        <button class="ia-btn primary" id="wiz-email" type="button"><i class="ph ph-envelope-simple" aria-hidden="true"></i> Send email</button>
+      </div>
+      <div class="wiz-nav"><button class="ia-btn wiz-back" data-back="resources" type="button">&larr; Back</button><button class="btn-submit wiz-next" data-next="notes" type="button">Continue &rarr;</button></div>
+    </div>
+
+    <!-- 5 · Progress notes + save -->
+    <div class="wiz-step" data-wiz="notes">
+      <h2 class="step-title">Progress Notes</h2>
+      <p class="step-subtitle">Summarize the visit. Saving creates a session linked to this contact.</p>
+      <button type="button" class="ia-btn" id="wiz-add-referrals" hidden style="margin-bottom:1rem"><i class="ph ph-map-trifold" aria-hidden="true"></i> Add referrals &amp; resources</button>
+      <div class="field-row"><label class="field-label" for="wz-notes">Notes</label><textarea class="field-input" id="wz-notes" rows="6" placeholder="What happened in this session? Interests, referrals made, next steps…"></textarea></div>
+      <div class="ia-status" id="wiz-save-status"></div>
+      <div class="wiz-nav"><button class="ia-btn wiz-back" data-back="share" type="button">&larr; Back</button><button class="btn-submit" id="wiz-save" type="button"><i class="ph ph-floppy-disk" aria-hidden="true"></i> Save Contact &amp; Session</button></div>
     </div>
   </section>
 
@@ -5941,14 +6269,16 @@
         <input type="tel" id="cm-phone" placeholder="617-555-0100" autocomplete="off">
       </div>
       <div>
-        <label for="cm-zip">ZIP</label>
-        <input type="text" id="cm-zip" placeholder="02118" inputmode="numeric" autocomplete="off">
+        <label for="cm-email">Email</label>
+        <input type="email" id="cm-email" placeholder="name@example.com" autocomplete="off">
       </div>
     </div>
-    <label for="cm-email">Email</label>
-    <input type="email" id="cm-email" placeholder="name@example.com" autocomplete="off">
+    <label for="cm-age">Age</label>
+    <input type="number" id="cm-age" min="0" max="120" placeholder="72" inputmode="numeric" autocomplete="off">
     <label for="cm-address">Address</label>
-    <input type="text" id="cm-address" placeholder="Street, city" autocomplete="off">
+    <input type="text" id="cm-address" placeholder="Street, city, state" autocomplete="off">
+    <label for="cm-zip">ZIP</label>
+    <input type="text" id="cm-zip" placeholder="02118" inputmode="numeric" autocomplete="off">
     <label for="cm-needs">Needs</label>
     <input type="text" id="cm-needs" placeholder="e.g. Housing, SNAP" autocomplete="off">
     <label for="cm-status">Status</label>
@@ -6065,6 +6395,34 @@
   </div>
 </div>
 
+<!-- Session detail / edit modal (staff) -->
+<div class="form-modal-backdrop" id="session-edit-modal">
+  <div class="form-modal session-edit-card" role="dialog" aria-modal="true" aria-labelledby="se-title" style="position:relative">
+    <button type="button" class="wiz-close" id="se-close" aria-label="Close" title="Close" style="position:absolute;top:0.8rem;right:0.8rem;width:38px;height:38px;font-size:1.4rem">&times;</button>
+    <h3 id="se-title">Session</h3>
+    <p class="sub" id="se-sub"></p>
+    <div class="se-grid">
+      <div class="se-col">
+        <div class="csf-form">
+          <div class="csf-row"><label class="csf-label" for="se-date">Date</label><input type="date" id="se-date"></div>
+          <div class="csf-row"><label class="csf-label" for="se-topic">Topic / Interest</label><input type="text" id="se-topic"></div>
+          <div class="csf-row se-notes-row"><label class="csf-label" for="se-notes">Notes</label><textarea id="se-notes"></textarea></div>
+        </div>
+      </div>
+      <div class="se-col">
+        <div class="cdr-section-title">Referrals made this session</div>
+        <div id="se-referrals" class="referral-list"></div>
+        <button type="button" class="ia-btn" id="se-add-referrals" style="margin-top:0.6rem"><i class="ph ph-map-trifold" aria-hidden="true"></i> Add referrals &amp; resources</button>
+      </div>
+    </div>
+    <div class="csf-status" id="se-status"></div>
+    <div class="csf-actions">
+      <button type="button" class="ia-btn danger" id="se-delete"><i class="ph ph-trash" aria-hidden="true"></i> Delete</button>
+      <button type="button" class="ia-btn primary" id="se-save"><i class="ph ph-check" aria-hidden="true"></i> Save changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Ticket detail drawer (staff) -->
 <div class="drawer-backdrop" id="ticket-drawer-backdrop"></div>
 <aside class="drawer" id="ticket-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
@@ -6090,10 +6448,15 @@
     </div>
     <div class="modal-body" id="modal-body"></div>
     <div id="modal-map" class="modal-map" role="img" aria-label="Location map"></div>
+    <img id="modal-map-img" class="modal-map-img" alt="Map showing the location" hidden>
     <div class="modal-actions">
       <button class="modal-btn primary" id="modal-print" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         <span data-i18n="modal.print">Print</span>
+      </button>
+      <button class="modal-btn primary" id="modal-email" type="button">
+        <i class="ph ph-envelope-simple" aria-hidden="true" style="font-size:1rem"></i>
+        <span data-i18n="modal.email">Email</span>
       </button>
       <button class="modal-btn primary" id="modal-share" type="button">
         <i class="ph ph-share-network" aria-hidden="true" style="font-size:1rem"></i>
@@ -6146,6 +6509,7 @@ let CBES_MARKERS = null; // marker layer group
 let CBES_USER_MARKER = null;
 let MODAL_MAP = null;    // mini-map inside the resource detail modal
 let MODAL_MAP_MARKERS = null;
+let MODAL_RESOURCE = null; // the directory entry currently shown in the modal
 
 // ================================================================
 // App State
@@ -7060,7 +7424,7 @@ const Tracker = {
 // localStorage is an offline cache so the UI renders instantly and
 // keeps working if the network hiccups.
 // ----------------------------------------------------------------
-const CONTACTS_API_URL = 'https://script.google.com/macros/s/AKfycbxl7dyOBC0fCK3LhfxT62rFqrNBC6hVYuQ7eqKOeDetz-o2pavWogQxcuRrfjCBHRjceg/exec';
+const CONTACTS_API_URL = 'https://script.google.com/macros/s/AKfycbxb25RK-8FUX1DDGXmxLRWLx02GX3h7pN6WDTqm82rf48fSQUEfIgynflAxmQUDn8fI/exec';
 
 // ----------------------------------------------------------------
 // Sessions (placeholder) — localStorage-backed for demo.
@@ -7071,16 +7435,40 @@ const CONTACTS_API_URL = 'https://script.google.com/macros/s/AKfycbxl7dyOBC0fCK3
 const Sessions = {
   KEY: 'cbes-connects-sessions',
   all() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (_) { return []; } },
+  _write(list) { try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {} },
   forContact(id) { return this.all().filter(s => s.contactId === id)
                                        .sort((a,b) => String(b.createdAt||'').localeCompare(String(a.createdAt||''))); },
+  // Pull canonical sessions from the Google Sheet into the local cache.
+  async refresh() {
+    try {
+      const res = await fetch(CONTACTS_API_URL + '?what=sessions');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const list = await res.json();
+      const safe = Array.isArray(list) ? list : [];
+      this._write(safe);
+      return safe;
+    } catch (e) { console.warn('Sessions.refresh failed, using cache', e); return this.all(); }
+  },
   add(session) {
     const list = this.all();
-    list.push(Object.assign({ id: 's-' + Date.now(), createdAt: new Date().toISOString() }, session));
-    try { localStorage.setItem(this.KEY, JSON.stringify(list)); } catch (_) {}
+    const rec = Object.assign({ id: 's-' + Date.now() + Math.random().toString(36).slice(2, 5), createdAt: new Date().toISOString() }, session);
+    list.push(rec);
+    this._write(list);
+    apiPost({ action: 'saveSession', record: rec });
+    return rec;
+  },
+  get(id) { return this.all().find(s => s.id === id) || null; },
+  update(id, fields) {
+    const list = this.all();
+    const s = list.find(x => x.id === id);
+    if (!s) return;
+    Object.assign(s, fields, { updatedAt: new Date().toISOString() });
+    this._write(list);
+    apiPost({ action: 'saveSession', record: s });
   },
   remove(id) {
-    const list = this.all().filter(s => s.id !== id);
-    try { localStorage.setItem(this.KEY, JSON.stringify(list)); } catch (_) {}
+    this._write(this.all().filter(s => s.id !== id));
+    apiPost({ action: 'deleteSession', id });
   },
 };
 
@@ -7095,6 +7483,31 @@ const Campaigns = {
   all() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (_) { return []; } },
   _write(list) { try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {} },
   get(id) { return this.all().find(c => c.id === id) || null; },
+
+  // Pull Events + their CampaignMembers (junction) and merge into the
+  // {…event, enrollments:[…]} shape the dashboard renders.
+  async refresh() {
+    try {
+      const [evRes, memRes] = await Promise.all([
+        fetch(CONTACTS_API_URL + '?what=events'),
+        fetch(CONTACTS_API_URL + '?what=campaignMembers')
+      ]);
+      const events  = await evRes.json();
+      const members = await memRes.json();
+      const safeEv  = Array.isArray(events) ? events : [];
+      const safeMem = Array.isArray(members) ? members : [];
+      safeEv.forEach(ev => {
+        ev.enrollments = safeMem.filter(m => m.eventId === ev.id).map(m => ({
+          memberId: m.id, contactId: m.contactId || null, name: m.name || 'Unknown',
+          enrolledAt: m.enrolledAt || m.createdAt || '', staff: m.staff || ''
+        }));
+      });
+      safeEv.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      this._write(safeEv);
+      return safeEv;
+    } catch (e) { console.warn('Campaigns.refresh failed, using cache', e); return this.all(); }
+  },
+
   add(c) {
     const list = this.all();
     const rec = Object.assign({
@@ -7105,31 +7518,150 @@ const Campaigns = {
     }, c);
     list.unshift(rec);
     this._write(list);
+    const eventRec = Object.assign({}, rec); delete eventRec.enrollments;
+    apiPost({ action: 'saveEvent', record: eventRec });   // persist Event row
     return rec;
   },
-  remove(id) { this._write(this.all().filter(c => c.id !== id)); },
+
+  remove(id) {
+    this._write(this.all().filter(c => c.id !== id));
+    apiPost({ action: 'deleteEvent', id });               // cascades to members
+  },
+
   enroll(id, contact, staff) {
     const list = this.all();
     const c = list.find(x => x.id === id);
     if (!c) return false;
     if (!Array.isArray(c.enrollments)) c.enrollments = [];
-    // No double-enrollment of the same contact
     if (c.enrollments.some(e => e.contactId && e.contactId === contact.id)) return false;
-    c.enrollments.push({
-      contactId: contact.id || null,
-      name: contact.name || 'Unknown',
-      enrolledAt: new Date().toISOString(),
-      staff: staff || ''
-    });
+    const memberId = 'mbr-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const enrolledAt = new Date().toISOString();
+    c.enrollments.push({ memberId, contactId: contact.id || null, name: contact.name || 'Unknown', enrolledAt, staff: staff || '' });
     this._write(list);
+    apiPost({ action: 'addMember', record: { id: memberId, eventId: id, contactId: contact.id || null, name: contact.name || 'Unknown', staff: staff || '', enrolledAt } });
     return true;
   },
+
   unenroll(id, contactId) {
     const list = this.all();
     const c = list.find(x => x.id === id);
     if (!c || !Array.isArray(c.enrollments)) return;
     c.enrollments = c.enrollments.filter(e => e.contactId !== contactId);
     this._write(list);
+    apiPost({ action: 'removeMember', eventId: id, contactId });
+  }
+};
+
+// ----------------------------------------------------------------
+// Shared fire-and-forget POST to the Apps Script backend. Body is sent
+// as text/plain (no Content-Type header) so the browser skips the CORS
+// preflight — the script reads e.postData.contents either way.
+// ----------------------------------------------------------------
+function apiPost(payload) {
+  try {
+    return fetch(CONTACTS_API_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+  } catch (e) { return Promise.resolve(null); }
+}
+
+// ----------------------------------------------------------------
+// Leads — anonymous public-interface resource searches. Every time a
+// member of the public looks up resources (by address or ZIP) we log a
+// lead row so we can analyze who is reaching us and from where.
+// Backed by the Apps Script "Leads" tab. Fire-and-forget; de-duped per
+// search session so one person's session doesn't spam rows.
+// ----------------------------------------------------------------
+const Leads = {
+  _seen: {},
+  log(info) {
+    info = info || {};
+    const anonId = (typeof Tracker !== 'undefined' && Tracker.anonId) ? Tracker.anonId() : '';
+    // De-dupe: one lead per (anon + zip/address) per page load.
+    const key = anonId + '|' + (info.address || info.zip || '');
+    if (this._seen[key]) return;
+    this._seen[key] = true;
+    const record = {
+      anonId,
+      source: info.source || 'public-search',
+      age: (info.age != null ? info.age : (typeof state !== 'undefined' ? state.age : null)),
+      zip: info.zip || (typeof state !== 'undefined' ? state.zip : '') || '',
+      address: info.address || (typeof state !== 'undefined' ? state.address : '') || '',
+      lat: info.lat != null ? info.lat : (typeof state !== 'undefined' ? state.lat : null),
+      lng: info.lng != null ? info.lng : (typeof state !== 'undefined' ? state.lng : null),
+      interests: info.interests || [],
+      language: (typeof _lang !== 'undefined' ? _lang : 'en'),
+      createdAt: new Date().toISOString()
+    };
+    apiPost({ action: 'saveLead', record });
+  }
+};
+
+// ----------------------------------------------------------------
+// Referrals — the specific resource places a contact was referred to.
+// Contact-scoped, localStorage-backed (like Sessions). Each referral:
+// { id, contactId, name, category, address, phone, website, date, staff }
+// ----------------------------------------------------------------
+const Referrals = {
+  KEY: 'cbes-connects-contact-referrals',
+  all() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (_) { return []; } },
+  _write(list) { try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {} },
+  forContact(id) {
+    return this.all().filter(r => r.contactId === id)
+      .sort((a, b) => String(b.date || b.createdAt || '').localeCompare(String(a.date || a.createdAt || '')));
+  },
+  forSession(sessionId) {
+    return this.all().filter(r => r.sessionId === sessionId)
+      .sort((a, b) => String(b.date || b.createdAt || '').localeCompare(String(a.date || a.createdAt || '')));
+  },
+  // Pull canonical referrals from the Google Sheet into the local cache.
+  async refresh() {
+    try {
+      const res = await fetch(CONTACTS_API_URL + '?what=referrals');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const list = await res.json();
+      const safe = Array.isArray(list) ? list : [];
+      this._write(safe);
+      return safe;
+    } catch (e) { console.warn('Referrals.refresh failed, using cache', e); return this.all(); }
+  },
+  add(ref) {
+    const list = this.all();
+    const rec = Object.assign({ id: 'ref-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), createdAt: new Date().toISOString() }, ref);
+    list.push(rec);
+    this._write(list);
+    apiPost({ action: 'saveReferral', record: rec });
+    return rec;
+  },
+  // Save a batch of places for one contact, all dated `date` (default today),
+  // optionally linked to the session they were captured in.
+  addMany(contactId, places, staff, date, sessionId) {
+    if (!contactId || !Array.isArray(places) || !places.length) return 0;
+    const list = this.all();
+    let n = 0;
+    const d = date || (typeof todayISO === 'function' ? todayISO() : new Date().toISOString().slice(0, 10));
+    places.forEach(p => {
+      const name = p.name || '';
+      // skip exact duplicate (same contact + place + date + same session)
+      if (list.some(x => x.contactId === contactId && (x.name || '') === name && x.date === d && (x.sessionId || null) === (sessionId || null))) return;
+      const rec = {
+        id: 'ref-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+        contactId, sessionId: sessionId || null, name,
+        category: p.category || '',
+        address: [p.street, p.city, p.state].filter(Boolean).join(', ') || p.address || '',
+        phone: p.phone || '',
+        website: p.website || p.url || '',
+        date: d, staff: staff || '',
+        createdAt: new Date().toISOString()
+      };
+      list.push(rec);
+      apiPost({ action: 'saveReferral', record: rec });
+      n++;
+    });
+    this._write(list);
+    return n;
+  },
+  remove(id) {
+    this._write(this.all().filter(r => r.id !== id));
+    apiPost({ action: 'deleteReferral', id });
   }
 };
 
@@ -7180,10 +7712,14 @@ const Contacts = {
     const norm = (s) => String(s || '').trim().toLowerCase();
     const cache = this.all();
     const now = new Date().toISOString();
-    const idx = cache.findIndex(c =>
-      norm(c.name) === norm(record.name) &&
-      (norm(c.phone) === norm(record.phone) || norm(c.email) === norm(record.email))
-    );
+    // Editing an existing contact passes its id — match on that so changing the
+    // name/phone/email updates in place instead of creating a duplicate.
+    const idx = record.id
+      ? cache.findIndex(c => c.id === record.id)
+      : cache.findIndex(c =>
+          norm(c.name) === norm(record.name) &&
+          (norm(c.phone) === norm(record.phone) || norm(c.email) === norm(record.email))
+        );
     if (idx >= 0) {
       cache[idx] = Object.assign({}, cache[idx], record, { updatedAt: now });
     } else {
@@ -7359,10 +7895,11 @@ function applyAuthState() {
   const sess = Session.current();
   document.body.classList.toggle('is-authed', !!sess);
 
-  // If the user just signed in from the login panel, advance to the main flow
+  // If the user just signed in from the login panel, land on the dashboard (staff home)
   if (sess && $('step-login') && $('step-login').classList.contains('active')) {
-    showStep('step-age');
-    if (typeof setProgress === 'function') setProgress(1);
+    if ($('card')) $('card').classList.add('wide');
+    showStep('step-dashboard');
+    if (typeof renderDashboard === 'function') renderDashboard();
   }
   // If the user signed out while viewing the dashboard, return them home
   if (!sess && $('step-dashboard') && $('step-dashboard').classList.contains('active')) {
@@ -7580,10 +8117,11 @@ function haversineMiles(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-function pinIcon(isUser) {
+function pinIcon(isUser, variant) {
+  const cls = 'marker-pin' + (isUser ? ' marker-user' : '') + (variant ? ' marker-' + variant : '');
   return L.divIcon({
     className: '',
-    html: '<div class="marker-pin ' + (isUser ? 'marker-user' : '') + '"></div>',
+    html: '<div class="' + cls + '"></div>',
     iconSize: isUser ? [34, 44] : [26, 36],
     iconAnchor: isUser ? [17, 44] : [13, 36],
     popupAnchor: [0, isUser ? -40 : -32],
@@ -7592,11 +8130,12 @@ function pinIcon(isUser) {
 
 function ensureMap() {
   if (CBES_MAP) return;
-  CBES_MAP = L.map('cbes-map', { zoomControl: true, scrollWheelZoom: true }).setView(BOSTON_CENTROID, 12);
+  CBES_MAP = L.map('cbes-map', { zoomControl: true, scrollWheelZoom: true, doubleClickZoom: false }).setView(BOSTON_CENTROID, 12);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 19,
+    crossOrigin: 'anonymous',
   }).addTo(CBES_MAP);
   CBES_MARKERS = L.layerGroup().addTo(CBES_MAP);
 }
@@ -7685,6 +8224,7 @@ async function renderCategoryMap(category) {
     const m = L.marker(r._pt, { icon: pinIcon(false), title: r.name }).addTo(CBES_MARKERS);
     m.bindPopup(popupHTML(r));
     m._resName = r.name;
+    m.on('dblclick', () => openResourceModal(r));
   });
 
   // user marker — on top, with pulsing halo
@@ -7729,7 +8269,151 @@ async function renderCategoryMap(category) {
 // ================================================================
 // Resource detail modal
 // ================================================================
+// ---- Static map image, built client-side from CORS-enabled CARTO tiles ----
+// All keyless static-map *services* are dead/blocked, so we stitch the same
+// tiles the live map uses onto a canvas and draw pin(s) ourselves. No API key,
+// no external service — produces a real PNG we can attach to an email.
+function _lngToTileX(lng, z) { return (lng + 180) / 360 * Math.pow(2, z); }
+function _latToTileY(lat, z) {
+  const r = lat * Math.PI / 180;
+  return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * Math.pow(2, z);
+}
+
+// Draw a simple map pin (teardrop) centred horizontally on (x,y) with its tip
+// at y. Falls back gracefully if drawn off-canvas.
+function _drawPin(ctx, x, y, color) {
+  const rad = 9, tip = 13;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y - tip - rad, rad, Math.PI, 2 * Math.PI);     // head
+  ctx.lineTo(x + rad * 0.7, y - tip - rad + rad * 1.1);
+  ctx.lineTo(x, y);                                          // tip
+  ctx.lineTo(x - rad * 0.7, y - tip - rad + rad * 1.1);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.fillStyle = '#ffffff';
+  ctx.arc(x, y - tip - rad, rad * 0.42, 0, 2 * Math.PI);     // dot
+  ctx.fill();
+  ctx.restore();
+}
+
+// Returns a Promise<Blob> (PNG) of a static map centred on the resource, with a
+// pin on the resource and (if known) a pin on the user.
+function captureMapImage(r, w, h, zoom, opts) {
+  opts = opts || {};
+  w = w || 640; h = h || 420; zoom = zoom || 15;
+  const pt = (r && r._pt) || (r && r.lat && r.lng ? [parseFloat(r.lat), parseFloat(r.lng)] : null);
+  if (!pt) return Promise.resolve(null);
+  const [lat, lng] = pt;
+  const TS = 256, n = Math.pow(2, zoom);
+  const originX = _lngToTileX(lng, zoom) * TS - w / 2;   // top-left in world px
+  const originY = _latToTileY(lat, zoom) * TS - h / 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#e8eaed'; ctx.fillRect(0, 0, w, h);
+
+  const subs = ['a', 'b', 'c', 'd'];
+  const minTX = Math.floor(originX / TS), maxTX = Math.floor((originX + w) / TS);
+  const minTY = Math.floor(originY / TS), maxTY = Math.floor((originY + h) / TS);
+  const loads = [];
+  for (let tx = minTX; tx <= maxTX; tx++) {
+    for (let ty = minTY; ty <= maxTY; ty++) {
+      if (ty < 0 || ty >= n) continue;
+      const wrapX = ((tx % n) + n) % n;
+      const s = subs[Math.abs(tx + ty) % subs.length];
+      const url = 'https://' + s + '.basemaps.cartocdn.com/rastertiles/voyager/' + zoom + '/' + wrapX + '/' + ty + '.png';
+      const dx = tx * TS - originX, dy = ty * TS - originY;
+      loads.push(new Promise(res => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => { try { ctx.drawImage(img, dx, dy, TS, TS); } catch (e) {} res(); };
+        img.onerror = () => res();
+        img.src = url;
+      }));
+    }
+  }
+
+  return Promise.all(loads).then(() => {
+    _drawPin(ctx, w / 2, h / 2, '#1c75bc');               // resource (centre)
+    if (!opts.noUser && state.lat && state.lng) {          // user (if on-canvas)
+      const ux = _lngToTileX(state.lng, zoom) * TS - originX;
+      const uy = _latToTileY(state.lat, zoom) * TS - originY;
+      if (ux >= 0 && ux <= w && uy >= 0 && uy <= h) _drawPin(ctx, ux, uy, '#e23b3b');
+    }
+    return new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
+  });
+}
+
+// Plain-text block of the resource details for the email body.
+function resourceInfoText(r) {
+  const addr = r.street + ', ' + r.city + ', ' + r.state + ' ' + padZip(r.zip);
+  const lines = [r.name, r.category ? '(' + r.category + ')' : '', '', 'Address: ' + addr];
+  if (r.phone)       lines.push('Phone: ' + r.phone);
+  if (r.website)     lines.push('Website: ' + r.website);
+  if (r.hours)       lines.push('Hours: ' + r.hours);
+  if (r.eligibility) lines.push('Eligibility: ' + r.eligibility);
+  if (r.languages)   lines.push('Languages: ' + r.languages);
+  if (r.notes)       lines.push('Notes: ' + r.notes);
+  return lines.filter(l => l !== '').join('\n');
+}
+
+// Email the resource + a picture of the map. The map is rendered to a PNG with
+// captureMapImage(). On mobile (Web Share with file support) the PNG is attached
+// as a real file; on desktop we download the PNG (so the user can attach it) and
+// open a pre-filled mailto with the resource details.
+async function emailResourceWithMap(r) {
+  if (!r) return;
+  const addr = r.street + ', ' + r.city + ', ' + r.state + ' ' + padZip(r.zip);
+  const dir  = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr);
+  const subject = 'CB Connects — ' + r.name;
+  const info    = resourceInfoText(r);
+
+  let blob = null;
+  try { blob = await captureMapImage(r, 640, 420, 15); } catch (e) { blob = null; }
+
+  // Mobile / PWA share sheet — attach the actual map image file.
+  if (blob && navigator.canShare) {
+    try {
+      const file = new File([blob], 'map.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: subject, text: info + '\n\nDirections: ' + dir });
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // user canceled the share sheet
+      // otherwise fall through to download + mailto
+    }
+  }
+
+  // Desktop — download the map PNG so the user can attach it, then open mailto.
+  let noteSaved = false;
+  if (blob) {
+    try {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (r.name || 'resource').replace(/[^\w]+/g, '_').slice(0, 60) + '_map.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      noteSaved = true;
+      if (typeof showToast === 'function') showToast(t('modal.map_downloaded', 'Map image saved — attach it to your email'));
+    } catch (e) { noteSaved = false; }
+  }
+
+  const body = info
+             + '\n\nDirections: ' + dir
+             + (noteSaved ? '\n\n(A map image was saved to your downloads — attach it to this email.)' : '')
+             + '\n\n— Central Boston Elder Services';
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(subject)
+                       + '&body=' + encodeURIComponent(body);
+}
+
 function openResourceModal(r) {
+  MODAL_RESOURCE = r;
   const addr = r.street + ', ' + r.city + ', ' + r.state + ' ' + padZip(r.zip);
   const dir = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr);
 
@@ -7756,6 +8440,16 @@ function openResourceModal(r) {
   modal.hidden = false;
   modal.classList.add('open');
 
+  // Pre-render a static map snapshot for printing (live Leaflet tiles don't
+  // print reliably). Hidden on screen; shown via @media print CSS.
+  const mapImg = $('modal-map-img');
+  if (mapImg) {
+    mapImg.removeAttribute('src');
+    captureMapImage(r, 640, 380, 15)
+      .then(blob => { if (blob) mapImg.src = URL.createObjectURL(blob); })
+      .catch(() => {});
+  }
+
   // Render mini-map showing user + resource
   setTimeout(() => {
     if (!MODAL_MAP) {
@@ -7770,6 +8464,7 @@ function openResourceModal(r) {
         attribution: '&copy; OSM &copy; CARTO',
         subdomains: 'abcd',
         maxZoom: 19,
+        crossOrigin: 'anonymous',
       }).addTo(MODAL_MAP);
       MODAL_MAP_MARKERS = L.layerGroup().addTo(MODAL_MAP);
     }
@@ -7804,6 +8499,7 @@ function closeResourceModal() {
   $('resource-modal').addEventListener('click', e => { if (e.target.id === 'resource-modal') closeResourceModal(); });
   document.querySelector('.modal-close').addEventListener('click', closeResourceModal);
   $('modal-print').addEventListener('click', () => window.print());
+  $('modal-email').addEventListener('click', () => emailResourceWithMap(MODAL_RESOURCE));
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && $('resource-modal').classList.contains('open')) closeResourceModal();
   });
@@ -7905,7 +8601,7 @@ $('age-next-btn').addEventListener('click', () => {
   }
   state.age = age;
   setProgress(2);
-  showStep(age >= 65 ? 'step-address' : 'step-zip');
+  showStep(age >= 60 ? 'step-address' : 'step-zip');
 });
 $('age-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('age-next-btn').click(); });
 
@@ -7928,7 +8624,7 @@ $('back-from-zip').addEventListener('click', () => { setProgress(1); showStep('s
 // Back from map view → return to the category buttons (senior or zip path)
 $('back-from-map').addEventListener('click', () => {
   $('card').classList.remove('wide');
-  showStep(state.age >= 65 ? 'step-results-senior' : 'step-results-zip');
+  showStep(state.age >= 60 ? 'step-results-senior' : 'step-results-zip');
 });
 
 // ================================================================
@@ -8610,9 +9306,12 @@ $('nav-dashboard').addEventListener('click', () => {
   $('card').classList.add('wide');
   renderDashboard();
   showStep('step-dashboard');
-  // Pull fresh contacts + tickets from the Google Sheet in the background
-  Contacts.refresh().then(() => renderContacts()).catch(() => {});
+  // Pull fresh contacts + tickets + events from the Google Sheet in the background
+  Contacts.refresh().then(() => { renderContacts(); renderConsumerInsights(); }).catch(() => {});
   Tickets.refresh().then(() => renderTickets()).catch(() => {});
+  if (typeof Campaigns !== 'undefined' && Campaigns.refresh) Campaigns.refresh().then(() => renderCampaigns()).catch(() => {});
+  if (typeof Sessions !== 'undefined' && Sessions.refresh) Sessions.refresh().catch(() => {});
+  if (typeof Referrals !== 'undefined' && Referrals.refresh) Referrals.refresh().then(() => renderConsumerInsights()).catch(() => {});
 });
 
 $('nav-contacts').addEventListener('click', () => {
@@ -9078,6 +9777,624 @@ if ($('cmpf-save')) $('cmpf-save').addEventListener('click', () => {
 if ($('enroll-cancel')) $('enroll-cancel').addEventListener('click', () => closeModal('enroll-modal'));
 if ($('enroll-search')) $('enroll-search').addEventListener('input', e => renderEnrollResults(e.target.value));
 
+// ================================================================
+// Staff Intake Wizard — the single contact-creation flow
+//   info → interests → resources(map+filter+ASAP+PS+cart) → share → notes → save
+// ================================================================
+const Wizard = {
+  STEPS: ['info', 'interests', 'resources', 'share', 'notes'],
+  data: {}, cart: [], cats: [], activeCat: null,
+  map: null, markers: null, userMarker: null, items: [], contactId: null,
+
+  open(prefill) {
+    this.data = {}; this.cart = []; this.cats = []; this.activeCat = null; this.items = []; this.contactId = (prefill && prefill.id) || null;
+    ['wz-name','wz-phone','wz-email','wz-age','wz-zip','wz-address','wz-city','wz-other','wz-notes','wz-share-email'].forEach(id => { const e = $(id); if (e) e.value = ''; });
+    if ($('wz-state')) $('wz-state').value = 'MA';
+    if ($('wz-name')) $('wz-name').style.borderColor = '';
+    if (prefill) {
+      if ($('wz-name')) $('wz-name').value = prefill.name || '';
+      if ($('wz-phone')) $('wz-phone').value = prefill.phone || '';
+      if ($('wz-email')) $('wz-email').value = prefill.email || '';
+      if ($('wz-zip')) $('wz-zip').value = prefill.zip || '';
+      if ($('wz-address')) $('wz-address').value = prefill.address || '';
+      if ($('wz-age') && Number.isFinite(prefill.age)) $('wz-age').value = prefill.age;
+    }
+    this.sessionMode = false;
+    this.existingSessionId = null;
+    if ($('wiz-add-referrals')) $('wiz-add-referrals').hidden = true;
+    this.renderInterests();
+    if ($('wiz-cart-count')) $('wiz-cart-count').textContent = '0';
+    this._status('', null);
+    this.goto('info');
+    if ($('card')) $('card').classList.add('wide');
+    showStep('step-wizard');
+  },
+
+  // Launch as a NEW SESSION for an existing contact: prefill, jump to notes.
+  // From notes the staffer can optionally tap "Add referrals & resources".
+  openSession(contact) {
+    this.open(contact || {});
+    this.sessionMode = true;
+    this.contactId = (contact && contact.id) || null;
+    if ($('wiz-add-referrals')) $('wiz-add-referrals').hidden = false;
+    this.goto('notes');
+  },
+
+  // Add referrals/resources to an EXISTING session (from the session popup).
+  // On save we append referrals to that session instead of creating a new one.
+  addToSession(contact, sessionId) {
+    this.open(contact || {});
+    this.sessionMode = true;
+    this.existingSessionId = sessionId;
+    this.contactId = (contact && contact.id) || null;
+    const ex = (typeof Sessions !== 'undefined') ? Sessions.get(sessionId) : null;
+    if (ex && $('wz-notes')) $('wz-notes').value = ex.notes || '';
+    if ($('wiz-add-referrals')) $('wiz-add-referrals').hidden = true;
+    this.goto('interests');
+  },
+
+  goto(name) {
+    document.querySelectorAll('#step-wizard .wiz-step').forEach(s => s.classList.toggle('active', s.dataset.wiz === name));
+    const i = this.STEPS.indexOf(name);
+    if ($('wiz-progress')) $('wiz-progress').innerHTML = this.STEPS.map((s, idx) => '<span class="dot ' + (idx < i ? 'done' : idx === i ? 'active' : '') + '"></span>').join('');
+    if (name === 'resources') this.showResources();
+    if (name === 'share') this.renderCart();
+    window.scrollTo(0, 0);
+  },
+
+  collectInfo() {
+    this.data = Object.assign(this.data, {
+      name: ($('wz-name').value || '').trim(),
+      phone: ($('wz-phone').value || '').trim(),
+      email: ($('wz-email').value || '').trim(),
+      age: parseInt($('wz-age').value, 10),
+      zip: ($('wz-zip').value || '').trim(),
+      address: ($('wz-address').value || '').trim(),
+      city: ($('wz-city').value || '').trim(),
+      state: ($('wz-state').value || '').trim()
+    });
+    return this.data;
+  },
+
+  renderInterests() {
+    const wrap = $('wiz-interests');
+    if (!wrap) return;
+    wrap.innerHTML = RESOURCES.filter(r => !r.fullWidth).map(r =>
+      '<label class="wiz-int"><input type="checkbox" value="' + escapeHTML(r.category) + '">' + r.icon + '<span>' + escapeHTML(r.title) + '</span></label>'
+    ).join('');
+    wrap.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => cb.closest('.wiz-int').classList.toggle('checked', cb.checked)));
+  },
+
+  selectedInterests() {
+    const cats = [...document.querySelectorAll('#wiz-interests input:checked')].map(c => c.value);
+    const other = ($('wz-other').value || '').trim();
+    return { cats, other };
+  },
+
+  async showResources() {
+    const d = this.collectInfo();
+    const { cats } = this.selectedInterests();
+    this.cats = cats; this.activeCat = null;
+    if ($('wiz-res-sub')) $('wiz-res-sub').innerHTML = d.address
+      ? ('Near <strong>' + escapeHTML([d.address, d.city, d.state].filter(Boolean).join(', ')) + '</strong>')
+      : (d.zip ? ('ZIP ' + escapeHTML(d.zip)) : 'Greater Boston');
+    if (!DIRECTORY.length) { try { await loadDirectory(); } catch (_) {} }
+    let center = BOSTON_CENTROID;
+    const addr = [d.address, d.city, d.state, d.zip].filter(Boolean).join(', ');
+    try {
+      if (addr.length > 4) { const g = await geocode(addr); center = [g.lat, g.lng]; this.data.lat = g.lat; this.data.lng = g.lng; }
+      else if (d.zip) { const g = await geocode(d.zip + ', USA'); center = [g.lat, g.lng]; this.data.lat = g.lat; this.data.lng = g.lng; }
+    } catch (_) {}
+    this._renderAsapAndPS();
+    this._renderCatIcons(center);
+    this._ensureMap(center);
+    this._renderMapList(center);
+  },
+
+  _ensureMap(center) {
+    if (!this.map) {
+      this.map = L.map('wiz-map', { zoomControl: true, scrollWheelZoom: true, doubleClickZoom: false }).setView(center, 13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, crossOrigin: 'anonymous', attribution: '&copy; OSM &copy; CARTO' }).addTo(this.map);
+      this.markers = L.layerGroup().addTo(this.map);
+      // wire the "Add to list" button inside marker popups (once)
+      this.map.on('popupopen', (e) => {
+        const node = e.popup.getElement && e.popup.getElement();
+        const r = e.popup._source && e.popup._source._wizRes;
+        if (!node || !r) return;
+        const btn = node.querySelector('.wiz-pop-add');
+        if (!btn) return;
+        const sync = () => {
+          const inCart = this.cart.some(x => x._key === this._key(r));
+          btn.classList.toggle('added', inCart);
+          btn.innerHTML = inCart ? '<i class="ph ph-check"></i> Added to list' : '<i class="ph ph-plus"></i> Add to list';
+        };
+        sync();
+        btn.onclick = (ev) => { ev.preventDefault(); const inCart = this.cart.some(x => x._key === this._key(r)); this._toggleCart(r, !inCart); sync(); this._syncListChecks(); };
+      });
+    } else {
+      this.map.setView(center, 13);
+    }
+    setTimeout(() => { try { this.map.invalidateSize(); } catch (_) {} }, 250);
+  },
+
+  _cbesItem() {
+    return { name: 'Central Boston Elder Services', category: 'CBES', street: '2315 Washington Street', city: 'Boston', state: 'MA', zip: '02119', phone: '(617) 277-7416', website: 'https://centralboston.org/', lat: 42.32663, lng: -71.08372 };
+  },
+
+  _renderCbesCard() {
+    const wrap = $('wiz-cbes-card');
+    if (!wrap) return;
+    const item = this._cbesItem(); item._key = this._key(item);
+    const inCart = this.cart.some(x => x._key === item._key);
+    wrap.innerHTML =
+      '<label class="wiz-cbes-row ' + (inCart ? 'in-cart' : '') + '">' +
+        '<input type="checkbox" ' + (inCart ? 'checked' : '') + '>' +
+        '<i class="ph-duotone ph-buildings" aria-hidden="true"></i>' +
+        '<span class="cmain"><span class="cname">Central Boston Elder Services</span>' +
+        '<span class="csub">2315 Washington St &middot; (617) 277-7416 &middot; <a href="https://centralboston.org/" target="_blank" rel="noopener" onclick="event.stopPropagation()">centralboston.org</a></span></span>' +
+      '</label>';
+    const cb = wrap.querySelector('input');
+    cb.addEventListener('change', () => { this._toggleCart(item, cb.checked); wrap.querySelector('.wiz-cbes-row').classList.toggle('in-cart', cb.checked); });
+  },
+
+  _popupHTML(r) {
+    return '<b>' + escapeHTML(r.name || '') + '</b><br>' +
+      escapeHTML([r.street, r.city].filter(Boolean).join(', ')) +
+      (r.phone ? '<br><a href="tel:' + r.phone.replace(/[^0-9+]/g, '') + '">' + escapeHTML(r.phone) + '</a>' : '') +
+      (r.website ? '<br><a href="' + escapeHTML(r.website) + '" target="_blank" rel="noopener">Website</a>' : '') +
+      '<br><button type="button" class="wiz-pop-add"><i class="ph ph-plus"></i> Add to list</button>';
+  },
+
+  _syncListChecks() {
+    const list = $('wiz-res-list');
+    if (list) list.querySelectorAll('.wiz-res-row').forEach(row => {
+      const r = this.items[+row.dataset.i]; if (!r) return;
+      const inCart = this.cart.some(x => x._key === this._key(r));
+      row.classList.toggle('in-cart', inCart);
+      const cb = row.querySelector('input'); if (cb) cb.checked = inCart;
+      this._updateMarkerIcon(r);
+    });
+    if ($('wiz-cart-count')) $('wiz-cart-count').textContent = this.cart.length;
+  },
+
+  _renderCatIcons(center) {
+    const wrap = $('wiz-cat-icons');
+    if (!wrap) return;
+    if (!this.cats.length) { wrap.innerHTML = '<span class="wiz-res-empty">No categories selected — go back to add some.</span>'; return; }
+    const byCat = {};
+    RESOURCES.forEach(r => { if (!r.fullWidth) byCat[r.category] = r; });
+    wrap.innerHTML = this.cats.map(c => {
+      const r = byCat[c] || { icon: '<i class="ph ph-folder-simple"></i>', title: c };
+      return '<button type="button" class="wiz-cat-icon ' + (this.activeCat === c ? 'active' : '') + '" data-cat="' + escapeHTML(c) + '">' + r.icon + '<span>' + escapeHTML(r.title) + '</span></button>';
+    }).join('');
+    wrap.querySelectorAll('.wiz-cat-icon').forEach(b => b.addEventListener('click', () => {
+      // single selection — toggle off if the same icon is tapped again
+      this.activeCat = (this.activeCat === b.dataset.cat) ? null : b.dataset.cat;
+      wrap.querySelectorAll('.wiz-cat-icon').forEach(x => x.classList.toggle('active', x.dataset.cat === this.activeCat));
+      this._renderMapList(center);
+    }));
+  },
+
+  _renderAsapAndPS() {
+    const d = this.data;
+    const asapWrap = $('wiz-asap-wrap');
+    const psWrap = $('wiz-ps-wrap');
+    if (asapWrap) {
+      const known = Number.isFinite(d.age);
+      const props = (d.lat && d.lng) ? findASAP(d.lat, d.lng) : null;
+      // Show the ASAP section when the contact is a known senior (60+), OR when
+      // the age is unknown but their address falls inside a real ASAP catchment
+      // (covers existing contacts saved before age was tracked). Hide it only
+      // for known under-60 contacts or when there's nothing useful to show.
+      const showAsap = (d.lat && d.lng) && ((known && d.age >= 60) || (!known && props));
+      if (showAsap) {
+        this._asapProps = props;
+        asapWrap.innerHTML = this._asapHTML(props);
+        asapWrap.querySelectorAll('.wiz-asap-svc[data-reveal]').forEach(p => p.addEventListener('change', () => {
+          const sub = asapWrap.querySelector('#' + p.dataset.reveal);
+          if (sub) { sub.hidden = !p.checked; if (!p.checked) sub.querySelectorAll('input').forEach(c => c.checked = false); }
+        }));
+        // Reveal "Make Referral" once at least one ASAP service is checked.
+        const refBtn = asapWrap.querySelector('#wiz-asap-refer');
+        const statusEl = asapWrap.querySelector('#wiz-asap-refer-status');
+        const syncRefer = () => {
+          const any = asapWrap.querySelectorAll('.wiz-asap-svc:checked').length > 0;
+          if (refBtn) refBtn.hidden = !any;
+          if (statusEl && any) statusEl.textContent = '';
+        };
+        asapWrap.querySelectorAll('.wiz-asap-svc, .wiz-asap-sub').forEach(cb => cb.addEventListener('change', syncRefer));
+        if (refBtn) refBtn.addEventListener('click', () => this._makeAsapReferral());
+        syncRefer();
+      } else { asapWrap.innerHTML = ''; }
+    }
+    if (psWrap) psWrap.innerHTML = this._psHTML();
+  },
+
+  _asapHTML(props) {
+    const svc =
+      '<div class="asap-services" style="margin-top:.8rem">' +
+        '<p class="asap-services-label">Services they may qualify for — note for the ASAP</p>' +
+        '<div class="svc-grid">' +
+          '<label class="svc-item svc-parent"><input type="checkbox" class="wiz-asap-svc" value="Home Maker" data-reveal="wz-svc-hm"><span><i class="ph ph-broom"></i>Home Maker</span></label>' +
+          '<div class="svc-sub" id="wz-svc-hm" hidden>' +
+            '<label class="svc-item"><input type="checkbox" class="wiz-asap-sub" data-parent="Home Maker" value="Medical Escort"><span>Medical Escort</span></label>' +
+            '<label class="svc-item"><input type="checkbox" class="wiz-asap-sub" data-parent="Home Maker" value="Cleaning"><span>Cleaning</span></label>' +
+            '<label class="svc-item"><input type="checkbox" class="wiz-asap-sub" data-parent="Home Maker" value="Laundry at home"><span>Laundry at home</span></label>' +
+          '</div>' +
+          '<label class="svc-item"><input type="checkbox" class="wiz-asap-svc" value="Home Delivered Meals"><span><i class="ph ph-bowl-food"></i>Home Delivered Meals</span></label>' +
+          '<label class="svc-item svc-parent"><input type="checkbox" class="wiz-asap-svc" value="Personal Care" data-reveal="wz-svc-pc"><span><i class="ph ph-hand-soap"></i>Personal Care</span></label>' +
+          '<div class="svc-sub" id="wz-svc-pc" hidden>' +
+            '<label class="svc-item"><input type="checkbox" class="wiz-asap-sub" data-parent="Personal Care" value="Bathing"><span>Bathing</span></label>' +
+            '<label class="svc-item"><input type="checkbox" class="wiz-asap-sub" data-parent="Personal Care" value="Dressing"><span>Dressing</span></label>' +
+          '</div>' +
+          '<label class="svc-item"><input type="checkbox" class="wiz-asap-svc" value="Companion"><span><i class="ph ph-users"></i>Companion</span></label>' +
+        '</div>' +
+        '<button type="button" class="wiz-asap-refer" id="wiz-asap-refer" hidden><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Make Referral</button>' +
+        '<div class="wiz-asap-refer-status" id="wiz-asap-refer-status" aria-live="polite"></div>' +
+      '</div>';
+    if (!props) {
+      return '<div class="asap-banner"><p class="asap-eyebrow">Aging Services Access Point</p><p class="asap-name">No ASAP matched</p><p class="asap-details">Address may be outside Massachusetts.</p>' + svc + '</div>';
+    }
+    let det = '';
+    if (props.ASAP_ADDRESS) det += props.ASAP_ADDRESS;
+    if (props.ASAP_PHONE_NUMBER) det += ' &bull; <a href="tel:' + props.ASAP_PHONE_NUMBER.replace(/\s/g, '') + '">' + escapeHTML(props.ASAP_PHONE_NUMBER) + '</a>';
+    return '<div class="asap-banner"><p class="asap-eyebrow">Their Aging Services Access Point</p><p class="asap-name">' + escapeHTML(props.AGING_SERVICES_ACCESS_POINT || '') + '</p><p class="asap-details">' + det + '</p>' + svc + '</div>';
+  },
+
+  _psHTML() {
+    return '<div class="ps-card" role="region" aria-label="Report elder abuse">' +
+      '<div class="ps-card-head"><span class="ps-icon" aria-hidden="true"><i class="ph-duotone ph-shield-warning"></i></span>' +
+      '<div><p class="ps-eyebrow">Protective Services</p><p class="ps-title">Report abuse, neglect, or financial exploitation</p></div></div>' +
+      '<div class="ps-actions"><a class="ps-call" href="tel:8009222275"><i class="ph ph-phone-call"></i><span><span class="ps-call-label">Elder Abuse Hotline</span><strong>800-922-2275</strong></span></a>' +
+      '<a class="ps-web" href="https://www.mass.gov/info-details/report-abuse-of-adults-aged-60" target="_blank" rel="noopener"><i class="ph ph-globe"></i><span>Report at mass.gov</span></a></div></div>';
+  },
+
+  _collectAsapServices() {
+    const wrap = $('wiz-asap-wrap');
+    if (!wrap) return [];
+    const out = [];
+    wrap.querySelectorAll('.wiz-asap-svc:checked').forEach(p => {
+      const subs = [...wrap.querySelectorAll('.wiz-asap-sub:checked')].filter(s => s.dataset.parent === p.value).map(s => s.value);
+      out.push(subs.length ? p.value + ': ' + subs.join(', ') : p.value);
+    });
+    return out;
+  },
+
+  // Create a referral record for the ASAP services the staffer checked.
+  // Attaches to the contact's referral history when we have a saved contact;
+  // otherwise logs a dashboard ticket so an unsaved intake doesn't lose it.
+  _makeAsapReferral() {
+    const svcs = this._collectAsapServices();
+    if (!svcs.length) return;
+    const props = this._asapProps || null;
+    const asapName = (props && props.AGING_SERVICES_ACCESS_POINT) || 'ASAP';
+    const btn = $('wiz-asap-refer');
+    const statusEl = $('wiz-asap-refer-status');
+    const cur = (typeof Session !== 'undefined' && Session.current()) ? Session.current() : null;
+    const staff = cur ? (cur.name || cur.email || '') : '';
+    const date = (typeof todayISO === 'function') ? todayISO() : new Date().toISOString().slice(0, 10);
+    const d = this.data || {};
+
+    if (this.contactId && typeof Referrals !== 'undefined') {
+      // Contact-attached referral record (shows in the contact's referral list)
+      Referrals.add({
+        contactId: this.contactId,
+        sessionId: this.existingSessionId || null,
+        name: asapName,
+        category: 'ASAP Services — ' + svcs.join(', '),
+        address: (props && props.ASAP_ADDRESS) || '',
+        phone: (props && props.ASAP_PHONE_NUMBER) || '',
+        website: (props && props.ASAP_WEBSITE) || '',
+        services: svcs,
+        date, staff, kind: 'asap'
+      });
+      if (typeof renderContactReferrals === 'function') renderContactReferrals(this.contactId);
+    } else if (typeof Tickets !== 'undefined') {
+      // Unsaved new intake — log a dashboard referral ticket instead.
+      Tickets.create({
+        kind: 'referral',
+        title: 'ASAP referral → ' + asapName + ' — ' + svcs.join('; '),
+        description: 'Referred to: ' + asapName + '\nServices: ' + svcs.join(', ') +
+          (d.name ? '\nClient: ' + d.name : '') +
+          ((d.address || d.zip) ? '\nAddress: ' + [d.address, d.city, d.state, d.zip].filter(Boolean).join(', ') : '') +
+          '\nReferred by: ' + staff,
+        priority: 'normal',
+        submitterName: d.name || '', submitterPhone: d.phone || '', submitterEmail: d.email || '', submitterZip: d.zip || '',
+        meta: { type: 'asap_referral', asap: asapName, services: svcs, referredBy: staff, contactId: null }
+      }).catch(() => {});
+    }
+
+    if (typeof Tracker !== 'undefined') Tracker.log('ticket_created', { kind: 'referral', source: 'wizard_asap' });
+    if (btn) btn.hidden = true;
+    if (statusEl) statusEl.textContent = '✓ Referral created for ' + asapName + ' — ' + svcs.join(', ');
+  },
+
+  _key(r) { return (r.name || '') + '|' + (r.street || r.address || ''); },
+
+  _renderMapList(center) {
+    const list = $('wiz-res-list');
+    if (!list) return;
+    if (this.markers) this.markers.clearLayers();
+    if (this.userMarker) { try { this.userMarker.remove(); } catch (_) {} this.userMarker = null; }
+    // Map stays clear until a single category is chosen
+    if (!this.activeCat) {
+      list.innerHTML = '<div class="wiz-res-empty">Tap a category on the left to see resources here and on the map.</div>';
+      try { this.map.setView(center, 12); } catch (_) {}
+      return;
+    }
+    const items = DIRECTORY
+      .filter(r => r.category === this.activeCat)
+      .filter(r => (r.active || 'TRUE').toUpperCase() !== 'FALSE')
+      .filter(hasCoords)
+      .map(r => { const pt = [parseFloat(r.lat), parseFloat(r.lng)]; return Object.assign({}, r, { _pt: pt, _dist: haversineMiles(center, pt) }); })
+      .sort((a, b) => a._dist - b._dist)
+      .slice(0, 40);
+    this.items = items;
+    if (!items.length) { list.innerHTML = '<div class="wiz-res-empty">No mapped resources in this category yet.</div>'; return; }
+    items.forEach(r => {
+      const inCart = this.cart.some(x => x._key === this._key(r));
+      const m = L.marker(r._pt, { icon: pinIcon(false, inCart ? 'green' : ''), title: r.name }).addTo(this.markers);
+      m._wizRes = r; r._marker = m;
+      m.bindPopup(this._popupHTML(r));
+      m.on('dblclick', (e) => { L.DomEvent.stop(e); openResourceModal(r); });
+    });
+    if (this.data.lat && this.data.lng) {
+      this.userMarker = L.marker([this.data.lat, this.data.lng], { icon: pinIcon(true), zIndexOffset: 1000 }).addTo(this.map);
+      this.userMarker.bindPopup('<b>Client location</b>');
+      try { this.map.setView([this.data.lat, this.data.lng], 13); } catch (_) {}
+    }
+    list.innerHTML = items.map((r, i) => {
+      const inCart = this.cart.some(x => x._key === this._key(r));
+      return '<div class="wiz-res-row ' + (inCart ? 'in-cart' : '') + '" data-i="' + i + '">' +
+          '<input type="checkbox" ' + (inCart ? 'checked' : '') + ' aria-label="Add to list">' +
+          '<span class="rmain"><span class="rname">' + escapeHTML(r.name || 'Resource') + '</span>' +
+          '<span class="rmeta">' + escapeHTML([r.street, r.city].filter(Boolean).join(', ')) + (r.phone ? ' &middot; ' + escapeHTML(r.phone) : '') + '</span>' +
+          '<span class="rcat">' + escapeHTML(r.category || '') + '</span></span>' +
+          '<span class="rdist">' + (Number.isFinite(r._dist) ? r._dist.toFixed(1) + ' mi' : '') + '</span>' +
+        '</div>';
+    }).join('');
+    list.querySelectorAll('.wiz-res-row').forEach(row => {
+      const r = items[+row.dataset.i];
+      const cb = row.querySelector('input');
+      // Check = add to list + turn the map marker green.
+      cb.addEventListener('change', () => { this._toggleCart(r, cb.checked); row.classList.toggle('in-cart', cb.checked); this._updateMarkerIcon(r); });
+      // Click the row (not the checkbox) = highlight it + focus/open its marker.
+      row.addEventListener('click', (e) => {
+        if (e.target === cb) return;
+        list.querySelectorAll('.wiz-res-row.active').forEach(x => x.classList.remove('active'));
+        row.classList.add('active');
+        try { this.map.setView(r._pt, 16, { animate: true }); } catch (_) {}
+        if (r._marker) r._marker.openPopup();
+      });
+      row.addEventListener('dblclick', (e) => { e.preventDefault(); openResourceModal(r); });
+    });
+  },
+
+  // Repaint a resource's marker green (in list) or default (not), if it's drawn.
+  _updateMarkerIcon(r) {
+    if (!r || !r._marker) return;
+    const inCart = this.cart.some(x => x._key === this._key(r));
+    try { r._marker.setIcon(pinIcon(false, inCart ? 'green' : '')); } catch (_) {}
+  },
+
+  _toggleCart(r, on) {
+    const k = this._key(r); r._key = k;
+    if (on) { if (!this.cart.some(x => x._key === k)) this.cart.push(r); }
+    else { this.cart = this.cart.filter(x => x._key !== k); }
+    if ($('wiz-cart-count')) $('wiz-cart-count').textContent = this.cart.length;
+    this._renderSelectedPanel();
+  },
+
+  // Live panel (top-left of the resources step) listing what's been selected.
+  _renderSelectedPanel() {
+    const wrap = $('wiz-selected-wrap');
+    if (!wrap) return;
+    if (!this.cart.length) {
+      wrap.innerHTML = '<div class="wiz-selected-empty">Nothing selected yet. Check resources on the right — they turn green and show up here.</div>';
+      return;
+    }
+    wrap.innerHTML = this.cart.map((r, i) =>
+      '<div class="wiz-sel-row"><i class="ph-fill ph-check-circle wiz-sel-check" aria-hidden="true"></i>' +
+      '<span class="smain"><span class="sname">' + escapeHTML(r.name || 'Resource') + '</span>' +
+      '<span class="smeta">' + escapeHTML([r.street, r.city].filter(Boolean).join(', ')) + (r.phone ? ' · ' + escapeHTML(r.phone) : '') + '</span></span>' +
+      '<button type="button" class="srm" data-selrm="' + i + '" aria-label="Remove">&times;</button></div>'
+    ).join('');
+    wrap.querySelectorAll('[data-selrm]').forEach(b => b.addEventListener('click', () => {
+      this.cart.splice(+b.dataset.selrm, 1);
+      if ($('wiz-cart-count')) $('wiz-cart-count').textContent = this.cart.length;
+      this._renderSelectedPanel();
+      this._syncListChecks();
+    }));
+  },
+
+  renderCart() {
+    if ($('wiz-cart-count')) $('wiz-cart-count').textContent = this.cart.length;
+    const wrap = $('wiz-cart');
+    if (!wrap) return;
+    if (!this.cart.length) { wrap.innerHTML = '<div class="wiz-res-empty">No resources selected. Go back and check the ones you want to share.</div>'; return; }
+    wrap.innerHTML = this.cart.map((r, i) =>
+      '<div class="wiz-cart-row"><span class="cmain"><span class="cname">' + escapeHTML(r.name || '') + '</span>' +
+      '<span class="cmeta">' + escapeHTML([r.street, r.city].filter(Boolean).join(', ')) + (r.phone ? ' &middot; ' + escapeHTML(r.phone) : '') + (r.website ? ' &middot; ' + escapeHTML(r.website) : '') + '</span></span>' +
+      '<button type="button" data-rm="' + i + '" aria-label="Remove">&times;</button></div>').join('');
+    wrap.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { this.cart.splice(+b.dataset.rm, 1); this.renderCart(); }));
+    if ($('wz-share-email') && !$('wz-share-email').value && this.data.email) $('wz-share-email').value = this.data.email;
+  },
+
+  _mapsLink(r) {
+    if (r.lat && r.lng) return 'https://www.google.com/maps/search/?api=1&query=' + r.lat + ',' + r.lng;
+    const q = [r.name, r.street, r.city, r.state].filter(Boolean).join(', ');
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+  },
+
+  _shareBody() {
+    return this.cart.map(r => '• ' + (r.name || '') +
+      (r.street ? '\n  ' + [r.street, r.city, r.state].filter(Boolean).join(', ') : '') +
+      (r.phone ? '\n  ' + r.phone : '') + (r.website ? '\n  ' + r.website : '') +
+      '\n  Map: ' + this._mapsLink(r)).join('\n\n');
+  },
+
+  // Snapshot the wizard map (with every selected resource pinned) while the
+  // Resources step is still visible — stash it for the print view.
+  async prepareShareMap() {
+    this._mapImg = null;
+    if (typeof html2canvas === 'undefined' || !this.map || !this.cart.length) return;
+    const el = document.getElementById('wiz-map');
+    if (!el) return;
+    const pts = this.cart.filter(r => r.lat && r.lng).map(r => [parseFloat(r.lat), parseFloat(r.lng)]);
+    if (!pts.length) return;
+    const tmp = L.layerGroup().addTo(this.map);
+    pts.forEach(p => L.marker(p, { icon: pinIcon(false) }).addTo(tmp));
+    try {
+      if (pts.length === 1) this.map.setView(pts[0], 15);
+      else this.map.fitBounds(pts, { padding: [30, 30], maxZoom: 15 });
+      this.map.invalidateSize();
+    } catch (_) {}
+    await new Promise(res => setTimeout(res, 700));
+    try { const c = await html2canvas(el, { useCORS: true, backgroundColor: '#ffffff', logging: false }); this._mapImg = c.toDataURL('image/png'); } catch (_) { this._mapImg = null; }
+    try { tmp.remove(); } catch (_) {}
+  },
+
+  shareEmail() {
+    if (!this.cart.length) { this._status('Select at least one resource first.', false); this.goto('resources'); return; }
+    const to = ($('wz-share-email').value || '').trim();
+    const subject = 'Resources from Central Boston Elder Services';
+    const body = 'Hello' + (this.data.name ? ' ' + this.data.name : '') + ',\n\nHere are the resources we discussed:\n\n' + this._shareBody() +
+      '\n\n(Tap each "Map:" link to open the location. A printable copy with a map image is available from your case manager.)\n\n— Central Boston Elder Services';
+    window.location.href = 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    if (typeof Tracker !== 'undefined') Tracker.log('wizard_share_email', { count: this.cart.length });
+  },
+
+  // A self-contained PNG data URL of a single resource's location (resource pin
+  // only — no client pin, no other resources), for embedding in the print page.
+  async _resourceMapDataURL(r) {
+    try {
+      const blob = await captureMapImage(r, 520, 300, 15, { noUser: true });
+      if (!blob) return null;
+      return await new Promise(res => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = () => res(null);
+        fr.readAsDataURL(blob);
+      });
+    } catch (_) { return null; }
+  },
+
+  async print() {
+    if (!this.cart.length) { this.goto('resources'); return; }
+    // Open the print window synchronously (popup blockers need the user gesture).
+    const w = window.open('', '_blank');
+    if (!w) { this._status('Allow pop-ups to print.', false); return; }
+    w.document.write('<!doctype html><title>Resources — CBES</title><body style="font-family:system-ui,Segoe UI,sans-serif;padding:2rem;color:#0a1f3d">Preparing printable resources&hellip;</body>');
+    w.document.close();
+
+    // One map image per selected resource (rendered in parallel).
+    const items = await Promise.all(this.cart.map(async r => ({ r, img: await this._resourceMapDataURL(r) })));
+    const rows = items.map(({ r, img }) =>
+      '<li class="res">' +
+        '<div class="rhead">' + escapeHTML(r.name || 'Resource') + '</div>' +
+        '<div class="rmeta">' + escapeHTML([r.street, r.city, r.state].filter(Boolean).join(', ')) +
+          (r.phone ? '<br>' + escapeHTML(r.phone) : '') +
+          (r.website ? '<br>' + escapeHTML(r.website) : '') + '</div>' +
+        (img
+          ? '<img class="rmap" src="' + img + '" alt="Map of ' + escapeHTML(r.name || 'resource') + '">'
+          : '<div class="rmeta">Map: ' + escapeHTML(this._mapsLink(r)) + '</div>') +
+      '</li>'
+    ).join('');
+
+    const css = 'body{font-family:system-ui,Segoe UI,sans-serif;padding:2rem;color:#0a1f3d}' +
+      'h1{color:#10306e;font-size:1.3rem;margin:0 0 1.2rem}' +
+      'ul.rlist{list-style:none;padding:0;margin:0}' +
+      'li.res{margin:0 0 1.6rem;padding:0 0 1.4rem;border-bottom:1px solid #e2e6ec;page-break-inside:avoid}' +
+      '.rhead{font-weight:700;font-size:1.05rem;color:#10306e}' +
+      '.rmeta{font-size:0.9rem;line-height:1.5;margin:0.3rem 0 0.7rem;color:#33415a}' +
+      '.rmap{display:block;width:100%;max-width:520px;border:1px solid #ccc;border-radius:8px}' +
+      '@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+    w.document.open();
+    w.document.write('<html><head><title>Resources — CBES</title><style>' + css + '</style></head><body>' +
+      '<h1>Resources for ' + escapeHTML(this.data.name || 'Client') + '</h1>' +
+      '<ul class="rlist">' + rows + '</ul></body></html>');
+    w.document.close(); w.focus();
+    setTimeout(() => { try { w.print(); } catch (_) {} }, 500);
+    if (typeof Tracker !== 'undefined') Tracker.log('wizard_share_print', { count: this.cart.length });
+  },
+
+  async save() {
+    const d = this.collectInfo();
+    if (!d.name) { this.goto('info'); $('wz-name').focus(); $('wz-name').style.borderColor = 'var(--error)'; return; }
+    const btn = $('wiz-save'); const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="ia-spinner"></span> Saving…';
+    this._status('Saving contact & session…', null);
+    const { cats, other } = this.selectedInterests();
+    const interests = cats.concat(other ? ['Other: ' + other] : []);
+    const address = [d.address, d.city, d.state].filter(Boolean).join(', ') || null;
+    const notes = ($('wz-notes').value || '').trim();
+    const asapSvcs = this._collectAsapServices();
+    const selected = this.cart.map(r => r.name).filter(Boolean);
+    // Capture exact coordinates for the contact (for later location analytics).
+    // Use what the resources step already geocoded; otherwise geocode now.
+    if ((d.lat == null || d.lng == null) && address) {
+      try { const g = await geocode(address); d.lat = g.lat; d.lng = g.lng; this.data.lat = g.lat; this.data.lng = g.lng; } catch (_) {}
+    }
+    try {
+      const rec = { name: d.name, phone: d.phone || null, email: d.email || null, address, zip: d.zip || null, age: Number.isFinite(d.age) ? d.age : null, lat: (d.lat != null ? d.lat : null), lng: (d.lng != null ? d.lng : null), source: this.sessionMode ? 'staff-session' : 'staff-wizard', notes };
+      if (interests.length) rec.needs = interests.join(', ');
+      await Contacts.save(rec);
+      const norm = s => String(s || '').trim().toLowerCase();
+      const saved = Contacts.all().find(c => norm(c.name) === norm(d.name) && (norm(c.phone) === norm(d.phone) || norm(c.email) === norm(d.email)));
+      const cid = saved ? saved.id : this.contactId;
+      const cur = (typeof Session !== 'undefined') ? Session.current() : null;
+      const staffName = cur ? (cur.name || cur.email || '') : '';
+      const sessNotes = [
+        notes,
+        interests.length ? ('Interests: ' + interests.join(', ')) : '',
+        asapSvcs.length ? ('ASAP services flagged: ' + asapSvcs.join('; ')) : '',
+        selected.length ? ('Resources shared: ' + selected.join('; ')) : ''
+      ].filter(Boolean).join('\n\n');
+      let sessId;
+      if (this.existingSessionId) {
+        // Append to the session the staffer opened — don't create a new one
+        Sessions.update(this.existingSessionId, { notes: notes });
+        sessId = this.existingSessionId;
+      } else {
+        const sess = Sessions.add({ contactId: cid, date: todayISO(), topic: this.sessionMode ? 'Session' : 'Intake', notes: sessNotes, staff: staffName });
+        sessId = sess && sess.id;
+      }
+      // Save the checked places as related referrals (dated today, linked to this session)
+      if (cid && this.cart.length) {
+        Referrals.addMany(cid, this.cart, staffName, todayISO(), sessId);
+      }
+      if (typeof Tracker !== 'undefined') Tracker.log('wizard_intake_saved', { name: d.name, resources: selected.length });
+      this._status('Saved — opening the contact record…', true);
+      setTimeout(() => { if (typeof openContactProfile === 'function' && cid) openContactProfile(cid); else { showStep('step-contacts'); if (typeof renderContactsScreen === 'function') renderContactsScreen(); } }, 600);
+    } catch (e) {
+      this._status('Save failed: ' + (e.message || e), false);
+    } finally { btn.disabled = false; btn.innerHTML = old; }
+  },
+
+  _status(msg, ok) {
+    const el = $('wiz-save-status'); if (!el) return;
+    el.textContent = msg || ''; el.classList.remove('error', 'success');
+    if (ok === false) el.classList.add('error'); else if (ok === true) el.classList.add('success');
+  }
+};
+
+(function wireWizard() {
+  if ($('wiz-exit')) $('wiz-exit').addEventListener('click', () => {
+    if ($('card')) $('card').classList.add('wide');
+    if (Wizard.sessionMode && Wizard.contactId && typeof openContactProfile === 'function') { openContactProfile(Wizard.contactId); return; }
+    showStep('step-contacts'); if (typeof renderContactsScreen === 'function') renderContactsScreen();
+  });
+  document.querySelectorAll('#step-wizard .wiz-next').forEach(b => b.addEventListener('click', async () => {
+    const next = b.dataset.next;
+    if (next === 'interests') { Wizard.collectInfo(); if (!Wizard.data.name) { $('wz-name').focus(); $('wz-name').style.borderColor = 'var(--error)'; return; } $('wz-name').style.borderColor = ''; }
+    Wizard.goto(next);
+  }));
+  document.querySelectorAll('#step-wizard .wiz-back').forEach(b => b.addEventListener('click', () => Wizard.goto(b.dataset.back)));
+  if ($('wiz-add-referrals')) $('wiz-add-referrals').addEventListener('click', () => Wizard.goto('interests'));
+  if ($('wiz-print')) $('wiz-print').addEventListener('click', () => Wizard.print());
+  if ($('wiz-email')) $('wiz-email').addEventListener('click', () => Wizard.shareEmail());
+  if ($('wiz-save')) $('wiz-save').addEventListener('click', () => Wizard.save());
+})();
+
 $('dash-export').addEventListener('click', () => {
   Tracker.log('export_json', { count: Tracker.all().length });
   Tracker.export();
@@ -9136,6 +10453,127 @@ const DONUT_COLORS = [
 // Expand state per section — persists for the life of the tab
 const _expand = { resources: false, categories: false };
 
+// ================================================================
+// Consumer Insights — analytics built from the Contacts table + Referrals.
+// (Distinct from the search-event charts above.) Uses Chart.js + Leaflet.
+// ================================================================
+const _ciCharts = {};
+let _ciMap = null, _ciMapLayer = null;
+const CI_PALETTE = ['#1ab8d4', '#f0a500', '#34b584', '#7a5cff', '#ff6a78', '#3cc8aa', '#ffb13c', '#5aa9e6', '#e6a0dc', '#8cbe6e', '#ff8a5c', '#a0d2eb'];
+
+function _ciStyle() {
+  if (typeof Chart === 'undefined') return;
+  const light = document.body.getAttribute('data-theme') === 'light';
+  Chart.defaults.color = light ? '#33415a' : 'rgba(255,255,255,0.72)';
+  Chart.defaults.font.family = "'Geist', ui-sans-serif, system-ui, sans-serif";
+  Chart.defaults.borderColor = light ? 'rgba(10,31,61,0.08)' : 'rgba(255,255,255,0.08)';
+}
+function _ciDestroy(id) { if (_ciCharts[id]) { try { _ciCharts[id].destroy(); } catch (_) {} delete _ciCharts[id]; } }
+function _ciKpi(v, l) { return '<div class="ci-kpi"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>'; }
+
+function _ciDonut(id, counts) {
+  const el = document.getElementById(id); if (!el || typeof Chart === 'undefined') return;
+  _ciDestroy(id);
+  const labels = Object.keys(counts); if (!labels.length) return;
+  _ciCharts[id] = new Chart(el, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: labels.map(k => counts[k]), backgroundColor: labels.map((_, i) => CI_PALETTE[i % CI_PALETTE.length]), borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } } }
+  });
+}
+function _ciBar(id, labels, data, label, horizontal) {
+  const el = document.getElementById(id); if (!el || typeof Chart === 'undefined') return;
+  _ciDestroy(id); if (!labels.length) return;
+  _ciCharts[id] = new Chart(el, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: label || '', data, backgroundColor: '#1ab8d4', borderRadius: 6, maxBarThickness: 40 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { precision: 0 } }, y: { ticks: { precision: 0 } } } }
+  });
+}
+
+function renderConsumerInsights() {
+  if (typeof Chart === 'undefined' || typeof Contacts === 'undefined') return;
+  _ciStyle();
+  const contacts = Contacts.all() || [];
+  const referrals = (typeof Referrals !== 'undefined') ? (Referrals.all() || []) : [];
+
+  // KPIs
+  const ages = contacts.map(c => parseInt(c.age, 10)).filter(a => Number.isFinite(a) && a > 0 && a < 121);
+  const avgAge = ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : '—';
+  const seniorPct = ages.length ? Math.round(ages.filter(a => a >= 60).length / ages.length * 100) + '%' : '—';
+  const geocoded = contacts.filter(c => parseFloat(c.lat) && parseFloat(c.lng)).length;
+  if ($('ci-kpis')) $('ci-kpis').innerHTML = [
+    _ciKpi(contacts.length, 'Contacts'), _ciKpi(avgAge, 'Avg Age'),
+    _ciKpi(seniorPct, 'Age 60+'), _ciKpi(geocoded, 'Geocoded')
+  ].join('');
+  if ($('ci-meta')) $('ci-meta').textContent = contacts.length + ' contacts';
+
+  // Needs donut — needs field is comma-separated
+  const needCounts = {};
+  contacts.forEach(c => String(c.needs || '').split(',').map(s => s.trim()).filter(Boolean)
+    .forEach(n => { needCounts[n] = (needCounts[n] || 0) + 1; }));
+  _ciDonut('ci-needs-donut', needCounts);
+  if ($('ci-needs-meta')) $('ci-needs-meta').textContent = Object.keys(needCounts).length + ' categories';
+
+  // Age buckets
+  const bLabels = ['<60', '60–69', '70–79', '80–89', '90+'], bCounts = [0, 0, 0, 0, 0];
+  ages.forEach(a => { bCounts[a < 60 ? 0 : a < 70 ? 1 : a < 80 ? 2 : a < 90 ? 3 : 4]++; });
+  _ciBar('ci-age-bars', bLabels, bCounts, 'Contacts');
+  if ($('ci-age-meta')) $('ci-age-meta').textContent = ages.length + ' with age';
+
+  // Contacts by ZIP (top 12)
+  const zipCounts = {};
+  contacts.forEach(c => { const z = String(c.zip || '').trim(); if (z) zipCounts[z] = (zipCounts[z] || 0) + 1; });
+  const zipTop = Object.entries(zipCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  _ciBar('ci-zip-bars', zipTop.map(z => z[0]), zipTop.map(z => z[1]), 'Contacts');
+  if ($('ci-zip-meta')) $('ci-zip-meta').textContent = Object.keys(zipCounts).length + ' ZIPs';
+
+  // Top 5 referred resources (filterable by need category)
+  _ciBuildRefFilter(referrals);
+  _ciRefBars(referrals);
+
+  // Consumer location map
+  _ciMapRender(contacts);
+}
+
+function _ciBuildRefFilter(referrals) {
+  const sel = $('ci-ref-filter'); if (!sel) return;
+  const cats = Array.from(new Set(referrals.map(r => (r.category || '').trim()).filter(Boolean))).sort();
+  const prev = sel.value || '__all';
+  sel.innerHTML = '<option value="__all">All categories</option>' + cats.map(c => '<option value="' + escapeHTML(c) + '">' + escapeHTML(c) + '</option>').join('');
+  sel.value = (prev === '__all' || cats.indexOf(prev) >= 0) ? prev : '__all';
+  if (!sel._wired) { sel.addEventListener('change', () => _ciRefBars((typeof Referrals !== 'undefined') ? Referrals.all() : [])); sel._wired = true; }
+}
+function _ciRefBars(referrals) {
+  const sel = $('ci-ref-filter'); const cat = sel ? sel.value : '__all';
+  const filtered = (cat && cat !== '__all') ? referrals.filter(r => (r.category || '').trim() === cat) : referrals;
+  const nameCounts = {};
+  filtered.forEach(r => { const n = r.name || '—'; nameCounts[n] = (nameCounts[n] || 0) + 1; });
+  const top = Object.entries(nameCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  _ciBar('ci-ref-bars', top.map(t => t[0]), top.map(t => t[1]), 'Referrals', true);
+}
+
+function _ciMapRender(contacts) {
+  const host = document.getElementById('ci-map'); if (!host || typeof L === 'undefined') return;
+  const pts = contacts.filter(c => parseFloat(c.lat) && parseFloat(c.lng)).map(c => ({ c, pt: [parseFloat(c.lat), parseFloat(c.lng)] }));
+  if (!_ciMap) {
+    _ciMap = L.map('ci-map', { zoomControl: true, scrollWheelZoom: false }).setView(BOSTON_CENTROID, 11);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, crossOrigin: 'anonymous', attribution: '&copy; OSM &copy; CARTO' }).addTo(_ciMap);
+    _ciMapLayer = L.layerGroup().addTo(_ciMap);
+  }
+  _ciMapLayer.clearLayers();
+  pts.forEach(({ c, pt }) => {
+    L.marker(pt, { icon: pinIcon(false), title: c.name || '' })
+      .bindPopup('<b>' + escapeHTML(c.name || 'Contact') + '</b>' + (c.address ? '<br>' + escapeHTML(c.address) : ''))
+      .addTo(_ciMapLayer);
+  });
+  if ($('ci-map-meta')) $('ci-map-meta').textContent = pts.length + ' located';
+  setTimeout(() => { try { _ciMap.invalidateSize(); if (pts.length) _ciMap.fitBounds(pts.map(p => p.pt), { padding: [40, 40], maxZoom: 14 }); } catch (_) {} }, 150);
+}
+
 function renderDashboard() {
   const events = Tracker.all();
   const sess = Session.current();
@@ -9192,6 +10630,9 @@ function renderDashboard() {
 
   // Follow-up contacts roster
   renderContacts();
+
+  // Consumer Insights — analytics from the Contacts table + referrals
+  renderConsumerInsights();
 
   // ASAP region activity map
   renderDashMap(events);
@@ -9540,14 +10981,37 @@ function renderContactsScreen() {
 }());
 
 // ---- New Contact modal -------------------------------------------
-function openContactModal() {
-  ['cm-name', 'cm-phone', 'cm-email', 'cm-zip', 'cm-address', 'cm-needs'].forEach(id => {
-    const e = document.getElementById(id); if (e) e.value = '';
+let _editContactId = null; // set when the contact modal is opened to EDIT
+
+function openContactModal(contact) {
+  const g = id => document.getElementById(id);
+  ['cm-name', 'cm-phone', 'cm-email', 'cm-zip', 'cm-address', 'cm-needs', 'cm-age'].forEach(id => {
+    const e = g(id); if (e) e.value = '';
   });
-  const st = document.getElementById('cm-status'); if (st) st.value = 'new';
-  const msg = document.getElementById('cm-status-msg'); if (msg) { msg.textContent = ''; msg.className = 'csf-status'; }
+  const st = g('cm-status'); if (st) st.value = 'new';
+  const msg = g('cm-status-msg'); if (msg) { msg.textContent = ''; msg.className = 'csf-status'; }
+
+  _editContactId = (contact && contact.id) || null;
+  const titleEl = g('contact-modal-title');
+  const submitEl = g('cm-submit');
+  if (_editContactId) {
+    // Prefill for editing an existing contact
+    if (g('cm-name'))    g('cm-name').value = contact.name || '';
+    if (g('cm-phone'))   g('cm-phone').value = contact.phone || '';
+    if (g('cm-email'))   g('cm-email').value = contact.email || '';
+    if (g('cm-zip'))     g('cm-zip').value = contact.zip || '';
+    if (g('cm-age'))     g('cm-age').value = Number.isFinite(contact.age) ? contact.age : (contact.age || '');
+    if (g('cm-address')) g('cm-address').value = contact.address || '';
+    if (g('cm-needs'))   g('cm-needs').value = contact.needs || '';
+    if (st)              st.value = contact.status || 'new';
+    if (titleEl)  titleEl.textContent = 'Edit Contact';
+    if (submitEl) submitEl.textContent = 'Save Changes';
+  } else {
+    if (titleEl)  titleEl.textContent = 'New Contact';
+    if (submitEl) submitEl.textContent = 'Add Contact';
+  }
   openModal('contact-modal');
-  setTimeout(() => { const n = document.getElementById('cm-name'); if (n) n.focus(); }, 60);
+  setTimeout(() => { const n = g('cm-name'); if (n) n.focus(); }, 60);
 }
 
 (function wireContactModal() {
@@ -9556,7 +11020,8 @@ function openContactModal() {
   const cancelBtn = $('cm-cancel');
   const submitBtn = $('cm-submit');
   const modal = $('contact-modal');
-  if (openBtn) openBtn.addEventListener('click', openContactModal);
+  // The single contact-creation path is now the intake wizard
+  if (openBtn) openBtn.addEventListener('click', () => { if (typeof Wizard !== 'undefined') Wizard.open(); });
   if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal('contact-modal'));
   if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('contact-modal'); });
   document.addEventListener('keydown', (e) => {
@@ -9571,16 +11036,19 @@ function openContactModal() {
       $('cm-name').focus();
       return;
     }
+    const ageRaw = parseInt(($('cm-age') ? $('cm-age').value : '').trim(), 10);
     const record = {
       name,
       phone:   $('cm-phone').value.trim(),
       email:   $('cm-email').value.trim(),
       zip:     $('cm-zip').value.trim(),
+      age:     Number.isFinite(ageRaw) ? ageRaw : null,
       address: $('cm-address').value.trim(),
       needs:   $('cm-needs').value.trim(),
       status:  $('cm-status').value || 'new',
       followUp: true
     };
+    if (_editContactId) record.id = _editContactId;   // update in place
     const oldHTML = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="csf-spinner"></span> Saving…';
@@ -9588,14 +11056,26 @@ function openContactModal() {
     try {
       await Contacts.save(record);  // optimistic cache write + server sync
     } catch (e) {
-      console.warn('New contact save failed (kept locally)', e);
+      console.warn('Contact save failed (kept locally)', e);
     }
+    const wasEdit = !!_editContactId;
+    const editedId = _editContactId;
+    _editContactId = null;
     submitBtn.disabled = false;
     submitBtn.innerHTML = oldHTML;
     closeModal('contact-modal');
     renderContactsScreen();
     if (typeof renderContacts === 'function') renderContacts();
-    if (typeof Tracker !== 'undefined' && Tracker.log) { try { Tracker.log('contact_created_manual', {}); } catch (_) {} }
+    // If we were editing the contact whose profile is open, refresh it in place.
+    if (wasEdit && typeof openContactProfile === 'function' && editedId && _activeContactId === editedId) openContactProfile(editedId);
+    if (typeof Tracker !== 'undefined' && Tracker.log) { try { Tracker.log(wasEdit ? 'contact_edited' : 'contact_created_manual', {}); } catch (_) {} }
+  });
+
+  // "Edit" button on the contact profile → open the modal prefilled.
+  const editBtn = $('profile-edit-contact');
+  if (editBtn) editBtn.addEventListener('click', () => {
+    const c = Contacts.all().find(x => x.id === _activeContactId);
+    if (c) openContactModal(c);
   });
 }());
 
@@ -9639,9 +11119,55 @@ function openContactProfile(contactId) {
 
   hideSessionForm();
   renderContactSessions(contactId);
+  renderContactReferrals(contactId);
+  // Pull this contact's sessions + referrals from the Sheet, then re-render.
+  Promise.all([
+    (typeof Sessions !== 'undefined' && Sessions.refresh) ? Sessions.refresh() : Promise.resolve(),
+    (typeof Referrals !== 'undefined' && Referrals.refresh) ? Referrals.refresh() : Promise.resolve()
+  ]).then(() => {
+    if (_activeContactId === contactId) { renderContactSessions(contactId); renderContactReferrals(contactId); }
+  }).catch(() => {});
 
   $('card').classList.add('wide');
   showStep('step-contact-profile');
+}
+
+function renderContactReferrals(contactId) {
+  const wrap = document.getElementById('profile-referrals');
+  const meta = document.getElementById('profile-referrals-meta');
+  if (!wrap) return;
+  const list = Referrals.forContact(contactId);
+  if (meta) meta.textContent = list.length ? (list.length === 1 ? '1 referral' : list.length + ' referrals') : '';
+  if (!list.length) {
+    wrap.innerHTML = '<div class="cdr-empty"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>No referrals yet. They\'re saved when you check resources during an intake or session.</div>';
+    return;
+  }
+  const fmt = d => { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch (_) { return d; } };
+  const COLLAPSE_AT = 3; // show this many, hide the rest behind a toggle
+  const rowHTML = (r, i) =>
+    '<div class="referral-row' + (i >= COLLAPSE_AT ? ' rr-extra' : '') + '"' + (i >= COLLAPSE_AT ? ' hidden' : '') + '>' +
+      '<span class="rr-icon" aria-hidden="true"><i class="ph-duotone ph-map-pin"></i></span>' +
+      '<div class="rr-main"><div class="rr-title">' + escapeHTML(r.name || 'Resource') + '</div>' +
+        '<div class="rr-sub">' + escapeHTML([r.category, r.address, r.phone].filter(Boolean).join(' · ')) + '</div></div>' +
+      '<span class="rr-time">' + escapeHTML(fmt(r.date)) +
+        '<button type="button" class="cdr-session-del" data-rmref="' + escapeHTML(r.id) + '" aria-label="Delete referral" title="Delete" style="margin-left:.5rem"><i class="ph ph-trash"></i></button>' +
+      '</span>' +
+    '</div>';
+  const toggleHTML = list.length > COLLAPSE_AT
+    ? '<button type="button" class="rr-toggle" id="rr-toggle">See all ' + list.length + ' referrals <i class="ph ph-caret-down"></i></button>'
+    : '';
+  wrap.innerHTML = list.map(rowHTML).join('') + toggleHTML;
+
+  const toggle = document.getElementById('rr-toggle');
+  if (toggle) toggle.addEventListener('click', () => {
+    const expanded = toggle.classList.toggle('expanded');
+    wrap.querySelectorAll('.rr-extra').forEach(el => { el.hidden = !expanded; });
+    toggle.innerHTML = expanded
+      ? 'Show less <i class="ph ph-caret-up"></i>'
+      : 'See all ' + list.length + ' referrals <i class="ph ph-caret-down"></i>';
+  });
+
+  wrap.querySelectorAll('[data-rmref]').forEach(b => b.addEventListener('click', () => { Referrals.remove(b.dataset.rmref); renderContactReferrals(contactId); }));
 }
 
 function renderContactSessions(contactId) {
@@ -9697,7 +11223,69 @@ function renderContactSessions(contactId) {
       renderContactSessions(contactId);
     });
   });
+
+  // Click a session to open it for editing (+ its related referrals)
+  wrap.querySelectorAll('.cdr-session').forEach(row => {
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => { const sid = row.dataset.sessionId; if (sid) openSessionEdit(sid, contactId); });
+  });
 }
+
+// ---- Session detail / edit modal (with related referrals) ----
+let _seSessionId = null, _seContactId = null;
+function openSessionEdit(sessionId, contactId) {
+  const s = Sessions.get(sessionId);
+  if (!s) return;
+  _seSessionId = sessionId; _seContactId = contactId || s.contactId;
+  const g = id => document.getElementById(id);
+  const dt = s.date || (s.createdAt ? String(s.createdAt).slice(0, 10) : todayISO());
+  g('se-title').textContent = s.topic || 'Session';
+  g('se-sub').textContent = (dt ? 'Logged ' + dt : '') + (s.staff ? ' · ' + s.staff : '');
+  g('se-date').value = dt;
+  g('se-topic').value = s.topic || '';
+  g('se-notes').value = s.notes || s.summary || '';
+  g('se-status').textContent = '';
+  renderSessionEditReferrals(sessionId);
+  openModal('session-edit-modal');
+}
+function renderSessionEditReferrals(sessionId) {
+  const wrap = document.getElementById('se-referrals');
+  if (!wrap) return;
+  const list = Referrals.forSession(sessionId);
+  if (!list.length) { wrap.innerHTML = '<div class="cdr-empty" style="padding:0.6rem">No referrals were made in this session.</div>'; return; }
+  const fmt = d => { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) { return d; } };
+  wrap.innerHTML = list.map(r =>
+    '<div class="referral-row"><span class="rr-icon" aria-hidden="true"><i class="ph-duotone ph-map-pin"></i></span>' +
+    '<div class="rr-main"><div class="rr-title">' + escapeHTML(r.name || '') + '</div>' +
+    '<div class="rr-sub">' + escapeHTML([r.category, r.address, r.phone].filter(Boolean).join(' · ')) + '</div></div>' +
+    '<span class="rr-time">' + escapeHTML(fmt(r.date)) + '<button type="button" class="cdr-session-del" data-rmref="' + escapeHTML(r.id) + '" title="Delete" style="margin-left:0.4rem"><i class="ph ph-trash"></i></button></span></div>'
+  ).join('');
+  wrap.querySelectorAll('[data-rmref]').forEach(b => b.addEventListener('click', () => { Referrals.remove(b.dataset.rmref); renderSessionEditReferrals(sessionId); if (_seContactId) renderContactReferrals(_seContactId); }));
+}
+(function wireSessionEdit() {
+  const g = id => document.getElementById(id);
+  const modal = g('session-edit-modal');
+  if (g('se-close')) g('se-close').addEventListener('click', () => closeModal('session-edit-modal'));
+  if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeModal('session-edit-modal'); });
+  if (g('se-add-referrals')) g('se-add-referrals').addEventListener('click', () => {
+    if (!_seSessionId) return;
+    const c = Contacts.all().find(x => x.id === _seContactId);
+    if (typeof Wizard !== 'undefined' && c) { closeModal('session-edit-modal'); Wizard.addToSession(c, _seSessionId); }
+  });
+  if (g('se-save')) g('se-save').addEventListener('click', () => {
+    if (!_seSessionId) return;
+    Sessions.update(_seSessionId, { date: g('se-date').value || todayISO(), topic: g('se-topic').value.trim() || 'Session', notes: g('se-notes').value.trim() });
+    closeModal('session-edit-modal');
+    if (_seContactId) { renderContactSessions(_seContactId); renderContactReferrals(_seContactId); }
+  });
+  if (g('se-delete')) g('se-delete').addEventListener('click', () => {
+    if (!_seSessionId) return;
+    if (!confirm('Delete this session? This cannot be undone.')) return;
+    Sessions.remove(_seSessionId);
+    closeModal('session-edit-modal');
+    if (_seContactId) { renderContactSessions(_seContactId); renderContactReferrals(_seContactId); }
+  });
+})();
 
 // Leave the profile and return to the Contacts list
 function backToContacts() {
@@ -9947,7 +11535,10 @@ async function extractSessionFromTranscript() {
   const cancelBtn = $('csf-cancel');
   const saveBtn   = $('csf-save');
   const aiBtn     = $('csf-ai');
-  if (newBtn)    newBtn.addEventListener('click', openSessionForm);
+  if (newBtn)    newBtn.addEventListener('click', () => {
+    const c = (typeof _activeContactId !== 'undefined') ? Contacts.all().find(x => x.id === _activeContactId) : null;
+    if (typeof Wizard !== 'undefined' && c) Wizard.openSession(c); else openSessionForm();
+  });
   if (cancelBtn) cancelBtn.addEventListener('click', hideSessionForm);
   if (saveBtn)   saveBtn.addEventListener('click', saveSessionFromForm);
   if (aiBtn)     aiBtn.addEventListener('click', aiAssistSession);
@@ -10315,7 +11906,7 @@ $('age-next-btn').addEventListener('click', () => {
   const age = parseInt(raw, 10);
   if (isNaN(age) || age < 1 || age > 120) return;
   // Age submission = "signal of a new search intent"; always log
-  Tracker.log('age_submitted', { age, routed_to: age >= 65 ? 'address' : 'zip' });
+  Tracker.log('age_submitted', { age, routed_to: age >= 60 ? 'address' : 'zip' });
 });
 
 $('address-next-btn').addEventListener('click', () => {
@@ -10331,6 +11922,8 @@ $('address-next-btn').addEventListener('click', () => {
       zip,
       asap: state.asap?.AGING_SERVICES_ACCESS_POINT || null
     }, 'address:' + addr.toLowerCase());
+    // Persist a Lead row (who's reaching us + exact coordinates) for analytics
+    if (typeof Leads !== 'undefined') Leads.log({ source: 'public-address', address: state.address || addr, zip, lat: state.lat, lng: state.lng, age: state.age });
   }, 400);
 });
 
@@ -10339,6 +11932,8 @@ $('zip-next-btn').addEventListener('click', () => {
   if (!/^\d{5}$/.test(zip)) return;
   SearchSession.startOrResume(zip, null);
   Tracker.logOnce('zip_submitted', { zip }, 'zip:' + zip);
+  // ZIP path geocodes asynchronously — wait briefly so coords are populated.
+  setTimeout(() => { if (typeof Leads !== 'undefined') Leads.log({ source: 'public-zip', zip, lat: state.lat, lng: state.lng, age: state.age }); }, 600);
 });
 
 // Wrap the two resource-entry functions — dedup by resource/category
@@ -10462,6 +12057,14 @@ function applyDeepLink() {
       );
       if (match) setTimeout(() => showCategoryMap(match), 400);
     }
+    return;
+  }
+
+  // Signed-in staff with no deep link → land on the dashboard (staff home)
+  if (Session.current()) {
+    if ($('card')) $('card').classList.add('wide');
+    showStep('step-dashboard');
+    if (typeof renderDashboard === 'function') renderDashboard();
   }
 }
 
@@ -11470,12 +13073,12 @@ const IntakeAI = {
       const zip = extractZIP(matchedAddress) || f.zip || '02119';
       state.address = matchedAddress; state.zip = zip; state.lat = lat; state.lng = lng;
       const age = parseInt(f.age, 10);
-      state.age = Number.isFinite(age) ? age : 65;
+      state.age = Number.isFinite(age) ? age : 60;
       const asapProps = findASAP(lat, lng);
       state.asap = asapProps;
       if (typeof SearchSession !== 'undefined') SearchSession.startOrResume(zip, matchedAddress);
       this.stopListening();
-      if (state.age >= 65) {
+      if (state.age >= 60) {
         $('sr-address-display').textContent = matchedAddress;
         resetAsapServices();
         if (asapProps) {
