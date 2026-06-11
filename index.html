@@ -1430,6 +1430,7 @@
     padding: 0.85rem 1rem; border-radius: var(--radius-md);
     border: 1px solid var(--glass-border); background: var(--glass-bg);
   }
+  .referral-row[hidden] { display: none !important; }
   .referral-row .rr-icon i { font-size: 1.5rem; color: var(--accent-lt); }
   .referral-row .rr-main { flex: 1; min-width: 0; }
   .referral-row .rr-title { font-weight: 600; font-size: 0.92rem; color: var(--text-high); margin-bottom: 0.15rem; }
@@ -3454,6 +3455,23 @@
   @media (max-width: 860px) { .ci-grid { grid-template-columns: 1fr; } }
   .ci-canvas-wrap { position: relative; height: 250px; }
   .ci-map { height: 380px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-border); }
+  /* ASAP consumer-count badges shown on the catchment overlay */
+  .asap-count-badge { background: none !important; border: none !important; }
+  .asap-count-badge span {
+    display: grid; place-items: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    font: 700 12px 'Geist', ui-sans-serif, system-ui, sans-serif;
+    color: rgba(255,255,255,0.55);
+    background: rgba(20,40,60,0.55);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 2px 6px -2px rgba(0,0,0,0.5);
+  }
+  .asap-count-badge.has span {
+    color: #062235;
+    background: #4cb8cf;
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 2px 8px -2px rgba(76,184,207,0.7);
+  }
   .ci-select { background: var(--glass-bg); color: var(--text-high); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.3rem 0.55rem; font-size: 0.78rem; cursor: pointer; }
   .ci-empty { display: grid; place-items: center; height: 100%; color: var(--text-low); font-size: 0.85rem; text-align: center; padding: 1rem; }
   body[data-theme="light"] .ci-select { color: #0a1f3d; }
@@ -4486,6 +4504,7 @@
     justify-content: flex-end;
   }
   .bar-fill {
+    position: relative;
     width: 100%;
     min-height: 3px;
     border-radius: 6px 6px 2px 2px;
@@ -4496,6 +4515,16 @@
     transform-origin: bottom;
     animation: bar-rise 420ms cubic-bezier(0.34, 1.5, 0.6, 1) both;
     transition: filter 200ms var(--ease-out);
+  }
+  .bar-fill .bar-num {
+    position: absolute;
+    top: 3px; left: 0; right: 0;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    pointer-events: none;
   }
   .bar-fill:hover { filter: brightness(1.15); }
   .bar-fill.accent {
@@ -5740,8 +5769,6 @@
       <div class="meta" id="dash-meta"></div>
     </div>
 
-    <div class="tile-grid" id="dash-tiles"></div>
-
     <!-- ============ CONSUMER INSIGHTS (from the Contacts table) ============ -->
     <div class="ci-section">
       <div class="dash-section-title" style="margin-bottom:0.85rem">
@@ -5770,144 +5797,17 @@
         </div>
       </div>
       <div class="chart-card" style="margin-top:1.1rem">
-        <div class="chart-head"><span class="chart-title">Consumer Locations</span><span class="chart-meta" id="ci-map-meta"></span></div>
+        <div class="chart-head">
+          <span class="chart-title">Consumer Locations</span>
+          <span style="display:flex;align-items:center;gap:0.6rem">
+            <button type="button" class="range-pill" id="ci-catchment-toggle" aria-pressed="false">
+              <i class="ph ph-map-trifold" aria-hidden="true"></i> Catchment Areas
+            </button>
+            <span class="chart-meta" id="ci-map-meta"></span>
+          </span>
+        </div>
         <div id="ci-map" class="ci-map" role="img" aria-label="Map of consumer locations"></div>
       </div>
-    </div>
-
-    <div class="chart-row">
-      <div class="chart-card">
-        <div class="chart-head">
-          <span class="chart-title">Category Breakdown</span>
-          <span class="chart-meta" id="donut-meta"></span>
-        </div>
-        <div class="donut-wrap">
-          <svg class="donut-svg" viewBox="0 0 120 120" aria-hidden="true">
-            <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="20" />
-            <g id="donut-segments"></g>
-            <g transform="rotate(90 60 60)">
-              <text class="donut-center" x="60" y="62" text-anchor="middle" dominant-baseline="middle" id="donut-center-value">0</text>
-              <text class="donut-center-label" x="60" y="78" text-anchor="middle" dominant-baseline="middle">EVENTS</text>
-            </g>
-          </svg>
-          <div class="donut-legend" id="donut-legend"></div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <div class="chart-head">
-          <span class="chart-title" id="bars-title">Activity</span>
-          <div class="range-pills" role="tablist" aria-label="Activity range">
-            <button type="button" class="range-pill" data-range="day"   role="tab">Day</button>
-            <button type="button" class="range-pill active" data-range="week"  role="tab" aria-selected="true">Week</button>
-            <button type="button" class="range-pill" data-range="month" role="tab">Month</button>
-            <button type="button" class="range-pill" data-range="year"  role="tab">Year</button>
-          </div>
-        </div>
-        <div class="chart-meta" id="bars-meta" style="margin-bottom:0.5rem"></div>
-        <div class="bars" id="dash-bars"></div>
-      </div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1.8rem">
-      <div class="chart-head">
-        <span class="chart-title">Tickets</span>
-        <button type="button" class="share-btn" id="new-task-btn" style="font-size:0.78rem; padding:0.35rem 0.7rem">
-          <i class="ph ph-plus" aria-hidden="true"></i> New Task
-        </button>
-      </div>
-      <div class="ticket-tabs" id="ticket-tabs"></div>
-      <div class="ticket-toolbar">
-        <div class="ticket-filter-group" id="ticket-status-filter"></div>
-      </div>
-      <div class="ticket-list" id="dash-tickets"></div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1.8rem">
-      <div class="chart-head">
-        <span class="chart-title">Referrals to CBES</span>
-        <span class="chart-meta" id="referrals-meta"></span>
-      </div>
-      <div class="referral-list" id="dash-referrals"></div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1.8rem">
-      <div class="chart-head">
-        <span class="chart-title">Campaigns &amp; Events</span>
-        <button type="button" class="share-btn" id="new-campaign-btn" style="font-size:0.78rem; padding:0.35rem 0.7rem">
-          <i class="ph ph-plus" aria-hidden="true"></i> New
-        </button>
-      </div>
-      <div class="campaign-list" id="dash-campaigns"></div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1.8rem">
-      <div class="chart-head">
-        <span class="chart-title">Follow-up Contacts</span>
-        <span class="chart-meta" id="contacts-meta"></span>
-      </div>
-      <div class="contacts-table" id="dash-contacts"></div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1.8rem">
-      <div class="chart-head">
-        <span class="chart-title">ASAP Service Area Activity</span>
-        <span class="chart-meta" id="map-meta"></span>
-      </div>
-      <div class="dash-map-wrap">
-        <div id="dash-map" role="img" aria-label="Map of Massachusetts ASAP regions colored by search activity"></div>
-        <div class="dash-map-legend" aria-hidden="true">
-          Low <span class="ramp"></span> High
-        </div>
-      </div>
-    </div>
-
-    <div class="funnel-card">
-      <div class="chart-head">
-        <span class="chart-title">Conversion Funnel</span>
-        <span class="chart-meta" id="funnel-meta"></span>
-      </div>
-      <div class="funnel-stages" id="dash-funnel"></div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:1.8rem">
-      <div class="chart-head">
-        <span class="chart-title">ZIP Codes Searched</span>
-        <span class="chart-meta" id="zip-meta"></span>
-      </div>
-      <div class="zip-chart" id="dash-zips"></div>
-    </div>
-
-    <div class="dash-section">
-      <div class="dash-section-title">Most Viewed Resources</div>
-      <div class="hbar-list" id="dash-resources"></div>
-      <button type="button" class="dash-list-expand" id="dash-resources-expand" hidden>
-        <span id="dash-resources-expand-label">Show all</span>
-        <i class="ph ph-caret-down" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <div class="dash-section">
-      <div class="dash-section-title">Categories Explored</div>
-      <div class="hbar-list" id="dash-categories"></div>
-      <button type="button" class="dash-list-expand" id="dash-categories-expand" hidden>
-        <span id="dash-categories-expand-label">Show all</span>
-        <i class="ph ph-caret-down" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <div class="dash-section">
-      <div class="dash-section-title">Recent Activity</div>
-      <div class="activity-log" id="dash-activity"></div>
-    </div>
-
-    <div class="dash-actions">
-      <button type="button" class="dash-btn" id="dash-export">
-        <i class="ph ph-download-simple" aria-hidden="true"></i> Export JSON
-      </button>
-      <button type="button" class="dash-btn danger" id="dash-clear">
-        <i class="ph ph-trash" aria-hidden="true"></i> Clear Event Log
-      </button>
     </div>
   </section>
 
@@ -6473,6 +6373,8 @@
 // Source: MA Executive Office of Elder Affairs via ArcGIS Online
 // ================================================================
 const ASAP_GEOJSON = {"type":"FeatureCollection","crs":{"type":"name","properties":{"name":"EPSG:4326"}},"features":[{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.823,42.8],[-70.829,42.8],[-70.827,42.805],[-70.823,42.8]]],[[[-70.886,42.883],[-70.848,42.861],[-70.814,42.872],[-70.81,42.822],[-70.875,42.816],[-70.822,42.798],[-70.822,42.812],[-70.81,42.805],[-70.82,42.817],[-70.808,42.816],[-70.788,42.739],[-70.809,42.746],[-70.814,42.774],[-70.816,42.755],[-70.847,42.763],[-70.824,42.757],[-70.842,42.75],[-70.823,42.751],[-70.815,42.727],[-70.84,42.732],[-70.864,42.709],[-70.969,42.673],[-70.96,42.649],[-70.985,42.612],[-70.965,42.599],[-70.931,42.612],[-70.909,42.558],[-70.936,42.547],[-70.901,42.543],[-70.898,42.525],[-70.867,42.537],[-70.89,42.52],[-70.888,42.498],[-70.862,42.521],[-70.842,42.519],[-70.856,42.493],[-70.834,42.506],[-70.841,42.488],[-70.879,42.479],[-70.987,42.512],[-71.032,42.551],[-71.028,42.574],[-71.059,42.609],[-71.135,42.599],[-71.157,42.615],[-71.193,42.565],[-71.215,42.57],[-71.205,42.544],[-71.232,42.506],[-71.25,42.526],[-71.307,42.521],[-71.314,42.55],[-71.346,42.564],[-71.424,42.526],[-71.498,42.577],[-71.496,42.65],[-71.534,42.648],[-71.532,42.669],[-71.557,42.676],[-71.542,42.703],[-71.295,42.697],[-71.245,42.743],[-71.182,42.737],[-71.186,42.791],[-71.167,42.809],[-71.133,42.821],[-71.064,42.806],[-71.031,42.859],[-70.886,42.883]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"AgeSpan","ASAP_ADDRESS":"280 Merrimack Street, Suite 400, Lawrence, MA 01843","ASAP_PHONE_NUMBER":"(978) 683-7747","ASAP_WEBSITE":"http://www.agespan.org/","AREAS_SERVED":"Amesbury, Andover, Billerica, Boxford, Chelmsford, Danvers, Dracut, Dunstable, Georgetown, Groveland, Haverhill, Lawrence, Lowell, Marblehead, Merrimac, Methuen, Middleton, Newbury, Newburyport, North Andover, Peabody, Rowley, Salem, Salisbury, Tewksbury, Tyngsborough, West Newbury, Westford"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.534,42.648],[-71.496,42.65],[-71.498,42.577],[-71.539,42.543],[-71.62,42.553],[-71.639,42.531],[-71.626,42.499],[-71.636,42.477],[-71.549,42.447],[-71.559,42.412],[-71.604,42.398],[-71.58,42.387],[-71.625,42.35],[-71.678,42.365],[-71.671,42.387],[-71.701,42.396],[-71.742,42.387],[-71.818,42.404],[-71.832,42.432],[-71.888,42.395],[-71.965,42.447],[-72.007,42.421],[-72.1,42.485],[-72.08,42.499],[-72.139,42.624],[-72.117,42.627],[-72.111,42.717],[-71.542,42.703],[-71.557,42.676],[-71.532,42.669],[-71.534,42.648]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Aging Services of North Central Massachusetts","ASAP_ADDRESS":"680 Mechanic Street, Suite 120, Leominster, MA 01453","ASAP_PHONE_NUMBER":"(978) 537-7411","ASAP_WEBSITE":"https://www.agingservicesma.org/","AREAS_SERVED":"Ashburnham, Ashby, Ayer, Berlin, Bolton, Clinton, Fitchburg, Gardner, Groton, Hubbardston, Lancaster, Leominster, Lunenburg, Pepperell, Princeton, Shirley, Sterling, Templeton, Townsend, Westminster, Winchendon"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.966,42.357],[-70.956,42.354],[-70.953,42.344],[-70.966,42.357]]],[[[-71.069,42.367],[-71.07,42.366],[-71.071,42.367],[-71.069,42.367]]],[[[-71.069,42.368],[-71.069,42.369],[-71.067,42.369],[-71.069,42.368]]],[[[-71.052,42.369],[-71.061,42.343],[-71.045,42.355],[-71.022,42.344],[-71.042,42.34],[-71.008,42.336],[-71.046,42.328],[-71.033,42.313],[-71.053,42.306],[-71.037,42.288],[-71.062,42.267],[-71.092,42.285],[-71.095,42.313],[-71.068,42.322],[-71.073,42.364],[-71.052,42.369]]],[[[-71.074,42.391],[-71.049,42.384],[-71.05,42.372],[-71.072,42.373],[-71.074,42.391]]],[[[-71.067,42.393],[-71.071,42.39],[-71.071,42.392],[-71.067,42.393]]],[[[-70.995,42.394],[-70.987,42.387],[-71.02,42.377],[-71,42.378],[-71.01,42.365],[-70.991,42.354],[-71.008,42.347],[-71.042,42.364],[-71.041,42.384],[-70.995,42.394]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Boston Senior Home Care","ASAP_ADDRESS":"9 South Street, Lincoln Plaza Suite 501, Boston, MA 02111","ASAP_PHONE_NUMBER":"(617) 292-6211","ASAP_WEBSITE":"https://www.bshcinfo.org/","AREAS_SERVED":"Beacon Hill, Boston, Charlestown, Dorchester, Downtown, East Boston, North End, South Boston, South Cove, West End"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-70.995,41.915],[-70.974,41.861],[-71.037,41.817],[-71.015,41.8],[-71.026,41.779],[-70.922,41.791],[-70.907,41.764],[-71.077,41.687],[-71.037,41.624],[-71.045,41.588],[-71.022,41.504],[-71.038,41.481],[-71.063,41.507],[-71.12,41.497],[-71.142,41.613],[-71.133,41.66],[-71.196,41.675],[-71.102,41.793],[-71.079,41.793],[-71.09,41.81],[-71.112,41.783],[-71.119,41.794],[-71.113,41.848],[-71.094,41.873],[-71.115,41.855],[-71.119,41.776],[-71.136,41.747],[-71.194,41.707],[-71.187,41.744],[-71.204,41.71],[-71.224,41.727],[-71.203,41.744],[-71.226,41.731],[-71.226,41.713],[-71.282,41.772],[-71.328,41.781],[-71.34,41.797],[-71.339,41.899],[-71.381,41.894],[-71.381,41.985],[-71.169,42.061],[-71.156,42.001],[-71.055,41.985],[-71.049,41.963],[-70.995,41.915]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Bristol Aging & Wellness, Inc.","ASAP_ADDRESS":"1 Father DeValles Blvd., Unit 8, Fall River, MA 02723","ASAP_PHONE_NUMBER":"(508) 675-2101","ASAP_WEBSITE":"https://www.bristolelder.org/","AREAS_SERVED":"Attleboro, Berkley, Dighton, Fall River, Freetown, Mansfield, North Attleborough, Norton, Raynham, Rehoboth, Seekonk, Somerset, Swansea, Taunton, Westport"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.122,42.369],[-71.111,42.352],[-71.061,42.346],[-71.068,42.322],[-71.099,42.313],[-71.114,42.329],[-71.107,42.35],[-71.167,42.34],[-71.168,42.36],[-71.122,42.369]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Central Boston Elder Services","ASAP_ADDRESS":"2315 Washington Street, Boston, MA 02119","ASAP_PHONE_NUMBER":"(617) 277-7416","ASAP_WEBSITE":"https://centralboston.org/","AREAS_SERVED":"Allston, Back Bay, Brighton, Fenway, Mission Hill, Roxbury, South End"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.921,41.428],[-70.908,41.422],[-70.951,41.412],[-70.921,41.428]]],[[[-70.854,41.439],[-70.867,41.423],[-70.906,41.425],[-70.857,41.45],[-70.854,41.439]]],[[[-70.816,41.456],[-70.81,41.444],[-70.841,41.448],[-70.816,41.456]]],[[[-70.699,41.509],[-70.699,41.506],[-70.704,41.506],[-70.699,41.509]]],[[[-70.711,41.515],[-70.701,41.509],[-70.711,41.492],[-70.806,41.45],[-70.802,41.467],[-70.711,41.515]]],[[[-70.678,41.515],[-70.689,41.505],[-70.701,41.511],[-70.678,41.515]]],[[[-70.699,41.519],[-70.71,41.514],[-70.711,41.519],[-70.699,41.519]]],[[[-70.778,41.764],[-70.775,41.734],[-70.755,41.742],[-70.713,41.708],[-70.729,41.705],[-70.715,41.676],[-70.764,41.711],[-70.744,41.675],[-70.766,41.677],[-70.764,41.641],[-70.815,41.658],[-70.825,41.65],[-70.804,41.642],[-70.805,41.626],[-70.866,41.632],[-70.851,41.595],[-70.832,41.607],[-70.816,41.592],[-70.822,41.582],[-70.847,41.596],[-70.854,41.582],[-70.87,41.625],[-70.905,41.625],[-70.919,41.682],[-70.924,41.646],[-70.899,41.593],[-70.929,41.614],[-70.933,41.581],[-70.95,41.585],[-70.928,41.539],[-70.946,41.538],[-70.954,41.515],[-70.97,41.534],[-70.981,41.509],[-71.022,41.504],[-71.045,41.588],[-71.037,41.624],[-71.077,41.687],[-70.907,41.764],[-70.922,41.791],[-70.772,41.809],[-70.778,41.764]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Coastline Elderly Services, Inc.","ASAP_ADDRESS":"863 Belleville Avenue, New Bedford MA 02745","ASAP_PHONE_NUMBER":"(508) 999-6400","ASAP_WEBSITE":"https://coastlinenb.org/","AREAS_SERVED":"Acushnet, Dartmouth, Fairhaven, Gosnold, Marion, Mattapoisett, New Bedford, Rochester"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.104,42.326],[-71.085,42.305],[-71.093,42.285],[-71.069,42.272],[-71.112,42.261],[-71.131,42.228],[-71.191,42.283],[-71.169,42.301],[-71.136,42.298],[-71.124,42.323],[-71.104,42.326]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"ETHOS","ASAP_ADDRESS":"555 Amory Street, Jamaica Plain, MA 02130","ASAP_PHONE_NUMBER":"(617) 522-6700","ASAP_WEBSITE":"https://www.ethocare.org/","AREAS_SERVED":"Hyde Park, Jamaica Plain, Mattapan, Roslindale, West Roxbury"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-73.024,42.703],[-72.95,42.705],[-72.996,42.674],[-72.955,42.666],[-72.951,42.641],[-73.012,42.38],[-73.069,42.381],[-73.063,42.329],[-73.029,42.309],[-73,42.313],[-73.002,42.251],[-73.035,42.144],[-73.072,42.144],[-73.053,42.04],[-73.497,42.05],[-73.508,42.086],[-73.265,42.746],[-73.023,42.741],[-73.024,42.703]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Elder Services of Berkshire County, Inc.","ASAP_ADDRESS":"73 South Church Street, Pittsfield, MA 01201","ASAP_PHONE_NUMBER":"(413) 499-0524","ASAP_WEBSITE":"https://www.esbci.org/","AREAS_SERVED":"Adams, Alford, Becket, Cheshire, Clarksburg, Dalton, Egremont, Florida, Great Barrington, Hancock, Hinsdale, Lanesborough, Lee, Lenox, Monterey, Mount Washington, New Ashford, New Marlborough, North Adams, Otis, Peru, Pittsfield, Richmond, Sandisfield, Savoy, Sheffield, Stockbridge, Tyringham, Washington, West Stockbridge, Williamstown, Windsor"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.81,41.261],[-70.805,41.249],[-70.833,41.258],[-70.81,41.261]]],[[[-70.27,41.31],[-70.275,41.313],[-70.271,41.312],[-70.27,41.31]]],[[[-70.27,41.307],[-70.245,41.305],[-70.24,41.296],[-70.256,41.293],[-70.244,41.288],[-70.27,41.307]]],[[[-70.761,41.328],[-70.763,41.327],[-70.764,41.328],[-70.761,41.328]]],[[[-70.297,41.338],[-70.3,41.33],[-70.311,41.338],[-70.297,41.338]]],[[[-70.041,41.387],[-69.966,41.289],[-69.971,41.247],[-70.111,41.241],[-70.235,41.284],[-70.207,41.275],[-70.192,41.283],[-70.207,41.289],[-70.197,41.297],[-70.104,41.298],[-70.088,41.278],[-70.064,41.296],[-70.024,41.305],[-70.022,41.294],[-70.011,41.306],[-70.034,41.317],[-69.999,41.331],[-70.016,41.346],[-70.08,41.292],[-70.093,41.298],[-70.033,41.338],[-70.024,41.368],[-70.041,41.387]]],[[[-70.555,41.428],[-70.547,41.418],[-70.549,41.416],[-70.555,41.428]]],[[[-70.603,41.483],[-70.601,41.456],[-70.587,41.458],[-70.603,41.431],[-70.567,41.471],[-70.552,41.44],[-70.573,41.415],[-70.56,41.422],[-70.547,41.404],[-70.531,41.405],[-70.548,41.416],[-70.507,41.4],[-70.498,41.355],[-70.509,41.35],[-70.466,41.35],[-70.509,41.389],[-70.464,41.401],[-70.451,41.354],[-70.45,41.413],[-70.473,41.407],[-70.451,41.42],[-70.452,41.348],[-70.705,41.343],[-70.746,41.332],[-70.776,41.301],[-70.839,41.346],[-70.769,41.354],[-70.786,41.331],[-70.755,41.326],[-70.769,41.33],[-70.769,41.354],[-70.701,41.434],[-70.633,41.468],[-70.622,41.449],[-70.633,41.468],[-70.603,41.483]]],[[[-70.526,41.573],[-70.542,41.553],[-70.529,41.547],[-70.544,41.552],[-70.526,41.573]]],[[[-70.463,41.588],[-70.458,41.583],[-70.458,41.579],[-70.463,41.588]]],[[[-69.982,41.619],[-69.988,41.553],[-70.009,41.541],[-69.982,41.619]]],[[[-69.968,41.643],[-69.975,41.628],[-69.98,41.635],[-69.968,41.643]]],[[[-70.195,41.652],[-70.192,41.656],[-70.192,41.653],[-70.195,41.652]]],[[[-69.951,41.721],[-69.952,41.715],[-69.963,41.72],[-69.951,41.721]]],[[[-69.946,41.758],[-69.943,41.748],[-69.952,41.752],[-69.946,41.758]]],[[[-69.949,41.808],[-69.95,41.809],[-69.949,41.81],[-69.949,41.808]]],[[[-70.498,41.777],[-70.555,41.776],[-70.625,41.738],[-70.631,41.753],[-70.538,41.811],[-70.498,41.777]]],[[[-69.953,41.825],[-69.948,41.809],[-69.959,41.818],[-69.953,41.825]]],[[[-69.963,41.825],[-69.957,41.826],[-69.96,41.823],[-69.963,41.825]]],[[[-69.945,41.828],[-69.938,41.818],[-69.943,41.818],[-69.945,41.828]]],[[[-69.959,41.831],[-69.957,41.827],[-69.962,41.828],[-69.959,41.831]]],[[[-69.957,41.833],[-69.959,41.834],[-69.958,41.835],[-69.957,41.833]]],[[[-69.954,41.834],[-69.946,41.827],[-69.957,41.828],[-69.954,41.834]]],[[[-69.951,41.837],[-69.948,41.832],[-69.954,41.835],[-69.951,41.837]]],[[[-69.949,41.837],[-69.946,41.837],[-69.947,41.832],[-69.949,41.837]]],[[[-70.008,41.899],[-70.002,41.889],[-70.024,41.897],[-70.008,41.899]]],[[[-70.094,42.06],[-70.012,41.99],[-69.946,41.846],[-69.944,41.831],[-69.951,41.844],[-69.969,41.832],[-69.958,41.816],[-69.986,41.789],[-69.96,41.815],[-69.938,41.799],[-69.938,41.814],[-69.932,41.686],[-69.943,41.764],[-69.997,41.718],[-69.945,41.704],[-69.943,41.659],[-69.961,41.618],[-69.974,41.619],[-69.946,41.663],[-69.981,41.657],[-69.962,41.667],[-70.195,41.648],[-70.158,41.685],[-70.18,41.707],[-70.16,41.685],[-70.198,41.644],[-70.261,41.61],[-70.269,41.626],[-70.241,41.638],[-70.274,41.649],[-70.273,41.632],[-70.357,41.633],[-70.376,41.613],[-70.436,41.609],[-70.453,41.588],[-70.463,41.597],[-70.45,41.621],[-70.47,41.591],[-70.451,41.585],[-70.487,41.554],[-70.527,41.548],[-70.514,41.565],[-70.525,41.58],[-70.548,41.551],[-70.634,41.539],[-70.656,41.515],[-70.687,41.522],[-70.653,41.542],[-70.642,41.573],[-70.651,41.646],[-70.615,41.658],[-70.654,41.666],[-70.614,41.674],[-70.628,41.694],[-70.661,41.683],[-70.618,41.701],[-70.618,41.724],[-70.639,41.718],[-70.623,41.737],[-70.556,41.773],[-70.495,41.775],[-70.412,41.744],[-70.287,41.734],[-70.28,41.722],[-70.348,41.721],[-70.262,41.707],[-70.19,41.752],[-70.019,41.785],[-70.002,41.815],[-70.001,41.897],[-70.031,41.917],[-70.024,41.929],[-70.069,41.929],[-70.053,41.922],[-70.068,41.885],[-70.094,42.03],[-70.158,42.062],[-70.204,42.029],[-70.167,42.035],[-70.191,42.019],[-70.247,42.062],[-70.198,42.083],[-70.094,42.06]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Elder Services of Cape Cod and the Islands, Inc.","ASAP_ADDRESS":"68 Route 134, South Dennis, MA 02660","ASAP_PHONE_NUMBER":"(508) 394-4630","ASAP_WEBSITE":"https://escci.org/","AREAS_SERVED":"Aquinnah, Barnstable, Bourne, Brewster, Chatham, Chilmark, Dennis, Eastham, Edgartown, Falmouth, Harwich, Mashpee, Nantucket, Oak Bluffs, Orleans, Provincetown, Sandwich, Tisbury, Truro, Wellfleet, West Tisbury, Yarmouth"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.1,42.485],[-72.007,42.421],[-71.965,42.447],[-71.888,42.395],[-71.832,42.432],[-71.818,42.404],[-71.671,42.387],[-71.69,42.319],[-71.659,42.267],[-71.674,42.249],[-71.648,42.245],[-71.642,42.166],[-71.691,42.163],[-71.695,42.176],[-71.719,42.173],[-71.724,42.191],[-71.83,42.145],[-71.826,42.166],[-71.858,42.161],[-71.895,42.192],[-71.939,42.189],[-71.967,42.311],[-72.117,42.302],[-72.146,42.277],[-72.145,42.291],[-72.169,42.298],[-72.217,42.294],[-72.211,42.311],[-72.275,42.302],[-72.289,42.352],[-72.273,42.39],[-72.219,42.395],[-72.1,42.485]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Elder Services of Worcester Area, Inc.","ASAP_ADDRESS":"67 Millbrook Street, Suite 100, Worcester MA 01606","ASAP_PHONE_NUMBER":"(508) 756-1545","ASAP_WEBSITE":"https://eswa.org/","AREAS_SERVED":"Auburn, Barre, Boylston, Grafton, Hardwick, Holden, Leicester, Millbury, New Braintree, Oakham, Paxton, Rutland, Shrewsbury, West Boylston, Worcester"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.055,42.574],[-71.036,42.571],[-70.987,42.512],[-70.879,42.479],[-70.894,42.46],[-70.918,42.467],[-70.935,42.454],[-70.931,42.43],[-70.903,42.418],[-70.936,42.416],[-70.945,42.459],[-70.963,42.445],[-70.989,42.46],[-70.973,42.446],[-70.983,42.432],[-71.026,42.445],[-71.054,42.477],[-71.039,42.524],[-71.075,42.531],[-71.055,42.574]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Greater Lynn Senior Services, Inc.","ASAP_ADDRESS":"8 Silsbee St., Lynn, MA 01901","ASAP_PHONE_NUMBER":"(781) 599- 0110","ASAP_WEBSITE":"https://www.glss.net/","AREAS_SERVED":"Lynn, Lynnfield, Nahant, Saugus, Swampscott"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.221,42.245],[-72.264,42.184],[-72.199,42.154],[-72.135,42.162],[-72.136,42.03],[-72.582,42.025],[-72.715,42.037],[-72.685,42.163],[-72.627,42.162],[-72.621,42.124],[-72.521,42.161],[-72.412,42.153],[-72.41,42.178],[-72.358,42.19],[-72.365,42.207],[-72.343,42.219],[-72.221,42.245]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Greater Springfield Senior Services, Inc.","ASAP_ADDRESS":"66 Industry Ave., Springfield, MA 01104","ASAP_PHONE_NUMBER":"(413) 781-8800","ASAP_WEBSITE":"https://www.gsssi.org/","AREAS_SERVED":"Agawam, Brimfield, East Longmeadow, Hampden, Holland, Longmeadow, Monson, Palmer, Springfield, Wales, West Springfield, Wilbraham"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.183,42.276],[-71.147,42.256],[-71.143,42.236],[-71.067,42.164],[-71.149,42.139],[-71.132,42.107],[-71.139,42.073],[-71.364,41.985],[-71.381,41.985],[-71.381,42.019],[-71.458,42.018],[-71.456,42.035],[-71.388,42.041],[-71.359,42.09],[-71.404,42.188],[-71.344,42.201],[-71.347,42.216],[-71.271,42.216],[-71.27,42.2],[-71.251,42.203],[-71.229,42.264],[-71.183,42.276]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"HESSCO Elder Services","ASAP_ADDRESS":"546 South Street, Walpole, MA 02081","ASAP_PHONE_NUMBER":"(781) 784-4944","ASAP_WEBSITE":"http://www.hessco.org/","AREAS_SERVED":"Canton, Dedham, Foxborough, Medfield, Millis, Norfolk, Norwood, Plainville, Sharon, Walpole, Westwood, Wrentham"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.856,42.481],[-72.764,42.464],[-72.758,42.446],[-72.701,42.453],[-72.704,42.406],[-72.49,42.434],[-72.484,42.407],[-72.375,42.421],[-72.355,42.341],[-72.405,42.336],[-72.409,42.359],[-72.472,42.351],[-72.464,42.308],[-72.577,42.303],[-72.635,42.274],[-72.657,42.228],[-72.691,42.213],[-72.686,42.136],[-72.713,42.039],[-72.756,42.036],[-72.767,42.003],[-72.817,41.998],[-72.814,42.037],[-73.053,42.04],[-73.072,42.144],[-73.035,42.144],[-73.002,42.251],[-73,42.313],[-73.029,42.309],[-73.063,42.329],[-73.066,42.389],[-73.012,42.38],[-72.975,42.556],[-72.877,42.541],[-72.871,42.484],[-72.856,42.481]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Highland Valley Elder Services, Inc.","ASAP_ADDRESS":"320 Riverside Drive Suite B, Florence, MA 01062","ASAP_PHONE_NUMBER":"(413) 586-2000","ASAP_WEBSITE":"http://www.highlandvalley.org/","AREAS_SERVED":"Amherst, Blandford, Chester, Chesterfield, Cummington, Easthampton, Goshen, Granville, Hadley, Hatfield, Huntington, Middlefield, Montgomery, Northampton, Pelham, Plainfield, Russell, Southampton, Southwick, Tolland, Westfield, Westhampton, Williamsburg, Worthington"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.111,42.717],[-72.117,42.627],[-72.139,42.624],[-72.082,42.496],[-72.219,42.395],[-72.273,42.39],[-72.286,42.353],[-72.356,42.303],[-72.375,42.421],[-72.484,42.407],[-72.49,42.434],[-72.704,42.406],[-72.701,42.453],[-72.758,42.446],[-72.764,42.464],[-72.871,42.484],[-72.877,42.541],[-72.975,42.556],[-72.955,42.665],[-72.996,42.674],[-72.949,42.704],[-73.024,42.703],[-73.023,42.741],[-72.111,42.717]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"LifePath, Inc.","ASAP_ADDRESS":"101 Munson St., Suite 201, Greenfield, MA 01301","ASAP_PHONE_NUMBER":"(413) 773-5555","ASAP_WEBSITE":"http://lifepathma.org/","AREAS_SERVED":"Ashfield, Athol, Bernardston, Buckland, Charlemont, Colrain, Conway, Deerfield, Erving, Gill, Greenfield, Hawley, Heath, Leverett, Leyden, Monroe, Montague, New Salem, Northfield, Orange, Petersham, Phillipston, Rowe, Royalston, Shelburne, Shutesbury, Sunderland, Warwick, Wendell, Whately"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.131,42.583],[-71.135,42.53],[-71.11,42.474],[-71.122,42.44],[-71.15,42.436],[-71.132,42.415],[-71.144,42.397],[-71.267,42.424],[-71.283,42.399],[-71.322,42.393],[-71.43,42.437],[-71.443,42.407],[-71.473,42.39],[-71.527,42.396],[-71.559,42.412],[-71.549,42.447],[-71.636,42.477],[-71.626,42.499],[-71.639,42.531],[-71.62,42.553],[-71.539,42.543],[-71.498,42.577],[-71.424,42.526],[-71.346,42.564],[-71.314,42.55],[-71.307,42.521],[-71.25,42.526],[-71.232,42.506],[-71.205,42.544],[-71.213,42.573],[-71.193,42.565],[-71.154,42.615],[-71.131,42.583]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Minuteman Senior Services","ASAP_ADDRESS":"One Burlington Woods, Suite 101 Burlington, MA 01803","ASAP_PHONE_NUMBER":"(781) 272-7177","ASAP_WEBSITE":"http://www.minutemansenior.org/","AREAS_SERVED":"Acton, Arlington, Bedford, Boxborough, Burlington, Carlisle, Concord, Harvard, Lexington, Lincoln, Littleton, Maynard, Stow, Wilmington, Winchester, Woburn"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.978,42.366],[-70.981,42.364],[-70.983,42.366],[-70.978,42.366]]],[[[-70.998,42.378],[-70.999,42.366],[-71.01,42.365],[-70.998,42.378]]],[[[-70.967,42.377],[-70.967,42.378],[-70.967,42.377],[-70.967,42.377]]],[[[-71.028,42.574],[-71.057,42.574],[-71.075,42.531],[-71.039,42.524],[-71.054,42.477],[-71.026,42.445],[-71,42.428],[-70.958,42.44],[-70.99,42.409],[-70.967,42.389],[-70.969,42.356],[-70.972,42.372],[-70.997,42.372],[-70.988,42.393],[-71.018,42.403],[-71.027,42.385],[-71.07,42.39],[-71.073,42.417],[-71.077,42.397],[-71.1,42.396],[-71.149,42.431],[-71.122,42.44],[-71.11,42.474],[-71.135,42.53],[-71.135,42.599],[-71.059,42.609],[-71.028,42.574]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Mystic Valley Elder Services, Inc.","ASAP_ADDRESS":"300 Commercial Street, Suite #19, Malden, MA 02148","ASAP_PHONE_NUMBER":"(781) 324-7705","ASAP_WEBSITE":"http://www.mves.org/","AREAS_SERVED":"Chelsea, Everett, Malden, Medford, Melrose, North Reading, Reading, Revere, Stoneham, Wakefield, Winthrop"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.635,42.005],[-70.64,42.004],[-70.636,42.013],[-70.635,42.005]]],[[[-70.889,42.167],[-70.884,42.154],[-70.847,42.158],[-70.792,42.106],[-70.777,42.117],[-70.782,42.156],[-70.715,42.16],[-70.64,42.088],[-70.644,42.051],[-70.599,42.005],[-70.638,41.995],[-70.613,42.015],[-70.656,42.061],[-70.666,42.053],[-70.651,42.046],[-70.669,42.045],[-70.677,42.023],[-70.668,42.01],[-70.689,42.018],[-70.71,41.997],[-70.649,41.95],[-70.63,41.948],[-70.651,41.981],[-70.622,41.942],[-70.584,41.95],[-70.539,41.927],[-70.547,41.91],[-70.525,41.858],[-70.538,41.811],[-70.633,41.763],[-70.621,41.747],[-70.635,41.734],[-70.661,41.741],[-70.642,41.724],[-70.674,41.692],[-70.654,41.715],[-70.716,41.732],[-70.706,41.745],[-70.73,41.737],[-70.722,41.723],[-70.754,41.742],[-70.775,41.734],[-70.772,41.809],[-71.026,41.779],[-71.015,41.8],[-71.037,41.817],[-70.974,41.861],[-70.996,41.927],[-71.049,41.963],[-71.055,41.985],[-71.156,42.001],[-71.169,42.061],[-71.139,42.073],[-71.131,42.102],[-71.149,42.139],[-71.067,42.164],[-71.022,42.119],[-70.889,42.167]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Old Colony Elder Services, Inc.","ASAP_ADDRESS":"144 Main St., Brockton, MA 02301","ASAP_PHONE_NUMBER":"(508) 584-1561","ASAP_WEBSITE":"https://www.ocesma.org/","AREAS_SERVED":"Abington, Avon, Bridgewater, Brockton, Carver, Duxbury, East Bridgewater, Easton, Halifax, Hanover, Hanson, Kingston, Lakeville, Marshfield, Middleborough, Pembroke, Plymouth, Plympton, Rockland, Stoughton, Wareham, West Bridgewater, Whitman"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.695,42.641],[-70.696,42.639],[-70.696,42.641],[-70.695,42.641]]],[[[-70.69,42.641],[-70.688,42.635],[-70.697,42.632],[-70.69,42.641]]],[[[-70.688,42.645],[-70.686,42.642],[-70.692,42.642],[-70.688,42.645]]],[[[-70.683,42.646],[-70.685,42.643],[-70.686,42.646],[-70.683,42.646]]],[[[-70.744,42.661],[-70.742,42.654],[-70.749,42.652],[-70.744,42.661]]],[[[-70.764,42.661],[-70.754,42.659],[-70.76,42.657],[-70.764,42.661]]],[[[-70.767,42.669],[-70.767,42.667],[-70.769,42.668],[-70.767,42.669]]],[[[-70.759,42.674],[-70.75,42.664],[-70.767,42.664],[-70.759,42.674]]],[[[-70.628,42.692],[-70.624,42.662],[-70.596,42.661],[-70.591,42.64],[-70.665,42.58],[-70.656,42.603],[-70.688,42.622],[-70.682,42.662],[-70.628,42.692]]],[[[-70.82,42.729],[-70.816,42.707],[-70.727,42.667],[-70.779,42.674],[-70.765,42.648],[-70.72,42.649],[-70.718,42.664],[-70.686,42.655],[-70.702,42.637],[-70.673,42.609],[-70.71,42.573],[-70.793,42.567],[-70.879,42.539],[-70.911,42.547],[-70.908,42.573],[-70.931,42.612],[-70.965,42.599],[-70.985,42.612],[-70.96,42.649],[-70.969,42.673],[-70.82,42.729]]],[[[-70.777,42.719],[-70.77,42.705],[-70.785,42.702],[-70.799,42.733],[-70.788,42.739],[-70.777,42.719]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"SeniorCare, Inc.","ASAP_ADDRESS":"49 Blackburn Center, Gloucester, MA 01930","ASAP_PHONE_NUMBER":"(978) 281-1750","ASAP_WEBSITE":"https://seniorcareinc.org/","AREAS_SERVED":"Beverly, Essex, Gloucester, Hamilton, Ipswich, Manchester, Rockport, Topsfield, Wenham"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.127,42.416],[-71.076,42.395],[-71.081,42.381],[-71.064,42.369],[-71.104,42.352],[-71.129,42.374],[-71.144,42.365],[-71.158,42.395],[-71.127,42.416]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Somerville/Cambridge Elder Services, Inc.","ASAP_ADDRESS":"61 Medford Street, Somerville, MA 02143","ASAP_PHONE_NUMBER":"(617) 628-2601","ASAP_WEBSITE":"https://eldercare.org/","AREAS_SERVED":"Cambridge, Somerville"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[-70.698,42.144],[-70.7,42.145],[-70.699,42.147],[-70.698,42.144]]],[[[-70.707,42.155],[-70.705,42.153],[-70.71,42.154],[-70.707,42.155]]],[[[-70.7,42.154],[-70.68,42.126],[-70.712,42.158],[-70.7,42.154]]],[[[-70.912,42.27],[-70.91,42.268],[-70.911,42.266],[-70.912,42.27]]],[[[-70.916,42.27],[-70.926,42.266],[-70.925,42.27],[-70.916,42.27]]],[[[-70.895,42.28],[-70.903,42.281],[-70.9,42.282],[-70.895,42.28]]],[[[-70.894,42.301],[-70.891,42.301],[-70.898,42.302],[-70.894,42.301]]],[[[-70.936,42.291],[-70.95,42.29],[-70.927,42.302],[-70.936,42.291]]],[[[-70.882,42.31],[-70.852,42.269],[-70.786,42.251],[-70.788,42.223],[-70.768,42.254],[-70.748,42.222],[-70.716,42.206],[-70.727,42.2],[-70.714,42.2],[-70.713,42.161],[-70.782,42.156],[-70.777,42.117],[-70.789,42.107],[-70.847,42.158],[-70.884,42.154],[-70.89,42.172],[-71.022,42.119],[-71.131,42.228],[-71.111,42.261],[-71.041,42.277],[-71.04,42.302],[-70.991,42.308],[-71.023,42.288],[-70.987,42.265],[-70.954,42.281],[-70.961,42.249],[-70.99,42.255],[-70.966,42.248],[-70.968,42.222],[-70.95,42.232],[-70.966,42.245],[-70.925,42.264],[-70.938,42.247],[-70.916,42.226],[-70.932,42.251],[-70.914,42.262],[-70.893,42.263],[-70.884,42.246],[-70.882,42.274],[-70.867,42.257],[-70.845,42.261],[-70.89,42.277],[-70.877,42.28],[-70.886,42.305],[-70.923,42.303],[-70.882,42.31]]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"South Shore Elder Services, Inc.","ASAP_ADDRESS":"1515 Washington Street, Braintree, MA 02184","ASAP_PHONE_NUMBER":"(781) 848-3910","ASAP_WEBSITE":"http://www.sselder.org/","AREAS_SERVED":"Braintree, Cohasset, Hingham, Holbrook, Hull, Milton, Norwell, Quincy, Randolph, Scituate, Weymouth"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.335,42.396],[-71.283,42.399],[-71.267,42.424],[-71.211,42.406],[-71.194,42.415],[-71.152,42.401],[-71.16,42.387],[-71.14,42.374],[-71.174,42.353],[-71.167,42.34],[-71.107,42.35],[-71.136,42.298],[-71.169,42.301],[-71.197,42.269],[-71.229,42.264],[-71.251,42.203],[-71.27,42.2],[-71.271,42.216],[-71.347,42.216],[-71.344,42.201],[-71.478,42.157],[-71.497,42.167],[-71.503,42.191],[-71.556,42.183],[-71.599,42.226],[-71.644,42.227],[-71.65,42.248],[-71.674,42.249],[-71.659,42.267],[-71.69,42.319],[-71.676,42.365],[-71.625,42.35],[-71.58,42.387],[-71.604,42.398],[-71.585,42.407],[-71.473,42.39],[-71.443,42.407],[-71.43,42.437],[-71.335,42.396]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Springwell, Inc.","ASAP_ADDRESS":"307 Waverley Oaks Rd, Suite 205, Waltham, MA 02452","ASAP_PHONE_NUMBER":"(617) 926-4100","ASAP_WEBSITE":"http://www.springwell.com/","AREAS_SERVED":"Ashland, Belmont, Brookline, Chestnut Hill, Dover, Framingham, Holliston, Hopkinton, Hudson, Marlborough, Natick, Needham, Newton, Northborough, Sherborn, Southborough, Sudbury, Waltham, Watertown, Wayland, Wellesley, Westborough, Weston"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-71.961,42.281],[-71.939,42.189],[-71.895,42.192],[-71.858,42.161],[-71.826,42.166],[-71.83,42.145],[-71.724,42.191],[-71.719,42.173],[-71.695,42.176],[-71.691,42.163],[-71.642,42.166],[-71.644,42.227],[-71.621,42.231],[-71.556,42.183],[-71.503,42.191],[-71.497,42.167],[-71.478,42.157],[-71.402,42.179],[-71.359,42.09],[-71.388,42.041],[-71.456,42.035],[-71.458,42.018],[-71.799,42.008],[-71.801,42.024],[-72.136,42.03],[-72.135,42.162],[-72.199,42.154],[-72.264,42.184],[-72.261,42.205],[-72.21,42.247],[-72.211,42.294],[-72.169,42.298],[-72.145,42.291],[-72.146,42.277],[-72.117,42.302],[-71.967,42.311],[-71.961,42.281]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Tri-Valley, Inc.","ASAP_ADDRESS":"10 Mill Street, Dudley, MA 01571","ASAP_PHONE_NUMBER":"(508) 949-6640","ASAP_WEBSITE":"http://www.trivalleyinc.org/","AREAS_SERVED":"Bellingham, Blackstone, Brookfield, Charlton, Douglas, Dudley, East Brookfield, Franklin, Hopedale, Medway, Mendon, Milford, Millville, North Brookfield, Northbridge, Oxford, Southbridge, Spencer, Sturbridge, Sutton, Upton, Uxbridge, Warren, Webster, West Brookfield"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-72.409,42.359],[-72.405,42.336],[-72.354,42.34],[-72.356,42.303],[-72.29,42.352],[-72.275,42.302],[-72.211,42.311],[-72.21,42.247],[-72.343,42.219],[-72.365,42.207],[-72.358,42.19],[-72.41,42.178],[-72.412,42.153],[-72.521,42.161],[-72.621,42.124],[-72.627,42.162],[-72.685,42.163],[-72.691,42.213],[-72.657,42.228],[-72.635,42.274],[-72.577,42.303],[-72.464,42.308],[-72.472,42.351],[-72.409,42.359]]]},"properties":{"AGING_SERVICES_ACCESS_POINT":"Access Care Partners","ASAP_ADDRESS":"4 Valley Mill Rd, Holyoke, MA 01040","ASAP_PHONE_NUMBER":"(413) 538-9020","ASAP_WEBSITE":"https://accesscarepartners.org/","AREAS_SERVED":"Belchertown, Chicopee, Granby, Holyoke, Ludlow, South Hadley, Ware"}}]};
+// Refined Boston-metro catchments (CBES / Boston Senior Home Care / ETHOS) — hand-corrected from Google My Maps, far cleaner than the simplified state polygons.
+const ASAP_REFINED_GEOJSON = {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"ASAP":"Central Boston Elder Services"},"geometry":{"type":"Polygon","coordinates":[[[-71.08554075,42.28099895],[-71.0863132,42.2811895],[-71.0870361,42.281627],[-71.0888386,42.2827621],[-71.0889781,42.2829447],[-71.0892463,42.2836114],[-71.0893965,42.2838019],[-71.0896003,42.2839051],[-71.0912848,42.2841988],[-71.0917783,42.2843655],[-71.0925615,42.284806],[-71.0927707,42.2850084],[-71.0930014,42.2854648],[-71.0935593,42.2869212],[-71.0943532,42.2887825],[-71.0953993,42.2911476],[-71.0962576,42.2931277],[-71.0963595,42.2932388],[-71.0966384,42.2935324],[-71.0969657,42.2938142],[-71.0976577,42.2944729],[-71.0985589,42.2953617],[-71.0995674,42.2963378],[-71.1012894,42.2980043],[-71.1019921,42.2986432],[-71.1030436,42.2995835],[-71.1033225,42.2998454],[-71.1034083,42.2999208],[-71.1035585,42.3000081],[-71.1037409,42.3000914],[-71.1040843,42.3002144],[-71.1045885,42.3002858],[-71.1051679,42.3002064],[-71.1062086,42.3001588],[-71.1067557,42.3001985],[-71.1070454,42.3003096],[-71.107142,42.3005],[-71.107024,42.3007698],[-71.1068845,42.3008968],[-71.1069059,42.3010158],[-71.1065626,42.3012777],[-71.1057901,42.3016268],[-71.1055434,42.3017617],[-71.1051571,42.3020792],[-71.103934,42.3031186],[-71.1036658,42.3033726],[-71.103301,42.3037852],[-71.1032045,42.3040153],[-71.1031616,42.3044517],[-71.1030972,42.3046898],[-71.1029363,42.3049516],[-71.1027217,42.3052293],[-71.102668,42.305388],[-71.1027002,42.3065544],[-71.1026251,42.3070146],[-71.1025393,42.3076494],[-71.1024964,42.3080461],[-71.1025071,42.3084428],[-71.1024535,42.3088633],[-71.1024427,42.3089189],[-71.1027217,42.3089823],[-71.1033225,42.3091331],[-71.1045134,42.3094425],[-71.1048675,42.3096012],[-71.1064875,42.3102756],[-71.1069489,42.310466],[-71.1062837,42.311434],[-71.1058223,42.3121877],[-71.1054361,42.3129097],[-71.1052752,42.3133222],[-71.1050177,42.3140283],[-71.1046743,42.3146551],[-71.1043954,42.3151549],[-71.1041594,42.3154563],[-71.1032796,42.3164004],[-71.1030865,42.3166305],[-71.1033976,42.3167891],[-71.1037517,42.3169399],[-71.1040521,42.3170033],[-71.1043847,42.3170509],[-71.1048782,42.3170271],[-71.105082,42.3170113],[-71.1053181,42.3170033],[-71.1055863,42.3169478],[-71.1059082,42.3169557],[-71.1061335,42.3170351],[-71.1066377,42.3172255],[-71.1071742,42.3175269],[-71.1077428,42.3177808],[-71.1081934,42.3179553],[-71.1085796,42.3180823],[-71.10888,42.3181854],[-71.1093307,42.3183599],[-71.1099207,42.3185979],[-71.1104143,42.318828],[-71.1108434,42.3190501],[-71.1116481,42.3195499],[-71.1106503,42.3207556],[-71.110425,42.3210412],[-71.1119163,42.3210016],[-71.1120558,42.3216362],[-71.1151671,42.3211682],[-71.1157787,42.3210809],[-71.116122,42.3210492],[-71.1166048,42.321073],[-71.1170876,42.3211126],[-71.1179996,42.3212475],[-71.1189115,42.3214061],[-71.1192656,42.3214934],[-71.1194265,42.3216203],[-71.11947475000001,42.322711],[-71.1194479,42.3228181],[-71.1186111,42.3231275],[-71.1183858,42.3235083],[-71.1166665,42.323891],[-71.1164439,42.3239921],[-71.1159289,42.32588],[-71.1160362,42.3259078],[-71.1162508,42.3259355],[-71.1156929,42.3268755],[-71.1155051,42.3268041],[-71.1150411,42.3268656],[-71.1148345,42.3269984],[-71.1145449,42.3274426],[-71.1141345,42.3278273],[-71.1141238,42.3281168],[-71.1138971,42.3283389],[-71.1135504,42.3283726],[-71.1133986,42.3284509],[-71.1132127,42.3285615],[-71.1130553,42.3287972],[-71.113041,42.329034],[-71.1128166,42.3293547],[-71.1131711,42.3299652],[-71.1137561,42.3307384],[-71.1136329,42.3313609],[-71.1133754,42.3308295],[-71.1130965,42.3309167],[-71.113193,42.3312657],[-71.1129785,42.3322571],[-71.1128283,42.3326378],[-71.1124098,42.3331216],[-71.1125171,42.3332406],[-71.1126459,42.3332882],[-71.1124742,42.3336768],[-71.112088,42.3340575],[-71.1119056,42.3341685],[-71.1108005,42.3352154],[-71.1107683,42.3353423],[-71.11127466666666,42.335696266666666],[-71.1119699,42.3363575],[-71.1117876,42.3367857],[-71.1116213,42.3370157],[-71.111455,42.3371347],[-71.1116052,42.337555],[-71.1112404,42.3380864],[-71.1109185,42.3388953],[-71.1107898,42.3395931],[-71.1106181,42.340291],[-71.1102748,42.3407986],[-71.1094809,42.341544],[-71.1084509,42.3418612],[-71.108129,42.3423529],[-71.1058116,42.3437485],[-71.1058867,42.3444146],[-71.1065519,42.345723],[-71.1072278,42.3470314],[-71.1070561,42.3476975],[-71.1069059,42.3484666],[-71.1067879,42.3491089],[-71.1065894,42.3499216],[-71.1104947,42.3503974],[-71.1107093,42.3505302],[-71.1109078,42.3506551],[-71.1109293,42.3504886],[-71.1111438,42.3506868],[-71.1131555,42.350889],[-71.1158162,42.351222],[-71.1160791,42.3501635],[-71.1164814,42.350211],[-71.1164439,42.3504767],[-71.1164707,42.3505084],[-71.1162668,42.3512497],[-71.1185145,42.3515352],[-71.1184341,42.351337],[-71.1202499,42.351551],[-71.1213148,42.3516719],[-71.1214274,42.3511804],[-71.1224574,42.3513132],[-71.122503,42.3513607],[-71.1235276,42.3514678],[-71.1234337,42.3519316],[-71.1240828,42.3520188],[-71.12441,42.3519356],[-71.1246514,42.3518167],[-71.1250538,42.3515431],[-71.1247024,42.3512676],[-71.1268508,42.3500881],[-71.1285675,42.3498324],[-71.1285594,42.3497571],[-71.1292434,42.3490772],[-71.1296082,42.3489146],[-71.1316895,42.3479116],[-71.1333418,42.3471345],[-71.1339962,42.3467301],[-71.1347419,42.3462741],[-71.1358255,42.3454733],[-71.1377621,42.3439388],[-71.1389691,42.3429476],[-71.1404979,42.3417185],[-71.1413991,42.341084],[-71.1417586,42.340515],[-71.1419034,42.3400491],[-71.1420268,42.340061],[-71.1426169,42.3401165],[-71.1442047,42.3400214],[-71.1455888,42.3391143],[-71.1465329,42.3385245],[-71.1464685,42.3380457],[-71.1462808,42.3376026],[-71.147477,42.3374321],[-71.1489522,42.3371109],[-71.1488235,42.3368412],[-71.1485445,42.3362702],[-71.1484694,42.3358023],[-71.1501861,42.3353582],[-71.1503899,42.3355327],[-71.1510015,42.3360878],[-71.1514306,42.3364923],[-71.1523104,42.3371902],[-71.153115,42.3379039],[-71.1532867,42.3379991],[-71.1534476,42.3380626],[-71.1536515,42.3380626],[-71.1540484,42.3381339],[-71.1546493,42.338356],[-71.1550248,42.3385146],[-71.1551321,42.3383719],[-71.1554003,42.3382053],[-71.1556041,42.3380705],[-71.1558831,42.3380467],[-71.1560655,42.3380467],[-71.1563873,42.3381577],[-71.1571491,42.3384591],[-71.1574388,42.3385543],[-71.1579216,42.3386415],[-71.158458,42.3387287],[-71.1587799,42.3387446],[-71.158973,42.3386891],[-71.1591768,42.3385622],[-71.159327,42.3383639],[-71.159488,42.3380784],[-71.1597133,42.3377533],[-71.1599278,42.337666],[-71.160078,42.3376264],[-71.1603355,42.337666],[-71.1606359,42.3377295],[-71.1609042,42.3377612],[-71.1611295,42.3377771],[-71.1613441,42.3377057],[-71.161623,42.3375867],[-71.1617839,42.3374757],[-71.1618805,42.337214],[-71.1619234,42.3368888],[-71.1620307,42.3367064],[-71.1622667,42.3365002],[-71.1626637,42.336413],[-71.1632109,42.3362861],[-71.1635756,42.3361354],[-71.1629426,42.3352551],[-71.1631358,42.3351916],[-71.1638653,42.3354137],[-71.1647666,42.3356516],[-71.1653137,42.3358023],[-71.1653459,42.3362782],[-71.1653325,42.3364189],[-71.1652708,42.3371109],[-71.1651421,42.3376125],[-71.1656463,42.3381141],[-71.1664349,42.3389706],[-71.1671698,42.3387089],[-71.1672235,42.3388318],[-71.1663544,42.339157],[-71.1666226,42.3395654],[-71.1668479,42.3400214],[-71.1699218,42.3442878],[-71.1701417,42.3443036],[-71.1709142,42.3453186],[-71.1713004,42.3458182],[-71.1716545,42.3461195],[-71.1719656,42.346397],[-71.1720192,42.3466746],[-71.1748517,42.3502507],[-71.1749268,42.3507978],[-71.1739773,42.3534262],[-71.1683714,42.3592574],[-71.1676311,42.3600502],[-71.1680174,42.3600978],[-71.1666441,42.3617309],[-71.1659789,42.3612869],[-71.165657,42.3606527],[-71.165185,42.3601136],[-71.1645412,42.3597014],[-71.1641979,42.3593843],[-71.1639404,42.3591306],[-71.1632538,42.3589879],[-71.1624169,42.3591147],[-71.1614084,42.3596697],[-71.1604857,42.3601136],[-71.1594343,42.3604466],[-71.1578035,42.3605259],[-71.1567521,42.3605417],[-71.1559796,42.3603515],[-71.155057,42.3604149],[-71.1544776,42.360621],[-71.1538553,42.3607637],[-71.1530614,42.3611601],[-71.1513019,42.3621907],[-71.147697,42.3617943],[-71.1476755,42.3620004],[-71.1467957,42.3627456],[-71.1464095,42.3631578],[-71.1461091,42.3636652],[-71.145916,42.364014],[-71.1457014,42.3643628],[-71.1451435,42.3649494],[-71.1446071,42.3653458],[-71.1436415,42.3655043],[-71.1416245,42.3650604],[-71.1399293,42.3646482],[-71.1384273,42.3646957],[-71.1379123,42.3651238],[-71.1369681,42.3660434],[-71.1363029,42.3665665],[-71.1355948,42.3668836],[-71.1352301,42.3669946],[-71.1352515,42.3666141],[-71.1351013,42.3662019],[-71.1345863,42.365869],[-71.1341786,42.3658214],[-71.1336851,42.3660592],[-71.133492,42.366408],[-71.1336207,42.3667885],[-71.1341143,42.3670263],[-71.1346722,42.3671056],[-71.1334705,42.3676605],[-71.1328053,42.3680409],[-71.1321187,42.36858],[-71.1316252,42.3689287],[-71.1313677,42.3690873],[-71.1311102,42.3695629],[-71.1311102,42.3698799],[-71.1313677,42.3704506],[-71.1316037,42.3710689],[-71.131947,42.3714652],[-71.1323547,42.3719091],[-71.1329126,42.3716713],[-71.1330199,42.3717823],[-71.1335778,42.3714652],[-71.1339426,42.3719884],[-71.1339855,42.3724005],[-71.1335993,42.3729395],[-71.1328268,42.373637],[-71.1321831,42.3740333],[-71.1315179,42.3742711],[-71.1307883,42.3743821],[-71.1299944,42.3743821],[-71.1291575,42.374287],[-71.1283422,42.3740809],[-71.1277413,42.3738114],[-71.1270118,42.3733675],[-71.1260247,42.3727176],[-71.1250591,42.3718774],[-71.1245656,42.3713543],[-71.1242223,42.3705299],[-71.1239648,42.3701177],[-71.1237931,42.3698482],[-71.1232138,42.369436],[-71.1228919,42.3692458],[-71.1235571,42.368469],[-71.125617,42.3663446],[-71.1242437,42.3657738],[-71.1233425,42.3655043],[-71.1234498,42.3652824],[-71.1232352,42.3651872],[-71.1234283,42.3644738],[-71.1245871,42.3643945],[-71.1245227,42.3636176],[-71.1177421,42.3641725],[-71.1176777,42.3636018],[-71.1176562,42.3630627],[-71.1174846,42.3619529],[-71.1173558,42.3610015],[-71.1173129,42.359749],[-71.1172915,42.3594953],[-71.11727,42.3593209],[-71.1175919,42.3584805],[-71.118021,42.3573706],[-71.1182141,42.3564509],[-71.1181712,42.3559276],[-71.1179996,42.3552775],[-71.1174417,42.3544688],[-71.1169696,42.3540724],[-71.1141372,42.3525342],[-71.1133862,42.3522646],[-71.1125922,42.3520902],[-71.1114979,42.3521219],[-71.1111331,42.3522488],[-71.1104035,42.3521378],[-71.1101031,42.3520585],[-71.1090088,42.3520268],[-71.1084509,42.3520268],[-71.1076784,42.3518206],[-71.1068201,42.3515669],[-71.1039019,42.3513925],[-71.1016917,42.3515193],[-71.1009192,42.3516303],[-71.100297,42.3515986],[-71.0987091,42.3512815],[-71.0977221,42.3510594],[-71.0966492,42.3510277],[-71.0953188,42.3512497],[-71.0945034,42.3511229],[-71.0928297,42.3516938],[-71.0918427,42.3519475],[-71.0884953,42.3523915],[-71.0851908,42.3533746],[-71.0847187,42.3541358],[-71.0772514,42.3561496],[-71.0762966,42.3564192],[-71.0760605,42.356546],[-71.0758245,42.3567125],[-71.0750735,42.3553726],[-71.0731959,42.3558801],[-71.0729277,42.3552616],[-71.0724556,42.3553885],[-71.072005,42.3544609],[-71.0705996,42.3516303],[-71.0702991,42.3510119],[-71.0700631,42.3503775],[-71.0696983,42.3493785],[-71.0692799,42.3481495],[-71.0691726,42.347975],[-71.0690117,42.3477133],[-71.068722,42.3474437],[-71.0669839,42.3470711],[-71.0653853,42.3467459],[-71.0634542,42.3463415],[-71.0616302,42.3459689],[-71.0601282,42.3456279],[-71.0597634,42.3453266],[-71.0594523,42.3450411],[-71.0592699,42.3447873],[-71.0593128,42.3444226],[-71.0595489,42.3438278],[-71.0598815,42.3432767],[-71.0601711,42.3429159],[-71.0602033,42.3420753],[-71.0602462,42.3416709],[-71.0602462,42.3412902],[-71.0601604,42.3384512],[-71.0601175,42.3371505],[-71.0601175,42.3368095],[-71.0601175,42.336635],[-71.0602355,42.336072],[-71.0605574,42.3354851],[-71.0611582,42.3345968],[-71.0640979,42.330076],[-71.0657072,42.3275378],[-71.0666085,42.3261338],[-71.067059,42.3252692],[-71.0678852,42.3221121],[-71.0688722,42.3184154],[-71.0692692,42.3169954],[-71.0693228,42.3168605],[-71.0700524,42.3151945],[-71.0707068,42.3137982],[-71.0716403,42.3118545],[-71.0730672,42.3089903],[-71.0737431,42.307816],[-71.0753739,42.3064274],[-71.0772729,42.3047453],[-71.0777879,42.3041026],[-71.0783565,42.3033884],[-71.0790217,42.3022299],[-71.0793436,42.3007064],[-71.0793006,42.2999525],[-71.0792792,42.2993335],[-71.0790324,42.2972623],[-71.0783565,42.2933817],[-71.0782492,42.2921753],[-71.0781419,42.2909928],[-71.078217,42.2905325],[-71.0783136,42.2899412],[-71.0784423,42.2896515],[-71.0786784,42.2891515],[-71.0790002,42.2884451],[-71.0801804,42.28708],[-71.0816288,42.2856632],[-71.0831845,42.2842027],[-71.0833615,42.2839369],[-71.084767,42.2820636],[-71.08554075,42.28099895]]]}},{"type":"Feature","properties":{"ASAP":"Boston Senior Home Care"},"geometry":{"type":"Polygon","coordinates":[[[-71.0934305,42.2671192],[-71.09369065,42.2671847],[-71.0934734,42.273276],[-71.0895252,42.276769],[-71.0857916,42.2806427],[-71.0831738,42.284167],[-71.0801697,42.2870244],[-71.0789251,42.2884531],[-71.0782385,42.2899769],[-71.0780668,42.2909928],[-71.0782814,42.293342],[-71.0788822,42.2967386],[-71.0792255,42.299405],[-71.0792685,42.3007064],[-71.078968,42.3021664],[-71.0782814,42.3034043],[-71.0772514,42.3046739],[-71.0753632,42.306356],[-71.0737324,42.3077525],[-71.0730028,42.3089903],[-71.0710716,42.3128621],[-71.0695481,42.3161624],[-71.0692048,42.3169875],[-71.0688829,42.3181298],[-71.0683465,42.3202083],[-71.0677886,42.3222867],[-71.0672092,42.3244443],[-71.0670161,42.3251899],[-71.0664368,42.3262845],[-71.0629821,42.3317098],[-71.0605359,42.3354216],[-71.0601711,42.3360244],[-71.0600424,42.3367223],[-71.0601926,42.3415123],[-71.0601068,42.3428366],[-71.0595274,42.3437485],[-71.0592377,42.3443988],[-71.0592055,42.3448032],[-71.0594523,42.3451362],[-71.0600638,42.3456596],[-71.0612977,42.3459451],[-71.0686147,42.3474596],[-71.0689366,42.3477371],[-71.0692048,42.3481257],[-71.0692906,42.3483635],[-71.070224,42.3509802],[-71.0724127,42.3554361],[-71.0728526,42.3553171],[-71.0731316,42.3559356],[-71.0750306,42.3554282],[-71.0757709,42.3567601],[-71.0752666,42.3571882],[-71.0748911,42.3572675],[-71.0745478,42.3572675],[-71.0744512,42.3572199],[-71.07444584999999,42.35714855],[-71.0742903,42.3573706],[-71.0741293,42.3576877],[-71.073904,42.3576877],[-71.0737324,42.3577511],[-71.0735285,42.3579255],[-71.073153,42.3589245],[-71.0732067,42.3591464],[-71.073373,42.3592812],[-71.0735714,42.3592416],[-71.0733676,42.3596618],[-71.0731852,42.3601454],[-71.0731423,42.3605893],[-71.0731637,42.3611601],[-71.0759532,42.3613741],[-71.0759211,42.3616992],[-71.0742098,42.3615803],[-71.0731155,42.3614891],[-71.0730457,42.3617666],[-71.0731369,42.3621352],[-71.0731691,42.3622462],[-71.0731584,42.3624602],[-71.0730779,42.3629557],[-71.0729975,42.3634512],[-71.0729331,42.3638079],[-71.0728794,42.3639823],[-71.0727131,42.3642637],[-71.0725468,42.3644341],[-71.0723644,42.3645729],[-71.072107,42.3647037],[-71.0718495,42.3648107],[-71.071592,42.36489],[-71.0709751,42.3650485],[-71.0704386,42.3649019],[-71.070106,42.3655836],[-71.0703635,42.3657104],[-71.069988,42.3661147],[-71.0708463,42.3665586],[-71.0706747,42.3667647],[-71.0706693,42.3668083],[-71.070621,42.3669074],[-71.0709697,42.3670818],[-71.0709912,42.3670382],[-71.0712755,42.367173],[-71.0712487,42.3672165],[-71.0714418,42.3673236],[-71.0715759,42.3671809],[-71.0721177,42.3674742],[-71.072005,42.367597],[-71.072343,42.3677675],[-71.0724074,42.3677556],[-71.0726917,42.3679022],[-71.0719031,42.3687425],[-71.0717744,42.368683],[-71.0714042,42.3684848],[-71.0684055,42.3669629],[-71.0682929,42.3671095],[-71.0682875,42.3672007],[-71.0681587,42.3673553],[-71.0680354,42.3674266],[-71.067751,42.3675455],[-71.0675311,42.3676129],[-71.0672951,42.3676882],[-71.0672039,42.3677437],[-71.0667747,42.3679577],[-71.0664636,42.3680925],[-71.0661042,42.3681598],[-71.0659111,42.3681955],[-71.0658145,42.3682034],[-71.0657018,42.3683025],[-71.0654122,42.3683065],[-71.0652834,42.3684531],[-71.0650474,42.3683739],[-71.0650849,42.3683184],[-71.0647523,42.3683263],[-71.064983,42.368572],[-71.0652888,42.3688376],[-71.0649347,42.3689367],[-71.0645646,42.3687028],[-71.0642481,42.3685879],[-71.0638028,42.3684175],[-71.0636097,42.3683976],[-71.0635132,42.3683184],[-71.0620755,42.3679775],[-71.0616839,42.3680687],[-71.0616839,42.3681202],[-71.0617,42.3681519],[-71.0617805,42.3684254],[-71.0619414,42.3684016],[-71.0620487,42.368469],[-71.0621077,42.3687068],[-71.0616732,42.3687742],[-71.0616517,42.3688019],[-71.0618234,42.3693647],[-71.0619628,42.3693409],[-71.0623276,42.3693885],[-71.0629821,42.3693726],[-71.0645378,42.3705537],[-71.0654819,42.3701336],[-71.0660827,42.37074],[-71.0667372,42.371386],[-71.0668766,42.3716733],[-71.0670805,42.3718655],[-71.0668659,42.3718695],[-71.0667372,42.3718378],[-71.0673165,42.3722737],[-71.0685182,42.3730188],[-71.0722518,42.3749369],[-71.0735393,42.3759038],[-71.073786,42.3760782],[-71.073904,42.376316],[-71.0755777,42.3802629],[-71.0757923,42.380247],[-71.0777235,42.380358],[-71.0776591,42.3805799],[-71.0805345,42.3809761],[-71.0809851,42.3824502],[-71.0799122,42.3828306],[-71.0798049,42.3829733],[-71.0775518,42.3862224],[-71.0770583,42.3868246],[-71.0770583,42.3891702],[-71.0769081,42.3896932],[-71.076715,42.3901053],[-71.0763073,42.3909928],[-71.0751915,42.3923715],[-71.0741615,42.3907075],[-71.072402,42.3879341],[-71.0709643,42.3903747],[-71.0707498,42.3904698],[-71.0708356,42.3908977],[-71.0710073,42.3908501],[-71.0711145,42.3910878],[-71.0713935,42.3917218],[-71.0713077,42.3919912],[-71.0705352,42.3927043],[-71.0701919,42.3927518],[-71.0698271,42.3926409],[-71.0692906,42.3932907],[-71.0693336,42.3934808],[-71.0687113,42.3938295],[-71.0692263,42.3941464],[-71.0681963,42.3947169],[-71.0674882,42.3943683],[-71.0677028,42.3941464],[-71.0673594,42.3939562],[-71.0683036,42.3928628],[-71.0692263,42.3917059],[-71.0705996,42.38982],[-71.0719514,42.3876012],[-71.0696125,42.386365],[-71.0701919,42.3860481],[-71.0698056,42.3857469],[-71.0682392,42.3853665],[-71.067853,42.3857152],[-71.0658145,42.3855409],[-71.0658789,42.3853031],[-71.0649562,42.3849703],[-71.0648489,42.3854616],[-71.0631323,42.385319],[-71.0631752,42.3850179],[-71.0640067,42.38398765],[-71.0641837,42.3838212],[-71.0640335,42.3837103],[-71.063894,42.3838925],[-71.0636151,42.3837974],[-71.0626173,42.3849624],[-71.0624242,42.3848831],[-71.0623062,42.3850892],[-71.0604072,42.3849148],[-71.0605037,42.3846771],[-71.0612655,42.3847167],[-71.0622525,42.3835439],[-71.0621238,42.3835122],[-71.0620165,42.3837023],[-71.0618448,42.3837657],[-71.0616088,42.3840986],[-71.061126,42.3839797],[-71.0613513,42.3836944],[-71.06148,42.3836944],[-71.0616946,42.3834408],[-71.0611689,42.3833774],[-71.0600746,42.3848752],[-71.0595167,42.3847167],[-71.060375,42.3833695],[-71.0600317,42.3833537],[-71.059463,42.3841461],[-71.0588515,42.3850416],[-71.0552573,42.3846137],[-71.0502362,42.3841541],[-71.050365,42.3839559],[-71.0500646,42.3838212],[-71.0497749,42.384059],[-71.0489917,42.383948],[-71.0486162,42.3838688],[-71.0478866,42.3836786],[-71.0481763,42.383425],[-71.0473931,42.3825849],[-71.0474467,42.3817607],[-71.0475326,42.3817211],[-71.0491633,42.382054],[-71.049335,42.3820064],[-71.0496247,42.3816339],[-71.0469961,42.3812298],[-71.0474467,42.3798428],[-71.0509872,42.380358],[-71.0510087,42.380461],[-71.0518348,42.3806274],[-71.0577786,42.3814992],[-71.0578859,42.3814437],[-71.057961,42.3814596],[-71.0581005,42.3814517],[-71.0582829,42.3814279],[-71.0584223,42.3812298],[-71.0584438,42.381103],[-71.0583258,42.3810158],[-71.0581434,42.3809999],[-71.0581005,42.3809048],[-71.0567594,42.3804689],[-71.0550857,42.3801361],[-71.0547531,42.3802074],[-71.0540879,42.3801044],[-71.0541308,42.3800172],[-71.053412,42.3800647],[-71.0523176,42.3798983],[-71.051749,42.3798349],[-71.0508585,42.3796685],[-71.0508049,42.3797636],[-71.0501611,42.3796685],[-71.050086,42.3795972],[-71.0493243,42.3794783],[-71.0489058,42.3795734],[-71.0486698,42.3794307],[-71.048069,42.3793435],[-71.0473824,42.3769342],[-71.0476506,42.3768232],[-71.0490668,42.3780279],[-71.0492063,42.3779804],[-71.0492384,42.377909],[-71.0480046,42.3768153],[-71.0481119,42.3767281],[-71.048938,42.3774493],[-71.0491204,42.3772671],[-71.0492599,42.3772354],[-71.0492277,42.3771244],[-71.0495389,42.3767994],[-71.0498929,42.3760782],[-71.0486162,42.3752381],[-71.048938,42.3750161],[-71.0496569,42.3754758],[-71.0501075,42.3751826],[-71.0502791,42.3753015],[-71.0504937,42.375143],[-71.0485518,42.3735023],[-71.0489273,42.3729791],[-71.0505474,42.3744613],[-71.0506868,42.3739937],[-71.0491848,42.3726462],[-71.0493243,42.3723213],[-71.0507298,42.373526],[-71.0510945,42.3732883],[-71.0495496,42.371917],[-71.0500646,42.3715841],[-71.0515666,42.3729791],[-71.0519743,42.3727176],[-71.0508156,42.3716872],[-71.0504508,42.3713384],[-71.0506868,42.3712116],[-71.0507834,42.3711402],[-71.0527039,42.3728682],[-71.0527897,42.3728206],[-71.0544956,42.3743028],[-71.0546243,42.3743107],[-71.054635,42.3742077],[-71.0530686,42.3727889],[-71.0531008,42.37267],[-71.0527682,42.3723768],[-71.0529721,42.3722262],[-71.0537446,42.3729078],[-71.0539484,42.3727889],[-71.0540235,42.3728365],[-71.0541093,42.372781],[-71.0536373,42.3723609],[-71.053884,42.3721944],[-71.0545385,42.3727731],[-71.0546672,42.3726938],[-71.0557508,42.3736132],[-71.0558474,42.3735419],[-71.0548174,42.3726779],[-71.0549676,42.3726066],[-71.0539913,42.3717744],[-71.0547853,42.3716713],[-71.0568345,42.3726383],[-71.0572422,42.3725036],[-71.0573709,42.3723371],[-71.0574996,42.3723768],[-71.057682,42.3722658],[-71.0560083,42.3714018],[-71.0575962,42.3706171],[-71.0592699,42.371378],[-71.0593879,42.3713701],[-71.0598814,42.371164],[-71.0594738,42.3706964],[-71.05986,42.3704903],[-71.0599136,42.3705537],[-71.0600531,42.3705537],[-71.0600531,42.3704665],[-71.059463,42.3698244],[-71.0600102,42.3695787],[-71.0604823,42.3701811],[-71.0605466,42.3700939],[-71.0591626,42.3681995],[-71.0589051,42.367922],[-71.0584652,42.3681202],[-71.0580254,42.3683897],[-71.0580468,42.3685324],[-71.0577679,42.3687068],[-71.0565662,42.3690714],[-71.0559654,42.3691665],[-71.0552359,42.3690873],[-71.054914,42.3691665],[-71.053648,42.368897],[-71.0534763,42.3692458],[-71.0530257,42.3691665],[-71.0530686,42.368897],[-71.052897,42.3688178],[-71.0520816,42.3698641],[-71.0511589,42.369547],[-71.0508585,42.3694202],[-71.04985,42.3686909],[-71.051116,42.367597],[-71.0509014,42.3672958],[-71.050601,42.3674861],[-71.0506225,42.3676922],[-71.0502577,42.36793],[-71.0501075,42.3677397],[-71.0497427,42.3680568],[-71.0491633,42.367169],[-71.0487986,42.3659007],[-71.04985,42.3659324],[-71.0496783,42.3658373],[-71.0497856,42.365425],[-71.049335,42.3653933],[-71.0491633,42.3654885],[-71.0487556,42.3654726],[-71.0486913,42.3649019],[-71.049571,42.3648384],[-71.0495496,42.3650128],[-71.0504079,42.364997],[-71.0504079,42.3648543],[-71.0494208,42.3648226],[-71.0494208,42.3646957],[-71.0483694,42.3646323],[-71.048584,42.3643787],[-71.0492063,42.3643311],[-71.0493565,42.3638079],[-71.049571,42.3637445],[-71.0490131,42.3636335],[-71.0482836,42.3636335],[-71.0477471,42.3616358],[-71.0494637,42.3613028],[-71.049614,42.3616041],[-71.0503864,42.3618577],[-71.0505795,42.361715],[-71.0505795,42.3609223],[-71.0503221,42.3608113],[-71.0497642,42.360954],[-71.0495281,42.3608271],[-71.049099,42.3609064],[-71.0491419,42.3606369],[-71.0476828,42.3608906],[-71.0474682,42.3600344],[-71.0504508,42.3595904],[-71.0505581,42.3593843],[-71.0483265,42.3596697],[-71.0481548,42.3592574],[-71.0483694,42.3592099],[-71.0482192,42.3589562],[-71.0501504,42.3585756],[-71.0500431,42.3583378],[-71.0492706,42.3584805],[-71.0492277,42.3576877],[-71.0496569,42.3575291],[-71.0496354,42.3574181],[-71.0489488,42.3575926],[-71.0487771,42.3571961],[-71.0490561,42.35699],[-71.04882,42.3565143],[-71.0492706,42.356435],[-71.0492921,42.3562289],[-71.0515881,42.3528038],[-71.0518241,42.3528989],[-71.0520387,42.3526294],[-71.0517812,42.3524073],[-71.0523605,42.351773],[-71.0564804,42.3457151],[-71.0549784,42.3458578],[-71.0531759,42.348427],[-71.0529613,42.3485221],[-71.0518885,42.3499018],[-71.0484767,42.3544371],[-71.0478759,42.3548652],[-71.0475326,42.3548969],[-71.046288,42.3552141],[-71.0455585,42.3552299],[-71.0444212,42.3550079],[-71.0442495,42.3551189],[-71.0427904,42.3546115],[-71.0428548,42.3543419],[-71.0434771,42.3545639],[-71.0441637,42.3535491],[-71.0434341,42.3530734],[-71.0431337,42.3534539],[-71.0424042,42.3530892],[-71.0416746,42.3540248],[-71.040988,42.3537394],[-71.0428548,42.3511863],[-71.0424042,42.350996],[-71.0426617,42.3507581],[-71.0422325,42.3505678],[-71.0401297,42.3534539],[-71.0385203,42.3528038],[-71.040709,42.3499335],[-71.0399151,42.3495371],[-71.0378122,42.3524391],[-71.0366321,42.3519792],[-71.0385418,42.3492992],[-71.0372972,42.3487917],[-71.0375118,42.3485221],[-71.0372758,42.3483794],[-71.0365033,42.3493626],[-71.035881,42.3490772],[-71.0342503,42.3512656],[-71.0337996,42.351107],[-71.0339713,42.3508374],[-71.0337567,42.3507423],[-71.0334778,42.3509643],[-71.0330486,42.3508691],[-71.034615,42.3486014],[-71.0341215,42.3483953],[-71.0335207,42.3487441],[-71.0323405,42.350441],[-71.0271692,42.3483318],[-71.0266757,42.3480464],[-71.0263109,42.3480464],[-71.0261822,42.3482842],[-71.026032,42.348205],[-71.0230923,42.3470631],[-71.0230064,42.3456041],[-71.0305595,42.3454614],[-71.0308385,42.3453503],[-71.0305381,42.3452235],[-71.0264611,42.3453503],[-71.026504,42.3450966],[-71.0253024,42.34516],[-71.0253239,42.3445574],[-71.0218263,42.344605],[-71.0217619,42.3434789],[-71.0369325,42.3431141],[-71.0357308,42.342226],[-71.0355377,42.3418136],[-71.0350871,42.341766],[-71.0351729,42.3407668],[-71.0345936,42.340751],[-71.0347223,42.3405131],[-71.0345185,42.3404893],[-71.0338855,42.3404813],[-71.0339069,42.3415123],[-71.0325658,42.3415757],[-71.0325766,42.3417105],[-71.0303664,42.3417343],[-71.030302,42.3403069],[-71.0296047,42.3403148],[-71.0296261,42.3416629],[-71.0293579,42.3418533],[-71.0284996,42.3418929],[-71.0277271,42.3418453],[-71.0275984,42.341544],[-71.027019,42.3413695],[-71.0267186,42.3413695],[-71.0263968,42.3417343],[-71.0256457,42.3417819],[-71.025281,42.3417185],[-71.0254097,42.3420039],[-71.0142303,42.3421784],[-71.0106039,42.3397993],[-71.010797,42.3396724],[-71.0107112,42.3395614],[-71.010046,42.3394504],[-71.0099173,42.3391332],[-71.009531,42.3387049],[-71.0094666,42.3383719],[-71.0092521,42.3378643],[-71.0091233,42.3369285],[-71.0093379,42.3366747],[-71.0101533,42.3364685],[-71.0108399,42.336183],[-71.0113978,42.3357706],[-71.0115695,42.3353423],[-71.0119557,42.3350251],[-71.0132861,42.3325506],[-71.0139084,42.3317257],[-71.0142303,42.3316147],[-71.0144877,42.3313926],[-71.0147452,42.3310277],[-71.0147882,42.3307422],[-71.0148311,42.330536],[-71.0154319,42.3303615],[-71.0158181,42.3304884],[-71.0165477,42.3305519],[-71.0175562,42.3307105],[-71.0187149,42.3310753],[-71.0199809,42.3315988],[-71.0210109,42.3322016],[-71.0218263,42.332154],[-71.023972,42.3326933],[-71.0245085,42.3327251],[-71.0245728,42.3325347],[-71.0252166,42.3323126],[-71.0254312,42.332503],[-71.0257959,42.3322174],[-71.029079,42.3309802],[-71.0293365,42.3311071],[-71.0312462,42.3298697],[-71.0326195,42.3290924],[-71.0333705,42.3290448],[-71.0337138,42.3288545],[-71.0340786,42.3288703],[-71.0363746,42.3282358],[-71.0363317,42.3286007],[-71.0374904,42.3288703],[-71.0386062,42.329378],[-71.0391855,42.3294732],[-71.0401726,42.3295683],[-71.0418034,42.3295683],[-71.0435629,42.3295207],[-71.044507,42.3292035],[-71.0453224,42.3291083],[-71.0460734,42.32868],[-71.0468888,42.3278709],[-71.0474896,42.326697],[-71.0477042,42.3256976],[-71.0477042,42.3247933],[-71.0474467,42.3237938],[-71.0469747,42.32354],[-71.046524,42.3235241],[-71.0461807,42.3235876],[-71.0458374,42.323651],[-71.0458589,42.3233655],[-71.0454297,42.3232544],[-71.044786,42.3231275],[-71.0444641,42.323064],[-71.0433912,42.3225881],[-71.0434127,42.322128],[-71.0433269,42.3217314],[-71.0391641,42.320129],[-71.039207,42.3198434],[-71.0370827,42.3189866],[-71.036396,42.3187645],[-71.036396,42.3184472],[-71.0370183,42.3181774],[-71.0369754,42.3178601],[-71.03616,42.3175745],[-71.0354304,42.3173841],[-71.0350657,42.3173524],[-71.0349154,42.3172413],[-71.0345936,42.3171779],[-71.0340571,42.3169081],[-71.0329199,42.3166225],[-71.032759,42.3147185],[-71.0327053,42.3139014],[-71.0326087,42.3136475],[-71.0325873,42.3134809],[-71.0326087,42.3133301],[-71.0327053,42.3131873],[-71.0329306,42.313108],[-71.0332203,42.3131239],[-71.0369539,42.3103232],[-71.0372543,42.3102359],[-71.0376084,42.3102518],[-71.0378873,42.3103073],[-71.039046,42.3109976],[-71.0442495,42.314179],[-71.0444641,42.3141711],[-71.0459983,42.3134095],[-71.0461164,42.3131953],[-71.0461164,42.3130287],[-71.0462773,42.3129493],[-71.0461807,42.3128383],[-71.0460198,42.3128383],[-71.0456765,42.3125526],[-71.0456443,42.3124098],[-71.0453653,42.3124971],[-71.0450971,42.312505],[-71.0445178,42.3120925],[-71.043874,42.3113308],[-71.0438418,42.3110928],[-71.044035,42.310831],[-71.0443461,42.3106247],[-71.0448396,42.3106168],[-71.0449147,42.310585],[-71.0448718,42.3104343],[-71.0449255,42.3102042],[-71.0439813,42.3101883],[-71.0433376,42.3103787],[-71.042887,42.3104184],[-71.042608,42.3104025],[-71.0424471,42.3103232],[-71.0422862,42.3102042],[-71.0422111,42.3100296],[-71.0423291,42.3098392],[-71.0426188,42.3096091],[-71.0434985,42.3092759],[-71.0435092,42.3091727],[-71.0437882,42.3091331],[-71.0441422,42.3091172],[-71.0444534,42.3089982],[-71.0451829,42.3082444],[-71.045773,42.307332],[-71.0458481,42.3069511],[-71.0461485,42.3066575],[-71.046288,42.3062608],[-71.0463953,42.3055229],[-71.0464382,42.3053483],[-71.0467601,42.3048167],[-71.0472214,42.3043247],[-71.0473609,42.3043644],[-71.0478866,42.3032377],[-71.0476828,42.3031663],[-71.0478652,42.3026981],[-71.0478652,42.3023648],[-71.0478437,42.3022061],[-71.0472,42.3022299],[-71.0469532,42.3026902],[-71.0471356,42.3029758],[-71.0469532,42.3031663],[-71.0436273,42.30246],[-71.0432839,42.3018728],[-71.043359,42.3010714],[-71.0438204,42.300873],[-71.0440135,42.3007381],[-71.0441959,42.3003493],[-71.0441101,42.3001588],[-71.0437882,42.2999525],[-71.0437882,42.2998255],[-71.044035,42.2995557],[-71.0444427,42.2993415],[-71.044786,42.2993573],[-71.0447431,42.299151],[-71.045537,42.2988733],[-71.0457838,42.2990082],[-71.046288,42.2988177],[-71.0461915,42.2987066],[-71.0461915,42.2985876],[-71.0460734,42.2986193],[-71.0462344,42.298413],[-71.0458589,42.2983654],[-71.0454941,42.2981988],[-71.0448074,42.2975718],[-71.0444641,42.296691],[-71.044507,42.2964926],[-71.0444856,42.2961275],[-71.0447001,42.2959212],[-71.045022,42.2959609],[-71.0453117,42.2958815],[-71.0457945,42.2962228],[-71.0457194,42.2959371],[-71.0454941,42.2955323],[-71.0452151,42.2950482],[-71.0449469,42.2945403],[-71.044507,42.2938181],[-71.0430479,42.292961],[-71.042254,42.2921357],[-71.0421896,42.2916436],[-71.0418463,42.2911833],[-71.0418463,42.2907706],[-71.0419321,42.2900246],[-71.0417175,42.289469],[-71.0416961,42.2907388],[-71.0418463,42.2912627],[-71.0422325,42.2923579],[-71.0424471,42.2931515],[-71.0423183,42.2933896],[-71.0412669,42.2933579],[-71.0410094,42.293215],[-71.0395718,42.2930245],[-71.0394859,42.2926118],[-71.0391426,42.2926436],[-71.0389495,42.2925325],[-71.0392499,42.2924214],[-71.0390568,42.292342],[-71.0390782,42.2917865],[-71.0387564,42.2915166],[-71.0389924,42.2912944],[-71.0385418,42.2914055],[-71.0377049,42.2908341],[-71.0377479,42.2901992],[-71.0375547,42.2899769],[-71.0373616,42.2888975],[-71.03719,42.2883896],[-71.0374904,42.2872625],[-71.0377908,42.2871197],[-71.0382414,42.2866276],[-71.0380483,42.2864371],[-71.0382199,42.2861831],[-71.0390782,42.2855958],[-71.0402799,42.2846115],[-71.0413527,42.2835479],[-71.0415673,42.2805951],[-71.0425758,42.2803887],[-71.0439706,42.2809285],[-71.0444212,42.2808809],[-71.0431767,42.2804681],[-71.0426188,42.2800553],[-71.0425544,42.2796108],[-71.0426831,42.2793251],[-71.0425758,42.2791187],[-71.0419106,42.2791504],[-71.0416532,42.2789917],[-71.0437775,42.2771659],[-71.044507,42.2769436],[-71.0453868,42.2768642],[-71.0465026,42.2771976],[-71.0472965,42.2777851],[-71.048305,42.2779756],[-71.0486484,42.278309],[-71.04985,42.2784836],[-71.0509872,42.2782614],[-71.0512018,42.2782931],[-71.0525751,42.2778962],[-71.0535407,42.2775628],[-71.0542247,42.2775172],[-71.0543534,42.2774894],[-71.0546404,42.2773882],[-71.054855,42.277277],[-71.0551554,42.2770825],[-71.0554692,42.2768523],[-71.0558233,42.2765388],[-71.0560298,42.2763383],[-71.0562497,42.2758541],[-71.0563141,42.2755147],[-71.05629,42.2750721],[-71.056172,42.2747308],[-71.0563141,42.2746454],[-71.0564831,42.2747268],[-71.0565636,42.2747943],[-71.0566521,42.2748102],[-71.0567084,42.2747705],[-71.0567674,42.2746732],[-71.0567755,42.274568],[-71.0563624,42.2743716],[-71.0561022,42.2743279],[-71.0552412,42.2735737],[-71.0543749,42.2728434],[-71.0543776,42.2728037],[-71.0544419,42.272766],[-71.054796,42.2728791],[-71.0550776,42.2729227],[-71.0555658,42.2729525],[-71.0556301,42.2729406],[-71.0561317,42.272895],[-71.0566279,42.2726826],[-71.0567594,42.2726627],[-71.0569927,42.2727005],[-71.0574031,42.2727044],[-71.0575292,42.2727382],[-71.057733,42.2728572],[-71.0578403,42.272885],[-71.0580119,42.272893],[-71.0581568,42.2728434],[-71.058079,42.2727838],[-71.0578725,42.27276],[-71.0576633,42.2726826],[-71.0575372,42.2726012],[-71.0574085,42.2725516],[-71.0567164,42.2724702],[-71.0564348,42.2724881],[-71.056188,42.2725834],[-71.0559091,42.272758],[-71.0556784,42.2728037],[-71.0555255,42.2728096],[-71.0553619,42.2727898],[-71.0552251,42.272758],[-71.0551125,42.2726647],[-71.0549167,42.2725794],[-71.0547343,42.2725357],[-71.0545009,42.2725159],[-71.0543159,42.272369],[-71.0543185,42.272238],[-71.0543534,42.2721725],[-71.05458139999999,42.27201475],[-71.055032,42.2719502],[-71.0551178,42.2719066],[-71.0551876,42.2718073],[-71.0554397,42.2717716],[-71.0555041,42.2716922],[-71.0557938,42.2716446],[-71.0558474,42.2715453],[-71.0562873,42.2715136],[-71.0565877,42.271196],[-71.05699,42.2709976],[-71.0574353,42.2709102],[-71.0575265,42.2706879],[-71.0574031,42.2708547],[-71.0575157,42.2706919],[-71.0577142,42.2706284],[-71.0581487,42.2702751],[-71.0581487,42.2701798],[-71.0582346,42.2701123],[-71.058315,42.270021],[-71.058535,42.2698742],[-71.0587656,42.2694653],[-71.0588622,42.2694018],[-71.0589695,42.2693661],[-71.0592592,42.2694335],[-71.0599244,42.2698027],[-71.0604072,42.269894],[-71.0605037,42.269898],[-71.0604984,42.2698305],[-71.0603482,42.2696678],[-71.0597044,42.2692152],[-71.0596561,42.2691358],[-71.0597688,42.2691001],[-71.0600209,42.2691319],[-71.06011480000001,42.2690326],[-71.0604608,42.2689969],[-71.0605037,42.2688619],[-71.0611367,42.2687825],[-71.0615659,42.2686793],[-71.0615981,42.268592],[-71.061244,42.2683379],[-71.0612869,42.2681077],[-71.0614371,42.2680759],[-71.0616946,42.2679727],[-71.0623169,42.2676154],[-71.0630572,42.2679251],[-71.0630786,42.268068],[-71.062907,42.2683062],[-71.0630894,42.2684491],[-71.0630143,42.2685602],[-71.0632396,42.268584],[-71.0633576,42.2687508],[-71.0642266,42.2687825],[-71.0647309,42.2690604],[-71.0646987,42.2692112],[-71.0645378,42.2694177],[-71.0645807,42.2696955],[-71.06457,42.2699258],[-71.0645163,42.2700766],[-71.064291,42.270021],[-71.0643339,42.2700846],[-71.0643446,42.2702275],[-71.064527,42.2703069],[-71.0645056,42.2705371],[-71.0649455,42.2706403],[-71.0651708,42.2707832],[-71.0652566,42.2708864],[-71.0653639,42.2710373],[-71.0658252,42.2712992],[-71.0663188,42.2714104],[-71.0668123,42.2714739],[-71.066941,42.2713786],[-71.0676599,42.2715612],[-71.0678101,42.271585],[-71.0680139,42.2712992],[-71.0680246,42.2710611],[-71.0683572,42.2708785],[-71.0690224,42.2707991],[-71.0693979,42.2707197],[-71.069634,42.2706879],[-71.0698056,42.2706562],[-71.070267,42.2707038],[-71.0706103,42.2706641],[-71.0713398,42.2709182],[-71.0719299,42.2709102],[-71.0720694,42.2708626],[-71.0726058,42.2706879],[-71.0729921,42.2703466],[-71.0731637,42.2703942],[-71.0733515,42.2703505],[-71.0739952,42.2702949],[-71.0744458,42.2703624],[-71.0747516,42.2703386],[-71.07517,42.2703823],[-71.0753632,42.2704259],[-71.0754222,42.2705014],[-71.0755563,42.2705808],[-71.0757977,42.2706165],[-71.0758513,42.2705847],[-71.0758889,42.2706006],[-71.0764092,42.2705569],[-71.0764843,42.2706006],[-71.0772085,42.270553],[-71.0772407,42.2705133],[-71.0777879,42.2705053],[-71.0780883,42.2704299],[-71.0781848,42.2703664],[-71.077863,42.2702672],[-71.0777718,42.2701957],[-71.0778147,42.2701243],[-71.0779595,42.2700528],[-71.0784209,42.2700727],[-71.0785604,42.2700568],[-71.0788125,42.2699893],[-71.0790163,42.2698067],[-71.0791236,42.2697591],[-71.0794079,42.2697591],[-71.079644,42.2698543],[-71.0796547,42.2699178],[-71.0795581,42.2699694],[-71.0793918,42.270021],[-71.079188,42.2700568],[-71.0790861,42.2701084],[-71.0790485,42.270156],[-71.0791129,42.2702235],[-71.0791719,42.2702156],[-71.0794508,42.2701759],[-71.0796332,42.2700806],[-71.0798532,42.269898],[-71.0800302,42.2698504],[-71.0802877,42.2698384],[-71.0804754,42.2698742],[-71.0807222,42.2698742],[-71.0808402,42.2698464],[-71.0809153,42.2697749],[-71.0811567,42.2696439],[-71.0817629,42.2695288],[-71.0821009,42.2694177],[-71.0825837,42.2691438],[-71.0830235,42.2688222],[-71.0832381,42.2688024],[-71.0840321,42.2688976],[-71.0843432,42.2689572],[-71.0853893,42.2691517],[-71.0860062,42.2693065],[-71.0869128,42.2694177],[-71.0872346,42.2694772],[-71.0887581,42.2697432],[-71.0892248,42.2697392],[-71.0897505,42.26964],[-71.0899168,42.2695368],[-71.0901153,42.26937],[-71.0901958,42.2692668],[-71.0902333,42.2691596],[-71.0902762,42.2688738],[-71.0902387,42.2685324],[-71.0899812,42.2679886],[-71.0899919,42.267798],[-71.0903138,42.2668294],[-71.0904586,42.2665873],[-71.0907912,42.266496],[-71.091215,42.2665912],[-71.0915691,42.2666428],[-71.0921162,42.2666984],[-71.0926527,42.2667738],[-71.0929799,42.266889],[-71.0932213,42.2670359],[-71.0934305,42.2671192]]]}},{"type":"Feature","properties":{"ASAP":"Boston Senior Home Care"},"geometry":{"type":"Polygon","coordinates":[[[-71.04272599999999,42.37307425],[-71.0425758,42.3732724],[-71.0430264,42.3735419],[-71.0429192,42.373748],[-71.0440993,42.3743662],[-71.0431767,42.376316],[-71.0431981,42.3768232],[-71.0437775,42.3767915],[-71.0437775,42.3773305],[-71.0422754,42.3774256],[-71.0423183,42.3777743],[-71.0430479,42.3777109],[-71.0431337,42.3791058],[-71.0418677,42.379185],[-71.0418463,42.3796764],[-71.0420179,42.3800093],[-71.0421038,42.3804689],[-71.0422969,42.3806908],[-71.0424685,42.380881],[-71.04249,42.3821808],[-71.0407734,42.3823076],[-71.0408163,42.3828465],[-71.0405374,42.3829099],[-71.0405159,42.3842888],[-71.0396791,42.3842729],[-71.0396791,42.3840035],[-71.0393143,42.3840352],[-71.0386491,42.3843522],[-71.0385847,42.3855567],[-71.0362887,42.385208],[-71.0362887,42.3846058],[-71.035924,42.3845899],[-71.0359669,42.3841778],[-71.0355163,42.3842412],[-71.035409,42.3844156],[-71.0353231,42.3849545],[-71.0332417,42.3844473],[-71.0332417,42.3831159],[-71.032877,42.3829891],[-71.0314393,42.3829574],[-71.0308814,42.3832269],[-71.0306025,42.3833061],[-71.030581,42.3834805],[-71.0302377,42.3835122],[-71.0301948,42.3833695],[-71.030066,42.3836389],[-71.0298085,42.3836865],[-71.0288215,42.3836706],[-71.0286713,42.3832269],[-71.0281777,42.3829257],[-71.0276413,42.3828782],[-71.0274267,42.3830367],[-71.0274267,42.3833854],[-71.0271049,42.3836548],[-71.0241652,42.3849703],[-71.0228562,42.385636],[-71.0227919,42.3857786],[-71.0210323,42.3865711],[-71.020174,42.3865394],[-71.0182428,42.3882827],[-71.0183287,42.3886948],[-71.0179853,42.3888533],[-71.0169554,42.3899309],[-71.0168695,42.3903113],[-71.0151958,42.3922764],[-71.0157537,42.3930054],[-71.0160542,42.3939562],[-71.0152388,42.3947169],[-71.014123,42.3954775],[-71.0130072,42.3956677],[-71.011784,42.3956677],[-71.0094773,42.3949546],[-71.0078144,42.3942098],[-71.0039091,42.3931956],[-71.0033298,42.3932431],[-71.0027719,42.3942256],[-71.0020208,42.3955726],[-71.001184,42.3965551],[-70.9994888,42.398314],[-70.9980619,42.3965947],[-70.9964526,42.3964204],[-70.99538505000001,42.393880949999996],[-70.9956855,42.3938849],[-70.9956104,42.3936789],[-70.9953824,42.3936433],[-70.99538505000001,42.393880949999996],[-70.9950739,42.3935601],[-70.9951437,42.3934848],[-70.9948701,42.3932708],[-70.9947413,42.393362],[-70.994752,42.3933976],[-70.9943068,42.393251],[-70.9941941,42.3934135],[-70.994119,42.3934452],[-70.9937972,42.3934769],[-70.9935397,42.3933976],[-70.9932822,42.3932391],[-70.9930837,42.393152],[-70.9927672,42.3931124],[-70.9921718,42.3932986],[-70.9911579,42.3934135],[-70.9900153,42.3936789],[-70.9896612,42.3937185],[-70.9888458,42.3934887],[-70.9876335,42.3931163],[-70.9872901,42.3928786],[-70.9869254,42.3927281],[-70.9865391,42.3921021],[-70.9864104,42.3918802],[-70.9862065,42.3917535],[-70.9863031,42.3916346],[-70.9863675,42.3914365],[-70.986228,42.3913256],[-70.9863782,42.3911671],[-70.9863997,42.3906124],[-70.9865713,42.3902321],[-70.9867537,42.3898042],[-70.9867322,42.3893366],[-70.9863889,42.3889721],[-70.9861422,42.3887661],[-70.9858739,42.3886631],[-70.9855735,42.3885522],[-70.9849298,42.3887106],[-70.9846294,42.3888929],[-70.9841144,42.3891385],[-70.9840178,42.3892733],[-70.9838784,42.3892495],[-70.9836745,42.3893604],[-70.9836745,42.3894397],[-70.9835029,42.3894555],[-70.9831917,42.3896695],[-70.9830523,42.3900577],[-70.983063,42.3903113],[-70.9831917,42.3904856],[-70.9831059,42.3908818],[-70.9833741,42.3910799],[-70.9835136,42.3911116],[-70.983417,42.3913731],[-70.9835136,42.3915554],[-70.9830308,42.3918485],[-70.9829021,42.3919119],[-70.9828055,42.3919674],[-70.9831595,42.3916663],[-70.983299,42.3915474],[-70.9833205,42.3914048],[-70.9833419,42.3911829],[-70.9832239,42.3910482],[-70.9831381,42.3909928],[-70.9828699,42.3908977],[-70.9826875,42.3908184],[-70.9826016,42.3907313],[-70.9827197,42.3907392],[-70.9829021,42.3907947],[-70.9829879,42.390763],[-70.983063,42.3906283],[-70.9829986,42.3904222],[-70.982945,42.3902479],[-70.982945,42.3899309],[-70.9830415,42.3896615],[-70.9832883,42.3893921],[-70.9835243,42.3891465],[-70.9837174,42.388988],[-70.9839427,42.3889087],[-70.9840178,42.388782],[-70.9839427,42.3883699],[-70.9842002,42.3886076],[-70.984329,42.3886076],[-70.9848869,42.3885046],[-70.9851766,42.3883144],[-70.9855199,42.3879975],[-70.9859812,42.3878548],[-70.9865177,42.3875933],[-70.9868181,42.3871575],[-70.9869307,42.3870346],[-70.987215,42.3870703],[-70.9876442,42.387205],[-70.9885561,42.3873635],[-70.9894896,42.3875141],[-70.9902513,42.3874111],[-70.9906375,42.3873001],[-70.9912169,42.3869633],[-70.9915066,42.3868722],[-70.9918928,42.3869792],[-70.9916675,42.3867216],[-70.9916139,42.3865394],[-70.9919572,42.3863016],[-70.9926009,42.3862541],[-70.9934807,42.386365],[-70.9945321,42.385953],[-70.9947467,42.3854141],[-70.9952831,42.3855092],[-70.9951115,42.3842888],[-70.9946609,42.3841303],[-70.9949183,42.3839718],[-70.9947681,42.3835914],[-70.9950256,42.3834488],[-70.9955406,42.3835755],[-70.9950471,42.3832744],[-70.9951544,42.383005],[-70.9944677,42.3828306],[-70.9947467,42.3822125],[-70.9952402,42.3822442],[-70.9951115,42.3818796],[-70.9956479,42.3814358],[-70.9959912,42.3815943],[-70.997107,42.3811347],[-70.9974504,42.381103],[-70.9982336,42.3814041],[-70.9988773,42.3816815],[-70.999006,42.3817845],[-70.9996498,42.382054],[-71.0008299,42.3827434],[-71.0018063,42.3832903],[-71.0024178,42.3835835],[-71.0032332,42.3839005],[-71.0044241,42.3840431],[-71.0044456,42.3835914],[-71.004864,42.3836548],[-71.0048747,42.3839084],[-71.0053575,42.3839797],[-71.0052931,42.3840827],[-71.0063553,42.3842333],[-71.0067952,42.3844077],[-71.0072029,42.384479],[-71.0078466,42.3845582],[-71.0085976,42.3845741],[-71.009016,42.3845265],[-71.0095417,42.384376],[-71.010046,42.3840431],[-71.0105288,42.3834488],[-71.0109043,42.3827593],[-71.0110545,42.3818083],[-71.0110438,42.3810078],[-71.0110438,42.3806908],[-71.0111296,42.3806195],[-71.0114193,42.380461],[-71.011827,42.3804372],[-71.012181,42.3805799],[-71.0125673,42.3809127],[-71.013329,42.3809127],[-71.0134578,42.3805086],[-71.0134792,42.3801599],[-71.0132432,42.3800013],[-71.0131896,42.3795734],[-71.013447,42.3794862],[-71.0139298,42.37951],[-71.0142624,42.3794703],[-71.0145628,42.3792722],[-71.0149491,42.3792247],[-71.0151958,42.3792564],[-71.0158718,42.3802391],[-71.01614,42.3803184],[-71.0195518,42.3774176],[-71.0188973,42.3767281],[-71.0183179,42.376419],[-71.0175884,42.3761099],[-71.0172236,42.3760069],[-71.0168803,42.3758087],[-71.016773,42.3756819],[-71.0161829,42.3755868],[-71.0160971,42.3754045],[-71.0156894,42.3753015],[-71.0155177,42.3750954],[-71.0156786,42.3748259],[-71.0161722,42.3743424],[-71.0130715,42.3720359],[-71.0125351,42.3719646],[-71.012063,42.3717268],[-71.0116661,42.3714335],[-71.0113657,42.3714732],[-71.0108614,42.3719329],[-71.0104752,42.3723847],[-71.0102177,42.3724877],[-71.010046,42.3727255],[-71.0099709,42.3728761],[-71.0105503,42.3733675],[-71.0104001,42.3737559],[-71.0089946,42.3748259],[-71.00878,42.3751826],[-71.0089302,42.3754758],[-71.0088658,42.3756502],[-71.0084796,42.3759355],[-71.0081255,42.3767519],[-71.0081685,42.3768549],[-71.0077608,42.3773542],[-71.0071599,42.3782974],[-71.0068381,42.3787571],[-71.006602,42.3788442],[-71.0059905,42.378868],[-71.005733,42.3791216],[-71.0052824,42.3791375],[-71.0042524,42.3789631],[-71.0026002,42.3782657],[-71.0023427,42.3782974],[-71.0009265,42.3778218],[-71.0056901,42.3766013],[-71.0079326,42.3712827],[-71.0102391,42.3659641],[-71.0039735,42.3649653],[-71.0040379,42.3652348],[-71.0035443,42.3651555],[-71.0035658,42.3647275],[-71.0014522,42.364521350000004],[-71.0015917,42.3641091],[-71.0018492,42.3638713],[-70.999639,42.3619053],[-70.9991455,42.3617785],[-70.9986949,42.3617626],[-70.9981799,42.3615406],[-70.9980297,42.3612869],[-70.9977937,42.3608113],[-70.9970856,42.3606369],[-70.9962273,42.3609064],[-70.9957337,42.360954],[-70.9952617,42.3613187],[-70.9940815,42.3614138],[-70.9942532,42.3616516],[-70.99406,42.3618736],[-70.9934592,42.3619846],[-70.9930944,42.3616833],[-70.9928584,42.3616516],[-70.991292,42.3616358],[-70.9896183,42.362048],[-70.9889531,42.3621431],[-70.9884596,42.3620956],[-70.9878802,42.361826],[-70.9873652,42.3614931],[-70.9870434,42.3610333],[-70.9866571,42.3600661],[-70.9864426,42.3590513],[-70.9860349,42.357989],[-70.985992,42.3576243],[-70.9860671,42.35756085],[-70.990262,42.3543895],[-70.9891462,42.3535967],[-70.9901762,42.3528038],[-70.9914207,42.3536918],[-70.9919357,42.3535967],[-70.992794,42.3538821],[-70.9946823,42.3536601],[-70.9967422,42.3552141],[-70.9976006,42.3559435],[-70.9988451,42.3567046],[-70.9995317,42.3568314],[-71.0013342,42.3567363],[-71.0031366,42.3564509],[-71.0038662,42.3560386],[-71.004467,42.3557849],[-71.0054541,42.3556898],[-71.0058403,42.3555629],[-71.0061407,42.3553409],[-71.0062265,42.3549921],[-71.005969,42.3545164],[-71.005218,42.3540248],[-71.0051107,42.3546115],[-71.0048532,42.3549604],[-71.0044241,42.3551824],[-71.0039949,42.3553092],[-71.0036945,42.3552458],[-71.0033727,42.3549128],[-71.0033512,42.3546274],[-71.0035229,42.3541358],[-71.0041022,42.3531526],[-71.004231,42.3528672],[-71.0043383,42.3522171],[-71.0044885,42.351218],[-71.004746,42.3502665],[-71.0050035,42.3491406],[-71.0050464,42.3486807],[-71.004703,42.3471583],[-71.0050035,42.3470473],[-71.0051751,42.3470473],[-71.0077286,42.3466508],[-71.0079861,42.3466667],[-71.0161185,42.3518999],[-71.0208821,42.3543102],[-71.0283494,42.3580682],[-71.028285,42.3582427],[-71.0282636,42.3584646],[-71.026547,42.362159],[-71.0264397,42.3626188],[-71.0263753,42.3639189],[-71.0264826,42.364236],[-71.0267186,42.3644421],[-71.0278988,42.3648701],[-71.0285211,42.3640774],[-71.0283065,42.364014],[-71.0283279,42.363792],[-71.0284996,42.3636335],[-71.0286069,42.3635066],[-71.0288429,42.3634115],[-71.0292292,42.3634115],[-71.0294437,42.3633164],[-71.0294652,42.3631896],[-71.0295725,42.3631975],[-71.0296798,42.3632054],[-71.0296798,42.3626505],[-71.030302,42.3626822],[-71.0301948,42.3636018],[-71.030581,42.3635859],[-71.0306239,42.3627298],[-71.0315251,42.3627456],[-71.0315251,42.3630151],[-71.0319114,42.3629834],[-71.0318685,42.3626029],[-71.0324478,42.3625712],[-71.0324049,42.3612552],[-71.0332632,42.3613187],[-71.0331774,42.3626346],[-71.0335851,42.3626505],[-71.033628,42.3605576],[-71.0341001,42.3605576],[-71.0340357,42.3632688],[-71.0355163,42.3613187],[-71.0359454,42.3615089],[-71.0343146,42.3635225],[-71.0345292,42.3635859],[-71.0354519,42.3624285],[-71.035881,42.3626029],[-71.0350442,42.3637128],[-71.0359669,42.3640774],[-71.0373831,42.3623017],[-71.0383058,42.3627456],[-71.0369539,42.3645055],[-71.0375762,42.364775],[-71.0388422,42.3631103],[-71.0396791,42.3635066],[-71.0386276,42.3649019],[-71.0393143,42.3651397],[-71.0405588,42.3636811],[-71.0421467,42.3644421],[-71.0409451,42.3658055],[-71.0425758,42.366519],[-71.0432839,42.3673592],[-71.0425758,42.3681836],[-71.0423613,42.3683739],[-71.0425758,42.3684214],[-71.0428119,42.368247],[-71.0430694,42.368247],[-71.0432196,42.368469],[-71.0431337,42.3688019],[-71.0434127,42.369119],[-71.0433054,42.3692617],[-71.044035,42.3695629],[-71.0443139,42.3695153],[-71.0445714,42.3696104],[-71.0441208,42.3702446],[-71.0445499,42.3704665],[-71.0446572,42.3702128],[-71.0453224,42.3705141],[-71.0450006,42.3708787],[-71.0453439,42.3710055],[-71.0448933,42.3715762],[-71.0450864,42.3716396],[-71.0447001,42.3720042],[-71.0443568,42.3718615],[-71.0442924,42.3720042],[-71.0454941,42.3725432],[-71.0448503,42.3732883],[-71.0439491,42.3729395],[-71.0435843,42.3729395],[-71.0430694,42.37267],[-71.04272599999999,42.37307425]]]}},{"type":"Feature","properties":{"ASAP":"Boston Senior Home Care"},"geometry":{"type":"Polygon","coordinates":[[[-71.08554075,42.28099895],[-71.0863132,42.2811895],[-71.0870361,42.281627],[-71.0888386,42.2827621],[-71.0889781,42.2829447],[-71.0892463,42.2836114],[-71.0893965,42.2838019],[-71.0896003,42.2839051],[-71.0912848,42.2841988],[-71.0917783,42.2843655],[-71.0925615,42.284806],[-71.0927707,42.2850084],[-71.0930014,42.2854648],[-71.0935593,42.2869212],[-71.0943532,42.2887825],[-71.0953993,42.2911476],[-71.0962576,42.2931277],[-71.0963595,42.2932388],[-71.0966384,42.2935324],[-71.0969657,42.2938142],[-71.0976577,42.2944729],[-71.0985589,42.2953617],[-71.0995674,42.2963378],[-71.1012894,42.2980043],[-71.1019921,42.2986432],[-71.1030436,42.2995835],[-71.1033225,42.2998454],[-71.1034083,42.2999208],[-71.1035585,42.3000081],[-71.1037409,42.3000914],[-71.1040843,42.3002144],[-71.1045885,42.3002858],[-71.1051679,42.3002064],[-71.1062086,42.3001588],[-71.1067557,42.3001985],[-71.1070454,42.3003096],[-71.107142,42.3005],[-71.107024,42.3007698],[-71.1068845,42.3008968],[-71.1069059,42.3010158],[-71.1065626,42.3012777],[-71.1057901,42.3016268],[-71.1055434,42.3017617],[-71.1051571,42.3020792],[-71.103934,42.3031186],[-71.1036658,42.3033726],[-71.103301,42.3037852],[-71.1032045,42.3040153],[-71.1031616,42.3044517],[-71.1030972,42.3046898],[-71.1029363,42.3049516],[-71.1027217,42.3052293],[-71.102668,42.305388],[-71.1027002,42.3065544],[-71.1026251,42.3070146],[-71.1025393,42.3076494],[-71.1024964,42.3080461],[-71.1025071,42.3084428],[-71.1024535,42.3088633],[-71.1024427,42.3089189],[-71.1027217,42.3089823],[-71.1033225,42.3091331],[-71.1045134,42.3094425],[-71.1048675,42.3096012],[-71.1064875,42.3102756],[-71.1069489,42.310466],[-71.1062837,42.311434],[-71.1058223,42.3121877],[-71.1054361,42.3129097],[-71.1052752,42.3133222],[-71.1050177,42.3140283],[-71.1046743,42.3146551],[-71.1043954,42.3151549],[-71.1041594,42.3154563],[-71.1032796,42.3164004],[-71.1030865,42.3166305],[-71.1033976,42.3167891],[-71.1037517,42.3169399],[-71.1040521,42.3170033],[-71.1043847,42.3170509],[-71.1048782,42.3170271],[-71.105082,42.3170113],[-71.1053181,42.3170033],[-71.1055863,42.3169478],[-71.1059082,42.3169557],[-71.1061335,42.3170351],[-71.1066377,42.3172255],[-71.1071742,42.3175269],[-71.1077428,42.3177808],[-71.1081934,42.3179553],[-71.1085796,42.3180823],[-71.10888,42.3181854],[-71.1093307,42.3183599],[-71.1099207,42.3185979],[-71.1104143,42.318828],[-71.1108434,42.3190501],[-71.1116481,42.3195499],[-71.1106503,42.3207556],[-71.110425,42.3210412],[-71.1119163,42.3210016],[-71.1120558,42.3216362],[-71.1151671,42.3211682],[-71.1157787,42.3210809],[-71.116122,42.3210492],[-71.1166048,42.321073],[-71.1170876,42.3211126],[-71.1179996,42.3212475],[-71.1189115,42.3214061],[-71.1192656,42.3214934],[-71.1194265,42.3216203],[-71.11947475000001,42.322711],[-71.1194479,42.3228181],[-71.1186111,42.3231275],[-71.1183858,42.3235083],[-71.1166665,42.323891],[-71.1164439,42.3239921],[-71.1159289,42.32588],[-71.1160362,42.3259078],[-71.1162508,42.3259355],[-71.1156929,42.3268755],[-71.1155051,42.3268041],[-71.1150411,42.3268656],[-71.1148345,42.3269984],[-71.1145449,42.3274426],[-71.1141345,42.3278273],[-71.1141238,42.3281168],[-71.1138971,42.3283389],[-71.1135504,42.3283726],[-71.1133986,42.3284509],[-71.1132127,42.3285615],[-71.1130553,42.3287972],[-71.113041,42.329034],[-71.1128166,42.3293547],[-71.1131711,42.3299652],[-71.1137561,42.3307384],[-71.1136329,42.3313609],[-71.1133754,42.3308295],[-71.1130965,42.3309167],[-71.113193,42.3312657],[-71.1129785,42.3322571],[-71.1128283,42.3326378],[-71.1124098,42.3331216],[-71.1125171,42.3332406],[-71.1126459,42.3332882],[-71.1124742,42.3336768],[-71.112088,42.3340575],[-71.1119056,42.3341685],[-71.1108005,42.3352154],[-71.1107683,42.3353423],[-71.11127466666666,42.335696266666666],[-71.1119699,42.3363575],[-71.1117876,42.3367857],[-71.1116213,42.3370157],[-71.111455,42.3371347],[-71.1116052,42.337555],[-71.1112404,42.3380864],[-71.1109185,42.3388953],[-71.1107898,42.3395931],[-71.1106181,42.340291],[-71.1102748,42.3407986],[-71.1094809,42.341544],[-71.1084509,42.3418612],[-71.108129,42.3423529],[-71.1058116,42.3437485],[-71.1058867,42.3444146],[-71.1065519,42.345723],[-71.1072278,42.3470314],[-71.1070561,42.3476975],[-71.1069059,42.3484666],[-71.1067879,42.3491089],[-71.1065894,42.3499216],[-71.1104947,42.3503974],[-71.1107093,42.3505302],[-71.1109078,42.3506551],[-71.1109293,42.3504886],[-71.1111438,42.3506868],[-71.1131555,42.350889],[-71.1158162,42.351222],[-71.1160791,42.3501635],[-71.1164814,42.350211],[-71.1164439,42.3504767],[-71.1164707,42.3505084],[-71.1162668,42.3512497],[-71.1185145,42.3515352],[-71.1184341,42.351337],[-71.1202499,42.351551],[-71.1213148,42.3516719],[-71.1214274,42.3511804],[-71.1224574,42.3513132],[-71.122503,42.3513607],[-71.1235276,42.3514678],[-71.1234337,42.3519316],[-71.1240828,42.3520188],[-71.12441,42.3519356],[-71.1246514,42.3518167],[-71.1250538,42.3515431],[-71.1247024,42.3512676],[-71.1268508,42.3500881],[-71.1285675,42.3498324],[-71.1285594,42.3497571],[-71.1292434,42.3490772],[-71.1296082,42.3489146],[-71.1316895,42.3479116],[-71.1333418,42.3471345],[-71.1339962,42.3467301],[-71.1347419,42.3462741],[-71.1358255,42.3454733],[-71.1377621,42.3439388],[-71.1389691,42.3429476],[-71.1404979,42.3417185],[-71.1413991,42.341084],[-71.1417586,42.340515],[-71.1419034,42.3400491],[-71.1420268,42.340061],[-71.1426169,42.3401165],[-71.1442047,42.3400214],[-71.1455888,42.3391143],[-71.1465329,42.3385245],[-71.1464685,42.3380457],[-71.1462808,42.3376026],[-71.147477,42.3374321],[-71.1489522,42.3371109],[-71.1488235,42.3368412],[-71.1485445,42.3362702],[-71.1484694,42.3358023],[-71.1501861,42.3353582],[-71.1503899,42.3355327],[-71.1510015,42.3360878],[-71.1514306,42.3364923],[-71.1523104,42.3371902],[-71.153115,42.3379039],[-71.1532867,42.3379991],[-71.1534476,42.3380626],[-71.1536515,42.3380626],[-71.1540484,42.3381339],[-71.1546493,42.338356],[-71.1550248,42.3385146],[-71.1551321,42.3383719],[-71.1554003,42.3382053],[-71.1556041,42.3380705],[-71.1558831,42.3380467],[-71.1560655,42.3380467],[-71.1563873,42.3381577],[-71.1571491,42.3384591],[-71.1574388,42.3385543],[-71.1579216,42.3386415],[-71.158458,42.3387287],[-71.1587799,42.3387446],[-71.158973,42.3386891],[-71.1591768,42.3385622],[-71.159327,42.3383639],[-71.159488,42.3380784],[-71.1597133,42.3377533],[-71.1599278,42.337666],[-71.160078,42.3376264],[-71.1603355,42.337666],[-71.1606359,42.3377295],[-71.1609042,42.3377612],[-71.1611295,42.3377771],[-71.1613441,42.3377057],[-71.161623,42.3375867],[-71.1617839,42.3374757],[-71.1618805,42.337214],[-71.1619234,42.3368888],[-71.1620307,42.3367064],[-71.1622667,42.3365002],[-71.1626637,42.336413],[-71.1632109,42.3362861],[-71.1635756,42.3361354],[-71.1629426,42.3352551],[-71.1631358,42.3351916],[-71.1638653,42.3354137],[-71.1647666,42.3356516],[-71.1653137,42.3358023],[-71.1653459,42.3362782],[-71.1653325,42.3364189],[-71.1652708,42.3371109],[-71.1651421,42.3376125],[-71.1656463,42.3381141],[-71.1664349,42.3389706],[-71.1671698,42.3387089],[-71.1672235,42.3388318],[-71.1663544,42.339157],[-71.1666226,42.3395654],[-71.1668479,42.3400214],[-71.1699218,42.3442878],[-71.1701417,42.3443036],[-71.1709142,42.3453186],[-71.1713004,42.3458182],[-71.1716545,42.3461195],[-71.1719656,42.346397],[-71.1720192,42.3466746],[-71.1748517,42.3502507],[-71.1749268,42.3507978],[-71.1739773,42.3534262],[-71.1683714,42.3592574],[-71.1676311,42.3600502],[-71.1680174,42.3600978],[-71.1666441,42.3617309],[-71.1659789,42.3612869],[-71.165657,42.3606527],[-71.165185,42.3601136],[-71.1645412,42.3597014],[-71.1641979,42.3593843],[-71.1639404,42.3591306],[-71.1632538,42.3589879],[-71.1624169,42.3591147],[-71.1614084,42.3596697],[-71.1604857,42.3601136],[-71.1594343,42.3604466],[-71.1578035,42.3605259],[-71.1567521,42.3605417],[-71.1559796,42.3603515],[-71.155057,42.3604149],[-71.1544776,42.360621],[-71.1538553,42.3607637],[-71.1530614,42.3611601],[-71.1513019,42.3621907],[-71.147697,42.3617943],[-71.1476755,42.3620004],[-71.1467957,42.3627456],[-71.1464095,42.3631578],[-71.1461091,42.3636652],[-71.145916,42.364014],[-71.1457014,42.3643628],[-71.1451435,42.3649494],[-71.1446071,42.3653458],[-71.1436415,42.3655043],[-71.1416245,42.3650604],[-71.1399293,42.3646482],[-71.1384273,42.3646957],[-71.1379123,42.3651238],[-71.1369681,42.3660434],[-71.1363029,42.3665665],[-71.1355948,42.3668836],[-71.1352301,42.3669946],[-71.1352515,42.3666141],[-71.1351013,42.3662019],[-71.1345863,42.365869],[-71.1341786,42.3658214],[-71.1336851,42.3660592],[-71.133492,42.366408],[-71.1336207,42.3667885],[-71.1341143,42.3670263],[-71.1346722,42.3671056],[-71.1334705,42.3676605],[-71.1328053,42.3680409],[-71.1321187,42.36858],[-71.1316252,42.3689287],[-71.1313677,42.3690873],[-71.1311102,42.3695629],[-71.1311102,42.3698799],[-71.1313677,42.3704506],[-71.1316037,42.3710689],[-71.131947,42.3714652],[-71.1323547,42.3719091],[-71.1329126,42.3716713],[-71.1330199,42.3717823],[-71.1335778,42.3714652],[-71.1339426,42.3719884],[-71.1339855,42.3724005],[-71.1335993,42.3729395],[-71.1328268,42.373637],[-71.1321831,42.3740333],[-71.1315179,42.3742711],[-71.1307883,42.3743821],[-71.1299944,42.3743821],[-71.1291575,42.374287],[-71.1283422,42.3740809],[-71.1277413,42.3738114],[-71.1270118,42.3733675],[-71.1260247,42.3727176],[-71.1250591,42.3718774],[-71.1245656,42.3713543],[-71.1242223,42.3705299],[-71.1239648,42.3701177],[-71.1237931,42.3698482],[-71.1232138,42.369436],[-71.1228919,42.3692458],[-71.1235571,42.368469],[-71.125617,42.3663446],[-71.1242437,42.3657738],[-71.1233425,42.3655043],[-71.1234498,42.3652824],[-71.1232352,42.3651872],[-71.1234283,42.3644738],[-71.1245871,42.3643945],[-71.1245227,42.3636176],[-71.1177421,42.3641725],[-71.1176777,42.3636018],[-71.1176562,42.3630627],[-71.1174846,42.3619529],[-71.1173558,42.3610015],[-71.1173129,42.359749],[-71.1172915,42.3594953],[-71.11727,42.3593209],[-71.1175919,42.3584805],[-71.118021,42.3573706],[-71.1182141,42.3564509],[-71.1181712,42.3559276],[-71.1179996,42.3552775],[-71.1174417,42.3544688],[-71.1169696,42.3540724],[-71.1141372,42.3525342],[-71.1133862,42.3522646],[-71.1125922,42.3520902],[-71.1114979,42.3521219],[-71.1111331,42.3522488],[-71.1104035,42.3521378],[-71.1101031,42.3520585],[-71.1090088,42.3520268],[-71.1084509,42.3520268],[-71.1076784,42.3518206],[-71.1068201,42.3515669],[-71.1039019,42.3513925],[-71.1016917,42.3515193],[-71.1009192,42.3516303],[-71.100297,42.3515986],[-71.0987091,42.3512815],[-71.0977221,42.3510594],[-71.0966492,42.3510277],[-71.0953188,42.3512497],[-71.0945034,42.3511229],[-71.0928297,42.3516938],[-71.0918427,42.3519475],[-71.0884953,42.3523915],[-71.0851908,42.3533746],[-71.0847187,42.3541358],[-71.0772514,42.3561496],[-71.0762966,42.3564192],[-71.0760605,42.356546],[-71.0758245,42.3567125],[-71.0750735,42.3553726],[-71.0731959,42.3558801],[-71.0729277,42.3552616],[-71.0724556,42.3553885],[-71.072005,42.3544609],[-71.0705996,42.3516303],[-71.0702991,42.3510119],[-71.0700631,42.3503775],[-71.0696983,42.3493785],[-71.0692799,42.3481495],[-71.0691726,42.347975],[-71.0690117,42.3477133],[-71.068722,42.3474437],[-71.0669839,42.3470711],[-71.0653853,42.3467459],[-71.0634542,42.3463415],[-71.0616302,42.3459689],[-71.0601282,42.3456279],[-71.0597634,42.3453266],[-71.0594523,42.3450411],[-71.0592699,42.3447873],[-71.0593128,42.3444226],[-71.0595489,42.3438278],[-71.0598815,42.3432767],[-71.0601711,42.3429159],[-71.0602033,42.3420753],[-71.0602462,42.3416709],[-71.0602462,42.3412902],[-71.0601604,42.3384512],[-71.0601175,42.3371505],[-71.0601175,42.3368095],[-71.0601175,42.336635],[-71.0602355,42.336072],[-71.0605574,42.3354851],[-71.0611582,42.3345968],[-71.0640979,42.330076],[-71.0657072,42.3275378],[-71.0666085,42.3261338],[-71.067059,42.3252692],[-71.0678852,42.3221121],[-71.0688722,42.3184154],[-71.0692692,42.3169954],[-71.0693228,42.3168605],[-71.0700524,42.3151945],[-71.0707068,42.3137982],[-71.0716403,42.3118545],[-71.0730672,42.3089903],[-71.0737431,42.307816],[-71.0753739,42.3064274],[-71.0772729,42.3047453],[-71.0777879,42.3041026],[-71.0783565,42.3033884],[-71.0790217,42.3022299],[-71.0793436,42.3007064],[-71.0793006,42.2999525],[-71.0792792,42.2993335],[-71.0790324,42.2972623],[-71.0783565,42.2933817],[-71.0782492,42.2921753],[-71.0781419,42.2909928],[-71.078217,42.2905325],[-71.0783136,42.2899412],[-71.0784423,42.2896515],[-71.0786784,42.2891515],[-71.0790002,42.2884451],[-71.0801804,42.28708],[-71.0816288,42.2856632],[-71.0831845,42.2842027],[-71.0833615,42.2839369],[-71.084767,42.2820636],[-71.08554075,42.28099895]]]}},{"type":"Feature","properties":{"ASAP":"ETHOS"},"geometry":{"type":"Polygon","coordinates":[[[-71.119684,42.3230164],[-71.11947475000001,42.322711],[-71.1195284,42.3225683],[-71.119464,42.3216243],[-71.1192656,42.3214656],[-71.1189598,42.3213942],[-71.1186701,42.3213427],[-71.1176133,42.3211682],[-71.1172271,42.3211166],[-71.1170018,42.3210809],[-71.1165565,42.3210492],[-71.1160845,42.3210254],[-71.1153817,42.3211166],[-71.1120719,42.3216124],[-71.1119351,42.3209838],[-71.1104491,42.3210313],[-71.1106959,42.320716],[-71.1112431,42.3200635],[-71.1116749,42.3195479],[-71.1109963,42.3191294],[-71.1108488,42.3190382],[-71.1106718,42.3189489],[-71.1104438,42.3188319],[-71.1103097,42.3187685],[-71.1099878,42.3186157],[-71.1097544,42.3185166],[-71.1087781,42.3181378],[-71.1086655,42.3181001],[-71.1081854,42.3179395],[-71.1076945,42.317751],[-71.1072466,42.3175468],[-71.1071581,42.3175051],[-71.1066431,42.3172116],[-71.1058974,42.3169399],[-71.1055729,42.3169339],[-71.1053261,42.3169895],[-71.1049935,42.3170073],[-71.1044866,42.3170331],[-71.104382,42.3170371],[-71.1040467,42.3169895],[-71.103749,42.316924],[-71.103521,42.3168308],[-71.1033949,42.3167812],[-71.1031052,42.3166265],[-71.1033118,42.3163964],[-71.103926,42.3157221],[-71.1041889,42.3154444],[-71.1042559,42.3153572],[-71.1044249,42.3151509],[-71.1049747,42.3141374],[-71.1050391,42.3140124],[-71.1052698,42.3133797],[-71.105428,42.3129672],[-71.1054602,42.3129017],[-71.1056212,42.3125923],[-71.1057124,42.3124257],[-71.1058679,42.3121381],[-71.1060932,42.3117692],[-71.1063641,42.3113388],[-71.1066002,42.3109956],[-71.106973,42.3104521],[-71.105656,42.3099186],[-71.1048192,42.3095675],[-71.1045054,42.3094247],[-71.1040199,42.3093037],[-71.1024722,42.3089069],[-71.1025205,42.3084686],[-71.1025152,42.3080461],[-71.1025876,42.3074034],[-71.1026171,42.3071733],[-71.1027016,42.3067369],[-71.1027076,42.3066898],[-71.1027203,42.3066268],[-71.102719,42.3065266],[-71.1026841,42.3054178],[-71.1026976,42.3053702],[-71.1027351,42.3052432],[-71.1028665,42.3050746],[-71.102947,42.3049655],[-71.103116,42.3046937],[-71.103175,42.3044973],[-71.1031884,42.3044378],[-71.1032206,42.3040292],[-71.1033198,42.3037891],[-71.1035532,42.3035213],[-71.1037007,42.3033626],[-71.1038804,42.303192],[-71.1043712,42.3027675],[-71.1047682,42.3024323],[-71.1055085,42.3018074],[-71.1055541,42.3017736],[-71.105707,42.3016903],[-71.1058223,42.3016229],[-71.1060476,42.3015257],[-71.1065868,42.3012836],[-71.1069274,42.3010198],[-71.1069033,42.3009008],[-71.1070481,42.3007659],[-71.107083,42.3006826],[-71.1071581,42.300494],[-71.1070535,42.3002878],[-71.1067557,42.3001826],[-71.1063105,42.3001509],[-71.1060584,42.3001529],[-71.105141,42.3001945],[-71.1045858,42.3002699],[-71.1040789,42.3002025],[-71.1038268,42.3001072],[-71.1036336,42.3000279],[-71.1034432,42.2999287],[-71.1033413,42.2998474],[-71.102939,42.2994684],[-71.1027244,42.299282],[-71.1023006,42.2989011],[-71.1021423,42.2987602],[-71.1019841,42.2986193],[-71.1014879,42.298171],[-71.1011124,42.2978198],[-71.1009085,42.2976234],[-71.1002567,42.2969905],[-71.0996184,42.2963696],[-71.0988539,42.2956256],[-71.0986179,42.2954014],[-71.0984784,42.2952665],[-71.098339,42.2951276],[-71.0981593,42.2949471],[-71.0979956,42.2947923],[-71.0974297,42.2942288],[-71.0968879,42.2937289],[-71.096727,42.293594],[-71.0966304,42.2935086],[-71.0962656,42.2931118],[-71.0961798,42.2928995],[-71.0958579,42.2921674],[-71.0956112,42.2916039],[-71.09541,42.2911337],[-71.0949004,42.2899869],[-71.0942754,42.2885682],[-71.0937014,42.2872229],[-71.0935807,42.2869312],[-71.0934976,42.2867169],[-71.0931838,42.2859033],[-71.0930094,42.285437],[-71.0929397,42.285312],[-71.0927975,42.2850302],[-71.0927868,42.2849965],[-71.0926339,42.2848556],[-71.0925615,42.2847862],[-71.0919124,42.284423],[-71.0917622,42.2843436],[-71.0913143,42.2841928],[-71.0900483,42.2839686],[-71.089603,42.2838912],[-71.0894072,42.283788],[-71.0892597,42.2835955],[-71.08908,42.2831451],[-71.0889941,42.2829308],[-71.0888439,42.2827423],[-71.0877576,42.2820616],[-71.0865372,42.2813095],[-71.0863173,42.2811805],[-71.0855448,42.280996],[-71.0858318,42.2806229],[-71.0863897,42.2800454],[-71.0878783,42.2784995],[-71.088852,42.2774874],[-71.0892624,42.2770647],[-71.0895547,42.276767],[-71.0899329,42.2764296],[-71.0907698,42.2756874],[-71.0917139,42.2748518],[-71.0925025,42.2741572],[-71.093334,42.2734209],[-71.0934895,42.273284],[-71.0935351,42.2719066],[-71.0935807,42.2705669],[-71.0936102,42.2697829],[-71.0936451,42.268856],[-71.0936853,42.2676532],[-71.09369065,42.2671847],[-71.0939442,42.2671946],[-71.093979,42.2672433],[-71.0941038,42.2672135],[-71.0942513,42.2671311],[-71.0944337,42.2670249],[-71.0945423,42.2669307],[-71.0946643,42.2668135],[-71.094722,42.2667252],[-71.0947354,42.2666488],[-71.0947944,42.2665525],[-71.0950063,42.2662469],[-71.0950707,42.2661546],[-71.0951619,42.2660404],[-71.0952289,42.2659571],[-71.0953188,42.2657844],[-71.0954435,42.2656415],[-71.0955508,42.2655382],[-71.0957587,42.2653824],[-71.0958552,42.2653239],[-71.0958754,42.265301],[-71.0958955,42.2652554],[-71.0959022,42.2652276],[-71.095937,42.2651849],[-71.0959987,42.2651601],[-71.0960497,42.2651293],[-71.0961919,42.2649815],[-71.0962415,42.2649527],[-71.0962844,42.2649497],[-71.0964507,42.2647472],[-71.0968798,42.2641934],[-71.0972607,42.2636059],[-71.0975021,42.263197],[-71.097647,42.263058],[-71.0978615,42.2629667],[-71.0985643,42.262796],[-71.0987788,42.2627285],[-71.0991919,42.2624863],[-71.0992992,42.2623633],[-71.0994709,42.2621608],[-71.0999107,42.2617201],[-71.1003613,42.2613827],[-71.1009407,42.2610253],[-71.1015469,42.2607157],[-71.1019439,42.2604814],[-71.1025715,42.2600884],[-71.1030543,42.2599058],[-71.103462,42.2598105],[-71.1037409,42.2598184],[-71.1040413,42.2599375],[-71.1043203,42.260144],[-71.1046314,42.2604695],[-71.1050498,42.2607792],[-71.1052537,42.2608824],[-71.105479,42.2609618],[-71.1059082,42.2609856],[-71.1063588,42.2609301],[-71.1070883,42.2607951],[-71.1075389,42.2607792],[-71.1080861,42.2609142],[-71.1083865,42.2610889],[-71.1087084,42.2612715],[-71.1090302,42.2613668],[-71.1093843,42.2613668],[-71.1099529,42.2612635],[-71.1103821,42.2612477],[-71.110661,42.2612318],[-71.1112726,42.2609698],[-71.1117554,42.2606839],[-71.112206,42.2601519],[-71.1124957,42.2596318],[-71.1134076,42.2590164],[-71.1123347,42.2581827],[-71.1133218,42.257738],[-71.1140299,42.2572615],[-71.1147165,42.2566183],[-71.1153924,42.2559513],[-71.1159933,42.2552684],[-71.1172485,42.2538866],[-71.1177421,42.2533148],[-71.1173236,42.2529654],[-71.1151779,42.2541566],[-71.1154461,42.2544028],[-71.1154783,42.2545219],[-71.1151671,42.2551572],[-71.1122382,42.2568566],[-71.1116052,42.2562213],[-71.1108112,42.256658],[-71.1095345,42.2554272],[-71.1093414,42.2480099],[-71.1122489,42.2464771],[-71.1156929,42.2446821],[-71.1210733,42.2419142],[-71.1225968,42.2411119],[-71.1228114,42.241104],[-71.1229107,42.241106],[-71.1230743,42.2411199],[-71.1231628,42.2411218],[-71.1232567,42.2410921],[-71.1238039,42.2407942],[-71.1244583,42.2404745],[-71.1251342,42.2401349],[-71.125735,42.2398212],[-71.1256492,42.2395372],[-71.1264539,42.2392334],[-71.1264217,42.2390984],[-71.1259067,42.2384471],[-71.1257726,42.2380817],[-71.1257243,42.2379864],[-71.1255634,42.2379109],[-71.125102,42.23776],[-71.1249948,42.2372675],[-71.1249518,42.2372],[-71.1247963,42.2363897],[-71.1247641,42.2352101],[-71.1238146,42.2348328],[-71.123549,42.2347454],[-71.1230716,42.2346402],[-71.1229858,42.2346283],[-71.1228678,42.2345826],[-71.1224896,42.234523],[-71.1222535,42.2344833],[-71.1221355,42.2344356],[-71.1220068,42.2343423],[-71.1219236,42.234243],[-71.1218861,42.2341715],[-71.1218727,42.2340305],[-71.1218888,42.2338597],[-71.1220148,42.2337148],[-71.1221758,42.233544],[-71.1223689,42.2334109],[-71.1229536,42.2329621],[-71.1230797,42.2328509],[-71.1233586,42.2325867],[-71.1234766,42.2324557],[-71.1235651,42.2323147],[-71.1236054,42.2322253],[-71.1236241,42.2320823],[-71.1235946,42.2318142],[-71.1219129,42.2273138],[-71.1228745,42.2270019],[-71.1232802,42.2268699],[-71.1236215,42.2265948],[-71.1238146,42.2262055],[-71.1241472,42.2256891],[-71.1243403,42.225411],[-71.1246622,42.2252124],[-71.1250591,42.2251091],[-71.1254668,42.2250535],[-71.1259925,42.2249582],[-71.1262715,42.2248549],[-71.1265397,42.2246801],[-71.126765,42.2244735],[-71.1276877,42.2252362],[-71.128428,42.2259036],[-71.1296725,42.2269523],[-71.1302412,42.227421],[-71.1309493,42.2279215],[-71.1314964,42.2275402],[-71.1315286,42.228001],[-71.1314535,42.2281599],[-71.1313677,42.2282155],[-71.1329663,42.2293674],[-71.1344576,42.2304796],[-71.1366999,42.2319751],[-71.1369896,42.2321995],[-71.1381215,42.2329958],[-71.1383334,42.2331309],[-71.1386794,42.2333255],[-71.1387947,42.2333613],[-71.1389369,42.2334049],[-71.1392131,42.2335181],[-71.1399588,42.2340603],[-71.1406374,42.234525],[-71.1411148,42.2348706],[-71.1418015,42.2353551],[-71.1424828,42.2359012],[-71.1425847,42.236358],[-71.1426115,42.2368385],[-71.1427402,42.237196],[-71.1430192,42.2379069],[-71.1430782,42.2381968],[-71.1431426,42.2387171],[-71.143207,42.2391143],[-71.1432981,42.2395988],[-71.1433089,42.2399999],[-71.1435342,42.240548],[-71.14362,42.2411953],[-71.1436415,42.2416203],[-71.1437488,42.2421842],[-71.1439526,42.2429705],[-71.144017,42.2434351],[-71.1441779,42.2442254],[-71.1444515,42.2449005],[-71.1445105,42.2450911],[-71.1444139,42.245242],[-71.1449102,42.2476525],[-71.1453474,42.2494275],[-71.1458302,42.2515995],[-71.1459589,42.2522428],[-71.1465919,42.2556178],[-71.148051,42.2563325],[-71.1500895,42.2572456],[-71.1521602,42.2581985],[-71.1526108,42.2579524],[-71.1528254,42.2579683],[-71.1557221,42.2563325],[-71.1566234,42.2560307],[-71.1582541,42.2548237],[-71.1615372,42.257603],[-71.1598635,42.2588735],[-71.160078,42.2590482],[-71.160357,42.2587782],[-71.1622989,42.2601757],[-71.1626959,42.2598978],[-71.1629802,42.2598422],[-71.1631009,42.2598303],[-71.1632752,42.259874],[-71.1632189,42.2601182],[-71.1632484,42.2603464],[-71.1632323,42.2607951],[-71.1633208,42.2612596],[-71.1634094,42.2615891],[-71.1635113,42.2619821],[-71.1635274,42.2622481],[-71.1639243,42.2622164],[-71.1642247,42.2621767],[-71.1646968,42.2620457],[-71.1652923,42.2618273],[-71.1655927,42.2617201],[-71.1657536,42.2615772],[-71.165936,42.2615057],[-71.1663008,42.261474],[-71.1668372,42.2614779],[-71.1682534,42.2627841],[-71.1689723,42.2633756],[-71.1702812,42.2644872],[-71.1709464,42.2650509],[-71.1711019,42.2651145],[-71.1710912,42.2653368],[-71.1711287,42.2656544],[-71.1711717,42.2659719],[-71.1713433,42.2662419],[-71.171515,42.2664324],[-71.1717081,42.2665436],[-71.1719227,42.2666151],[-71.1720514,42.266623],[-71.1722338,42.2666945],[-71.1726308,42.2667183],[-71.1728883,42.2667421],[-71.1733711,42.2668771],[-71.173768,42.2671073],[-71.1739826,42.2672582],[-71.1741006,42.2674408],[-71.1741221,42.2675202],[-71.1742294,42.2675678],[-71.1743045,42.2683141],[-71.1742938,42.2684967],[-71.1742723,42.268584],[-71.1741328,42.2687825],[-71.1739933,42.2688778],[-71.173414,42.2691636],[-71.1732531,42.2693065],[-71.1731243,42.2695368],[-71.1731136,42.2696558],[-71.173017,42.2697511],[-71.1728239,42.2699258],[-71.1727273,42.2701243],[-71.1727273,42.2702592],[-71.172781,42.270418],[-71.1729312,42.2706482],[-71.1730492,42.2707753],[-71.1731672,42.2709976],[-71.1732316,42.2713628],[-71.1740148,42.2726965],[-71.174401,42.2730458],[-71.174562,42.273411],[-71.1746371,42.2737047],[-71.1746478,42.2740302],[-71.1744869,42.2744271],[-71.1742294,42.2748082],[-71.1739397,42.2752686],[-71.1737573,42.2756655],[-71.1737895,42.2758719],[-71.1738646,42.2760783],[-71.1740685,42.2762371],[-71.1745298,42.2763879],[-71.174916,42.2765388],[-71.1751735,42.2767213],[-71.1753559,42.2769436],[-71.1754632,42.2771738],[-71.1755276,42.2773723],[-71.1756563,42.2775707],[-71.1758494,42.2777216],[-71.1761391,42.2778565],[-71.1766112,42.2779835],[-71.176976,42.2780708],[-71.1773622,42.2780788],[-71.1778879,42.2780153],[-71.178124,42.2779518],[-71.1786067,42.2777057],[-71.1788857,42.2776104],[-71.1792183,42.277531],[-71.1795831,42.2774834],[-71.1803126,42.2775946],[-71.1806452,42.2771579],[-71.18101,42.2768166],[-71.1814821,42.2765229],[-71.1818254,42.2764038],[-71.1822331,42.2763482],[-71.1826408,42.2763641],[-71.1830699,42.2764753],[-71.1832952,42.2766578],[-71.1833382,42.2770944],[-71.183188,42.2775707],[-71.1828661,42.277928],[-71.1828125,42.2780708],[-71.1828339,42.278182],[-71.1830699,42.2783725],[-71.1834133,42.2785233],[-71.1839175,42.2788647],[-71.1841321,42.2791266],[-71.1842823,42.2792774],[-71.1844862,42.2793568],[-71.1849689,42.2793647],[-71.1851835,42.2795473],[-71.1851728,42.2796664],[-71.1852479,42.2797299],[-71.1854517,42.2797775],[-71.185559,42.2799045],[-71.1857951,42.2800315],[-71.186074,42.2801268],[-71.1863637,42.2801268],[-71.186589,42.2803332],[-71.1867285,42.2803808],[-71.1868787,42.2804443],[-71.1871576,42.2804364],[-71.1876512,42.2806586],[-71.1878765,42.2806904],[-71.1880803,42.2807301],[-71.1890674,42.2811905],[-71.1900437,42.2817778],[-71.1903977,42.282016],[-71.1906767,42.2823176],[-71.1907947,42.2825875],[-71.1908698,42.283286],[-71.1882198,42.2856354],[-71.1786926,42.294453],[-71.1775017,42.2951832],[-71.1696911,42.3005318],[-71.1697769,42.3003175],[-71.1694121,42.3003731],[-71.1690474,42.2993891],[-71.1682427,42.2983257],[-71.1678404,42.2985479],[-71.1674166,42.2978972],[-71.1657643,42.2968338],[-71.164155,42.2960402],[-71.1621165,42.2952466],[-71.1610651,42.2943102],[-71.1596918,42.2949451],[-71.1584902,42.295453],[-71.1576319,42.2957387],[-71.1571813,42.2958339],[-71.1569881,42.29558],[-71.1563444,42.2956117],[-71.1548638,42.2955958],[-71.153512,42.2955641],[-71.1532331,42.29558],[-71.152246,42.2946276],[-71.1482764,42.2965878],[-71.1475575,42.2966791],[-71.1471069,42.2966989],[-71.1471444,42.2971632],[-71.146785,42.2972623],[-71.1459482,42.2979528],[-71.1457014,42.2974687],[-71.1456156,42.297056],[-71.1459374,42.2967386],[-71.1456585,42.2968378],[-71.1454761,42.29681],[-71.1453259,42.2967307],[-71.145224,42.2966076],[-71.1451784,42.2965025],[-71.1452615,42.2963339],[-71.1446714,42.2963021],[-71.1442208,42.2962704],[-71.1425096,42.2960442],[-71.140734,42.2958736],[-71.1396343,42.2957268],[-71.1388242,42.2956831],[-71.1380464,42.2957268],[-71.1376762,42.2957863],[-71.1372149,42.2959133],[-71.1366677,42.2960958],[-71.1363673,42.2962942],[-71.1355948,42.296687],[-71.1350155,42.2968418],[-71.1363566,42.2992462],[-71.1361044,42.2995835],[-71.13615,42.2998632],[-71.1366074,42.3000785],[-71.1371881,42.301],[-71.1371398,42.3012102],[-71.1364397,42.3012926],[-71.1357665,42.301484],[-71.1365792,42.3023033],[-71.1362131,42.30234],[-71.1358154,42.3022631],[-71.1352411,42.3026254],[-71.1351256,42.3026042],[-71.1344885,42.302062],[-71.1339265,42.3016626],[-71.1330307,42.3015078],[-71.1324084,42.3014047],[-71.1317647,42.3013412],[-71.1310887,42.3012936],[-71.1308849,42.3012618],[-71.1287177,42.3005],[-71.1286962,42.3007381],[-71.1289215,42.3008333],[-71.1295009,42.301],[-71.1295974,42.3011587],[-71.128149,42.3027378],[-71.1289108,42.3031186],[-71.1294418,42.3042454],[-71.1311611,42.3044596],[-71.1335135,42.3047215],[-71.133846,42.304777],[-71.1341572,42.3049754],[-71.1343396,42.3052849],[-71.1346185,42.305507],[-71.1347795,42.3056499],[-71.1349082,42.3059672],[-71.1348009,42.3062529],[-71.1343074,42.3068797],[-71.1343074,42.307086],[-71.1345756,42.307213],[-71.1345005,42.3074589],[-71.1353481,42.3079112],[-71.1341572,42.3096171],[-71.1322474,42.3125764],[-71.1312819,42.3137982],[-71.1293828,42.3160117],[-71.1283288,42.3173484],[-71.1278326,42.3169081],[-71.1274544,42.3170628],[-71.1268361,42.3174972],[-71.1266557,42.3176667],[-71.1265838,42.3177924],[-71.1266407,42.3179498],[-71.126955,42.3184286],[-71.1257243,42.3201845],[-71.1245147,42.3216223],[-71.1237127,42.3227269],[-71.1234391,42.3225484],[-71.1216152,42.3238969],[-71.1199951,42.3228657],[-71.119684,42.3230164]]]}}]};
 
 // ================================================================
 // Resource Definitions
@@ -7438,15 +7340,20 @@ const Sessions = {
   _write(list) { try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {} },
   forContact(id) { return this.all().filter(s => s.contactId === id)
                                        .sort((a,b) => String(b.createdAt||'').localeCompare(String(a.createdAt||''))); },
+  // Normalize + merge a server list into the local cache. Shared by refresh()
+  // and the batched refreshAll() so both paths behave identically.
+  _ingest(list) {
+    const safe = Array.isArray(list) ? list : [];
+    const merged = mergeRecentLocal(safe, this.all(), (srv, loc) => srv.id === loc.id);
+    this._write(merged);
+    return merged;
+  },
   // Pull canonical sessions from the Google Sheet into the local cache.
   async refresh() {
     try {
       const res = await fetch(CONTACTS_API_URL + '?what=sessions');
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const list = await res.json();
-      const safe = Array.isArray(list) ? list : [];
-      this._write(safe);
-      return safe;
+      return this._ingest(await res.json());
     } catch (e) { console.warn('Sessions.refresh failed, using cache', e); return this.all(); }
   },
   add(session) {
@@ -7484,6 +7391,22 @@ const Campaigns = {
   _write(list) { try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {} },
   get(id) { return this.all().find(c => c.id === id) || null; },
 
+  // Merge Events + their CampaignMembers (junction) into the
+  // {…event, enrollments:[…]} shape the dashboard renders. Shared by
+  // refresh() and the batched refreshAll().
+  _ingestEvents(events, members) {
+    const safeEv  = Array.isArray(events) ? events : [];
+    const safeMem = Array.isArray(members) ? members : [];
+    safeEv.forEach(ev => {
+      ev.enrollments = safeMem.filter(m => m.eventId === ev.id).map(m => ({
+        memberId: m.id, contactId: m.contactId || null, name: m.name || 'Unknown',
+        enrolledAt: m.enrolledAt || m.createdAt || '', staff: m.staff || ''
+      }));
+    });
+    safeEv.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    this._write(safeEv);
+    return safeEv;
+  },
   // Pull Events + their CampaignMembers (junction) and merge into the
   // {…event, enrollments:[…]} shape the dashboard renders.
   async refresh() {
@@ -7492,19 +7415,7 @@ const Campaigns = {
         fetch(CONTACTS_API_URL + '?what=events'),
         fetch(CONTACTS_API_URL + '?what=campaignMembers')
       ]);
-      const events  = await evRes.json();
-      const members = await memRes.json();
-      const safeEv  = Array.isArray(events) ? events : [];
-      const safeMem = Array.isArray(members) ? members : [];
-      safeEv.forEach(ev => {
-        ev.enrollments = safeMem.filter(m => m.eventId === ev.id).map(m => ({
-          memberId: m.id, contactId: m.contactId || null, name: m.name || 'Unknown',
-          enrolledAt: m.enrolledAt || m.createdAt || '', staff: m.staff || ''
-        }));
-      });
-      safeEv.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-      this._write(safeEv);
-      return safeEv;
+      return this._ingestEvents(await evRes.json(), await memRes.json());
     } catch (e) { console.warn('Campaigns.refresh failed, using cache', e); return this.all(); }
   },
 
@@ -7563,6 +7474,26 @@ function apiPost(payload) {
   } catch (e) { return Promise.resolve(null); }
 }
 
+// Apps Script writes can lag a beat behind reads, so a background refresh()
+// fired right after a create could return a list that doesn't yet include the
+// new row — and overwrite it out of the cache. This keeps any just-created
+// local record (within `windowMs`) that the server hasn't echoed back yet;
+// once the server returns it, `matcher` finds it and the local copy is dropped
+// (no duplicate). Records the user deleted are already gone from the cache, so
+// they're never resurrected.
+function mergeRecentLocal(serverList, localList, matcher, windowMs) {
+  windowMs = windowMs || 180000; // 3 minutes
+  const now = Date.now();
+  const server = Array.isArray(serverList) ? serverList : [];
+  const extras = (localList || []).filter(function (loc) {
+    const t = loc && (loc.createdAt || loc.updatedAt);
+    const ms = t ? (now - new Date(t).getTime()) : NaN;
+    if (!(ms >= 0 && ms < windowMs)) return false;          // only just-created
+    return !server.some(function (srv) { return matcher(srv, loc); });
+  });
+  return server.concat(extras);
+}
+
 // ----------------------------------------------------------------
 // Leads — anonymous public-interface resource searches. Every time a
 // member of the public looks up resources (by address or ZIP) we log a
@@ -7612,15 +7543,20 @@ const Referrals = {
     return this.all().filter(r => r.sessionId === sessionId)
       .sort((a, b) => String(b.date || b.createdAt || '').localeCompare(String(a.date || a.createdAt || '')));
   },
+  // Normalize + merge a server list into the local cache. Shared by refresh()
+  // and the batched refreshAll().
+  _ingest(list) {
+    const safe = Array.isArray(list) ? list : [];
+    const merged = mergeRecentLocal(safe, this.all(), (srv, loc) => srv.id === loc.id);
+    this._write(merged);
+    return merged;
+  },
   // Pull canonical referrals from the Google Sheet into the local cache.
   async refresh() {
     try {
       const res = await fetch(CONTACTS_API_URL + '?what=referrals');
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const list = await res.json();
-      const safe = Array.isArray(list) ? list : [];
-      this._write(safe);
-      return safe;
+      return this._ingest(await res.json());
     } catch (e) { console.warn('Referrals.refresh failed, using cache', e); return this.all(); }
   },
   add(ref) {
@@ -7676,20 +7612,31 @@ const Contacts = {
     try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {}
   },
 
+  // Normalize + merge a server list into the local cache. Shared by refresh()
+  // and the batched refreshAll().
+  _ingest(list) {
+    const safe = Array.isArray(list) ? list : [];
+    // Normalize followUp -> boolean, status -> string
+    safe.forEach(c => {
+      c.followUp = (c.followUp === true || c.followUp === 'TRUE' || c.followUp === 'true');
+      if (!c.status) c.status = 'new';
+    });
+    // Keep a just-created contact the server hasn't echoed yet (match by id,
+    // else by name + phone/email so the optimistic copy doesn't double up).
+    const norm = s => String(s || '').trim().toLowerCase();
+    const merged = mergeRecentLocal(safe, this.all(), (srv, loc) =>
+      (loc.id && srv.id === loc.id) ||
+      (norm(srv.name) === norm(loc.name) && (norm(srv.phone) === norm(loc.phone) || norm(srv.email) === norm(loc.email)))
+    );
+    this._writeCache(merged);
+    return merged;
+  },
   // Pull canonical list from the server and update the cache
   async refresh() {
     try {
       const res = await fetch(CONTACTS_API_URL, { method: 'GET' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const list = await res.json();
-      const safe = Array.isArray(list) ? list : [];
-      // Normalize followUp -> boolean, status -> string
-      safe.forEach(c => {
-        c.followUp = (c.followUp === true || c.followUp === 'TRUE' || c.followUp === 'true');
-        if (!c.status) c.status = 'new';
-      });
-      this._writeCache(safe);
-      return safe;
+      return this._ingest(await res.json());
     } catch (e) {
       console.warn('Contacts.refresh failed, using cache', e);
       return this.all();
@@ -7783,27 +7730,31 @@ const Tickets = {
     try { localStorage.setItem(this.KEY, JSON.stringify(list || [])); } catch (_) {}
   },
 
+  // Normalize a server list and write it to the local cache. Shared by
+  // refresh() and the batched refreshAll().
+  _ingest(list) {
+    const safe = Array.isArray(list) ? list : [];
+    safe.forEach(t => {
+      if (typeof t.comments === 'string') {
+        try { t.comments = JSON.parse(t.comments); } catch (_) { t.comments = []; }
+      }
+      if (typeof t.meta === 'string') {
+        try { t.meta = JSON.parse(t.meta); } catch (_) { t.meta = {}; }
+      }
+      if (!t.comments) t.comments = [];
+      if (!t.meta)     t.meta = {};
+      if (!t.status)   t.status = 'new';
+      if (!t.priority) t.priority = 'normal';
+    });
+    this._writeCache(safe);
+    return safe;
+  },
+
   async refresh() {
     try {
       const res = await fetch(CONTACTS_API_URL + '?what=tickets', { method: 'GET' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const list = await res.json();
-      const safe = Array.isArray(list) ? list : [];
-      // Normalize
-      safe.forEach(t => {
-        if (typeof t.comments === 'string') {
-          try { t.comments = JSON.parse(t.comments); } catch (_) { t.comments = []; }
-        }
-        if (typeof t.meta === 'string') {
-          try { t.meta = JSON.parse(t.meta); } catch (_) { t.meta = {}; }
-        }
-        if (!t.comments) t.comments = [];
-        if (!t.meta)     t.meta = {};
-        if (!t.status)   t.status = 'new';
-        if (!t.priority) t.priority = 'normal';
-      });
-      this._writeCache(safe);
-      return safe;
+      return this._ingest(await res.json());
     } catch (e) {
       console.warn('Tickets.refresh failed, using cache', e);
       return this.all();
@@ -8504,6 +8455,16 @@ function closeResourceModal() {
     if (e.key === 'Escape' && $('resource-modal').classList.contains('open')) closeResourceModal();
   });
 })();
+
+// After printing, Chromium can leave the compositor in a state where text
+// inputs stop receiving events (aggravated by the page's backdrop-filter glass
+// UI) — so the user "comes back" from the print dialog and can't type in the
+// session/notes fields. Force a repaint when the dialog closes to unstick it.
+window.addEventListener('afterprint', () => {
+  document.body.style.transform = 'translateZ(0)';
+  void document.body.offsetHeight; // force reflow
+  document.body.style.transform = '';
+});
 
 // wire "center on me" button
 $('btn-recenter').addEventListener('click', () => {
@@ -9301,17 +9262,51 @@ $('nav-logout').addEventListener('click', () => {
   applyAuthState();
 });
 
+// Pull EVERY dataset the dashboard needs in ONE Apps Script call (?what=all)
+// instead of six separate cold-start round-trips. Falls back to the
+// per-endpoint refreshes if the batch route is unavailable (e.g. an older
+// backend deployment that doesn't know ?what=all yet).
+async function refreshAll() {
+  try {
+    const res = await fetch(CONTACTS_API_URL + '?what=all');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data || typeof data !== 'object' || Array.isArray(data) || data.error) {
+      throw new Error((data && data.error) || 'batch route not available');
+    }
+    Contacts._ingest(data.contacts || []);
+    Tickets._ingest(data.tickets || []);
+    Sessions._ingest(data.sessions || []);
+    Referrals._ingest(data.referrals || []);
+    Campaigns._ingestEvents(data.events || [], data.campaignMembers || []);
+    return data;
+  } catch (e) {
+    console.warn('refreshAll batch failed, falling back to per-endpoint', e);
+    await Promise.allSettled([
+      Contacts.refresh(),
+      Tickets.refresh(),
+      Sessions.refresh(),
+      Referrals.refresh(),
+      (typeof Campaigns !== 'undefined' && Campaigns.refresh) ? Campaigns.refresh() : Promise.resolve()
+    ]);
+    return null;
+  }
+}
+
 $('nav-dashboard').addEventListener('click', () => {
   Tracker.log('dashboard_viewed', {});
   $('card').classList.add('wide');
-  renderDashboard();
+  renderDashboard();          // paint instantly from the localStorage cache
   showStep('step-dashboard');
-  // Pull fresh contacts + tickets + events from the Google Sheet in the background
-  Contacts.refresh().then(() => { renderContacts(); renderConsumerInsights(); }).catch(() => {});
-  Tickets.refresh().then(() => renderTickets()).catch(() => {});
-  if (typeof Campaigns !== 'undefined' && Campaigns.refresh) Campaigns.refresh().then(() => renderCampaigns()).catch(() => {});
-  if (typeof Sessions !== 'undefined' && Sessions.refresh) Sessions.refresh().catch(() => {});
-  if (typeof Referrals !== 'undefined' && Referrals.refresh) Referrals.refresh().then(() => renderConsumerInsights()).catch(() => {});
+  // One batched call refreshes contacts + tickets + sessions + referrals +
+  // events, then we re-render everything from the freshened cache.
+  refreshAll().then(() => {
+    renderContacts();
+    renderConsumerInsights();
+    renderTickets();
+    if (typeof renderCampaigns === 'function') renderCampaigns();
+    renderDashboard();
+  }).catch(() => {});
 });
 
 $('nav-contacts').addEventListener('click', () => {
@@ -9496,7 +9491,7 @@ document.addEventListener('keydown', (e) => {
 function openModal(id) { $(id).classList.add('open'); }
 function closeModal(id) { $(id).classList.remove('open'); }
 
-$('new-task-btn').addEventListener('click', () => openModal('new-task-modal'));
+if ($('new-task-btn')) $('new-task-btn').addEventListener('click', () => openModal('new-task-modal'));
 $('new-task-cancel').addEventListener('click', () => closeModal('new-task-modal'));
 $('new-task-submit').addEventListener('click', async () => {
   const title = $('task-title').value.trim();
@@ -10337,10 +10332,13 @@ const Wizard = {
     try {
       const rec = { name: d.name, phone: d.phone || null, email: d.email || null, address, zip: d.zip || null, age: Number.isFinite(d.age) ? d.age : null, lat: (d.lat != null ? d.lat : null), lng: (d.lng != null ? d.lng : null), source: this.sessionMode ? 'staff-session' : 'staff-wizard', notes };
       if (interests.length) rec.needs = interests.join(', ');
+      // Existing contact (session/edit mode) → save BY ID so we update that
+      // record in place instead of appending a duplicate.
+      if (this.contactId) rec.id = this.contactId;
       await Contacts.save(rec);
       const norm = s => String(s || '').trim().toLowerCase();
       const saved = Contacts.all().find(c => norm(c.name) === norm(d.name) && (norm(c.phone) === norm(d.phone) || norm(c.email) === norm(d.email)));
-      const cid = saved ? saved.id : this.contactId;
+      const cid = this.contactId || (saved ? saved.id : null);
       const cur = (typeof Session !== 'undefined') ? Session.current() : null;
       const staffName = cur ? (cur.name || cur.email || '') : '';
       const sessNotes = [
@@ -10395,42 +10393,10 @@ const Wizard = {
   if ($('wiz-save')) $('wiz-save').addEventListener('click', () => Wizard.save());
 })();
 
-$('dash-export').addEventListener('click', () => {
-  Tracker.log('export_json', { count: Tracker.all().length });
-  Tracker.export();
-});
-
-$('dash-clear').addEventListener('click', () => {
-  if (!confirm('Clear all tracked events? This cannot be undone.')) return;
-  Tracker.clear();
-  Tracker.log('log_cleared', {});
-  renderDashboard();
-});
-
-// Expand / collapse toggles on the long lists
-$('dash-resources-expand').addEventListener('click', () => {
-  _expand.resources = !_expand.resources;
-  renderDashboard();
-});
-$('dash-categories-expand').addEventListener('click', () => {
-  _expand.categories = !_expand.categories;
-  renderDashboard();
-});
-
-// Range-pill toggle for the activity chart
-document.querySelectorAll('.range-pill').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const next = btn.dataset.range;
-    if (!next || next === _trendRange) return;
-    _trendRange = next;
-    document.querySelectorAll('.range-pill').forEach(b => {
-      const active = b.dataset.range === _trendRange;
-      b.classList.toggle('active', active);
-      b.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-    renderBars(Tracker.all());
-  });
-});
+// Catchment-areas toggle on the Consumer Locations map
+if ($('ci-catchment-toggle')) {
+  $('ci-catchment-toggle').addEventListener('click', (e) => toggleCatchment(e.currentTarget));
+}
 
 // ----------------------------------------------------------------
 // Dashboard aggregator + renderer
@@ -10471,6 +10437,67 @@ function _ciStyle() {
 function _ciDestroy(id) { if (_ciCharts[id]) { try { _ciCharts[id].destroy(); } catch (_) {} delete _ciCharts[id]; } }
 function _ciKpi(v, l) { return '<div class="ci-kpi"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>'; }
 
+// Lightweight value-label plugin — chartjs-plugin-datalabels isn't bundled, so
+// draw counts ourselves. Numbers sit INSIDE bars/slices; doughnuts skip slices
+// under 8% (too thin to label) and show the grand total in the middle.
+const CI_VALUE_LABELS = {
+  id: 'ciValueLabels',
+  afterDatasetsDraw(chart) {
+    const ctx = chart.ctx;
+    const isDonut = chart.config.type === 'doughnut' || chart.config.type === 'pie';
+    const light = document.body.getAttribute('data-theme') === 'light';
+    const dim = light ? '#33415a' : 'rgba(255,255,255,0.88)';
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      if (meta.hidden) return;
+      const total = ds.data.reduce((s, v) => s + (Number(v) || 0), 0);
+      meta.data.forEach((el, i) => {
+        const val = Number(ds.data[i]);
+        if (!val) return;
+        ctx.save();
+        ctx.font = '700 11px Geist, ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (isDonut) {
+          if (total && val / total < 0.08) { ctx.restore(); return; } // too thin to label
+          const p = el.tooltipPosition();
+          ctx.fillStyle = '#fff';
+          ctx.fillText(val, p.x, p.y);
+        } else if (chart.options.indexAxis === 'y') {
+          // horizontal bar — number inside the right end when there's room
+          const w = Math.abs(el.x - el.base);
+          if (w >= 18) { ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.fillText(val, el.x - 6, el.y); }
+          else { ctx.fillStyle = dim; ctx.textAlign = 'left'; ctx.fillText(val, el.x + 6, el.y); }
+        } else {
+          // vertical bar — number inside the top when there's room, else above
+          const hgt = Math.abs(el.base - el.y);
+          if (hgt >= 18) { ctx.fillStyle = '#fff'; ctx.textBaseline = 'top'; ctx.fillText(val, el.x, el.y + 4); }
+          else { ctx.fillStyle = dim; ctx.textBaseline = 'bottom'; ctx.fillText(val, el.x, el.y - 4); }
+        }
+        ctx.restore();
+      });
+    });
+    // Doughnut center total
+    if (isDonut && chart.chartArea) {
+      const ds0 = chart.data.datasets[0] || { data: [] };
+      const grand = ds0.data.reduce((s, v) => s + (Number(v) || 0), 0);
+      const cx = (chart.chartArea.left + chart.chartArea.right) / 2;
+      const cy = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = light ? '#0a1f3d' : '#ffffff';
+      ctx.font = '700 22px Geist, ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(grand, cx, cy + 2);
+      ctx.fillStyle = light ? '#5a6b85' : 'rgba(255,255,255,0.6)';
+      ctx.font = '600 10px Geist, ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'top';
+      ctx.fillText('total', cx, cy + 8);
+      ctx.restore();
+    }
+  }
+};
+
 function _ciDonut(id, counts) {
   const el = document.getElementById(id); if (!el || typeof Chart === 'undefined') return;
   _ciDestroy(id);
@@ -10478,6 +10505,7 @@ function _ciDonut(id, counts) {
   _ciCharts[id] = new Chart(el, {
     type: 'doughnut',
     data: { labels, datasets: [{ data: labels.map(k => counts[k]), backgroundColor: labels.map((_, i) => CI_PALETTE[i % CI_PALETTE.length]), borderWidth: 0 }] },
+    plugins: [CI_VALUE_LABELS],
     options: { responsive: true, maintainAspectRatio: false, cutout: '60%',
       plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } } }
   });
@@ -10488,6 +10516,7 @@ function _ciBar(id, labels, data, label, horizontal) {
   _ciCharts[id] = new Chart(el, {
     type: 'bar',
     data: { labels, datasets: [{ label: label || '', data, backgroundColor: '#1ab8d4', borderRadius: 6, maxBarThickness: 40 }] },
+    plugins: [CI_VALUE_LABELS],
     options: { responsive: true, maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
       plugins: { legend: { display: false } },
       scales: { x: { ticks: { precision: 0 } }, y: { ticks: { precision: 0 } } } }
@@ -10504,10 +10533,19 @@ function renderConsumerInsights() {
   const ages = contacts.map(c => parseInt(c.age, 10)).filter(a => Number.isFinite(a) && a > 0 && a < 121);
   const avgAge = ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : '—';
   const seniorPct = ages.length ? Math.round(ages.filter(a => a >= 60).length / ages.length * 100) + '%' : '—';
-  const geocoded = contacts.filter(c => parseFloat(c.lat) && parseFloat(c.lng)).length;
+  // Most common ZIP across contacts. Boston ZIPs (021xx) can lose their leading
+  // zero when stored as a number, so normalize: keep digits, pad 4-digit to 5.
+  const kpiZipCounts = {};
+  contacts.forEach(c => {
+    let z = String(c.zip || '').replace(/\D/g, '').slice(0, 5);
+    if (z.length === 4) z = '0' + z;
+    if (z.length === 5) kpiZipCounts[z] = (kpiZipCounts[z] || 0) + 1;
+  });
+  const topZip = Object.entries(kpiZipCounts).sort((a, b) => b[1] - a[1])[0];
+  const topZipDisplay = topZip ? topZip[0] : '—';
   if ($('ci-kpis')) $('ci-kpis').innerHTML = [
     _ciKpi(contacts.length, 'Contacts'), _ciKpi(avgAge, 'Avg Age'),
-    _ciKpi(seniorPct, 'Age 60+'), _ciKpi(geocoded, 'Geocoded')
+    _ciKpi(seniorPct, 'Age 60+'), _ciKpi(topZipDisplay, 'Top ZIP')
   ].join('');
   if ($('ci-meta')) $('ci-meta').textContent = contacts.length + ' contacts';
 
@@ -10583,80 +10621,258 @@ function renderDashboard() {
     ? 'Last activity ' + relTime(events[events.length - 1].ts)
     : 'No activity yet — start searching to populate data.';
 
-  const sessionIds = new Set(events.map(e => e.sessionId).filter(Boolean));
-
-  const counts = {
-    total: events.length,
-    sessions: sessionIds.size,
-    resources: events.filter(e => e.type === 'resource_viewed').length,
-    categories: events.filter(e => e.type === 'category_map_opened').length,
-    intake: events.filter(e => e.type === 'intake_submitted').length
-  };
-
-  // Age stats — pulled from age_submitted events
-  const ages = events
-    .filter(e => e.type === 'age_submitted')
-    .map(e => Number(e.payload && e.payload.age))
-    .filter(a => Number.isFinite(a) && a > 0 && a < 121);
-  const ageStats = computeAgeStats(ages);
-
-  // 7-day sparkline series per metric (last 7 daily buckets)
-  const tileSeries = {
-    sessions: sparkSeries(events, 7, e => e.type === 'age_submitted' ? e.sessionId : null, true),
-    resources: sparkSeries(events, 7, e => e.type === 'resource_viewed'),
-    categories: sparkSeries(events, 7, e => e.type === 'category_map_opened'),
-    ages:     sparkSeries(events, 7, e => e.type === 'age_submitted'),
-    total:    sparkSeries(events, 7, () => true)
-  };
-
-  $('dash-tiles').innerHTML = [
-    tileHTML('Unique Sessions',  counts.sessions,   'by contact + day',     tileSeries.sessions,   'teal'),
-    tileHTML('Resources Viewed', counts.resources,  'deduped per session',  tileSeries.resources,  'amber'),
-    tileHTML('Categories Opened',counts.categories, 'map views',            tileSeries.categories, 'teal'),
-    tileHTML('Avg. Age',         ageStats.avgDisplay, ageStats.subDisplay,  tileSeries.ages,       'amber'),
-    tileHTML('Total Events',     counts.total,      'across all time',      tileSeries.total,      'teal')
-  ].join('');
-
-  // Donut — categories (count category_map_opened + resource_viewed towards category)
-  const catCounts = tallyPayloadKey(events, ['category_map_opened', 'resource_viewed'], 'category');
-  renderDonut(catCounts);
-
-  // Bars — activity trend (day/week/month/year picker)
-  renderBars(events);
-
-  // Referrals to CBES + Campaigns/Events
-  renderReferrals();
-  renderCampaigns();
-
-  // Follow-up contacts roster
-  renderContacts();
-
   // Consumer Insights — analytics from the Contacts table + referrals
   renderConsumerInsights();
+}
 
-  // ASAP region activity map
-  renderDashMap(events);
+// ---- ASAP catchment overlay on the Consumer Locations map -------
+// Toggling on hides the individual consumer pins and instead shows the ASAP
+// catchment polygons, each stamped with a count of consumers inside it.
+//
+// For the Boston metro (CBES / Boston Senior Home Care / ETHOS) we draw the
+// REFINED hand-corrected polygons instead of the blocky state ones; every other
+// ASAP keeps its state polygon. Containment is tested refined-first to match.
+let _ciCatchmentLayer = null, _ciCatchmentLabels = null;
 
-  // Funnel — session journey stages
-  renderFunnel(events, counts, sessionIds.size);
+function _featName(f) {
+  const p = f.properties || {};
+  return p.ASAP || p.AGING_SERVICES_ACCESS_POINT || '';
+}
+function _featContains(feature, lng, lat) {
+  const g = feature.geometry; if (!g) return false;
+  const pt = [lng, lat];
+  if (g.type === 'Polygon') {
+    if (!pip(pt, g.coordinates[0])) return false;
+    for (let h = 1; h < g.coordinates.length; h++) if (pip(pt, g.coordinates[h])) return false;
+    return true;
+  }
+  if (g.type === 'MultiPolygon') {
+    for (const poly of g.coordinates) {
+      if (pip(pt, poly[0])) {
+        let hole = false;
+        for (let h = 1; h < poly.length; h++) if (pip(pt, poly[h])) { hole = true; break; }
+        if (!hole) return true;
+      }
+    }
+  }
+  return false;
+}
+// Refined Boston polygons first, then every state polygon NOT already refined.
+// Dedupes identical geometries (the source file has a stray BSHC polygon that
+// is byte-identical to CBES — dropping it fixes the hover/label bleed).
+function _catchmentFeatures() {
+  const refinedAll = (typeof ASAP_REFINED_GEOJSON !== 'undefined') ? ASAP_REFINED_GEOJSON.features : [];
+  const seen = new Set();
+  const refined = [];
+  for (const f of refinedAll) {
+    const key = JSON.stringify(f.geometry.coordinates);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    refined.push(f);
+  }
+  const refinedNames = new Set(refined.map(_featName));
+  const state = ASAP_GEOJSON.features.filter(f => !refinedNames.has(_featName(f)));
+  return { refined, state, refinedNames, all: refined.concat(state) };
+}
+function _isRefinedName(name, refinedNames) { return refinedNames.has(name); }
 
-  // ZIP chart — vertical bars
-  const zipCounts = tallyPayloadKey(events, ['zip_submitted', 'address_submitted'], 'zip');
-  renderZipChart(zipCounts);
+// Visual center of a polygon (pole of inaccessibility) — keeps the count badge
+// inside concave shapes like the CBES catchment instead of at the bbox centre.
+function _segDistSq(px, py, a, b) {
+  let x = a[0], y = a[1], dx = b[0] - x, dy = b[1] - y;
+  if (dx || dy) {
+    const t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy);
+    if (t > 1) { x = b[0]; y = b[1]; }
+    else if (t > 0) { x += dx * t; y += dy * t; }
+  }
+  dx = px - x; dy = py - y;
+  return dx * dx + dy * dy;
+}
+function _pointToPolyDist(x, y, rings) {
+  let inside = false, minSq = Infinity;
+  for (let k = 0; k < rings.length; k++) {
+    const ring = rings[k];
+    for (let i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+      const a = ring[i], b = ring[j];
+      if (((a[1] > y) !== (b[1] > y)) && (x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0])) inside = !inside;
+      minSq = Math.min(minSq, _segDistSq(x, y, a, b));
+    }
+  }
+  return (inside ? 1 : -1) * Math.sqrt(minSq);
+}
+function _polylabel(rings) {
+  const outer = rings[0];
+  let minX = outer[0][0], minY = outer[0][1], maxX = minX, maxY = minY;
+  for (const p of outer) {
+    if (p[0] < minX) minX = p[0]; if (p[1] < minY) minY = p[1];
+    if (p[0] > maxX) maxX = p[0]; if (p[1] > maxY) maxY = p[1];
+  }
+  const width = maxX - minX, height = maxY - minY;
+  const cellSize = Math.min(width, height);
+  if (cellSize === 0) return [minX, minY];
+  const precision = Math.max(width, height) / 100;
+  const mk = (x, y, h) => { const d = _pointToPolyDist(x, y, rings); return { x, y, h, d, max: d + h * Math.SQRT2 }; };
+  let h = cellSize / 2;
+  const queue = [];
+  for (let x = minX; x < maxX; x += cellSize)
+    for (let y = minY; y < maxY; y += cellSize)
+      queue.push(mk(x + h, y + h, h));
+  let best = mk(minX + width / 2, minY + height / 2, 0);
+  let guard = 0;
+  while (queue.length && guard++ < 4000) {
+    let bi = 0;
+    for (let i = 1; i < queue.length; i++) if (queue[i].max > queue[bi].max) bi = i;
+    const cell = queue.splice(bi, 1)[0];
+    if (cell.d > best.d) best = cell;
+    if (cell.max - best.d <= precision) continue;
+    h = cell.h / 2;
+    queue.push(mk(cell.x - h, cell.y - h, h), mk(cell.x + h, cell.y - h, h),
+               mk(cell.x - h, cell.y + h, h), mk(cell.x + h, cell.y + h, h));
+  }
+  return [best.x, best.y];
+}
+function _ringArea(r) {
+  let a = 0;
+  for (let i = 0, L = r.length, j = L - 1; i < L; j = i++) a += (r[j][0] + r[i][0]) * (r[j][1] - r[i][1]);
+  return Math.abs(a / 2);
+}
+// Largest single-polygon area within a feature (Polygon or MultiPolygon).
+function _featArea(feature) {
+  const g = feature.geometry; if (!g) return 0;
+  if (g.type === 'Polygon') return _ringArea(g.coordinates[0]);
+  if (g.type === 'MultiPolygon') {
+    let max = 0;
+    for (const poly of g.coordinates) max = Math.max(max, _ringArea(poly[0]));
+    return max;
+  }
+  return 0;
+}
+// L.LatLng at a feature's visual centre (largest sub-polygon for MultiPolygon).
+function _featVisualCenter(feature) {
+  const g = feature.geometry;
+  let rings;
+  if (g.type === 'Polygon') {
+    rings = g.coordinates;
+  } else if (g.type === 'MultiPolygon') {
+    let best = null, bestArea = -1;
+    for (const poly of g.coordinates) {
+      const area = _ringArea(poly[0]);
+      if (area > bestArea) { bestArea = area; best = poly; }
+    }
+    rings = best;
+  } else return null;
+  const c = _polylabel(rings);
+  return L.latLng(c[1], c[0]);
+}
 
-  // Expandable resources + categories lists
-  const resCounts = tallyPayloadKey(events, ['resource_viewed'], 'name');
-  renderExpandable('dash-resources', 'dash-resources-expand', 'dash-resources-expand-label',
-    resCounts, 5, 'resources', 'No resources opened yet.');
+function toggleCatchment(btn) {
+  if (typeof L === 'undefined' || !_ciMap) return;
 
-  renderExpandable('dash-categories', 'dash-categories-expand', 'dash-categories-expand-label',
-    catCounts, 5, 'categories', 'No categories explored yet.');
+  // Toggle OFF — drop the polygons + labels, bring the consumer pins back
+  if (_ciCatchmentLayer) {
+    _ciMap.removeLayer(_ciCatchmentLayer);
+    if (_ciCatchmentLabels) _ciMap.removeLayer(_ciCatchmentLabels);
+    _ciCatchmentLayer = _ciCatchmentLabels = null;
+    if (_ciMapLayer) _ciMapLayer.addTo(_ciMap);
+    if (btn) { btn.classList.remove('active'); btn.setAttribute('aria-pressed', 'false'); }
+    return;
+  }
 
-  // Recent activity
-  const recent = events.slice(-20).reverse();
-  $('dash-activity').innerHTML = recent.length
-    ? recent.map(activityRowHTML).join('')
-    : '<div class="dash-empty">No activity yet.</div>';
+  const feats = _catchmentFeatures();
+
+  // Count consumers per ASAP (refined-first containment, matching what we draw)
+  const counts = {};
+  let placed = 0;
+  (typeof Contacts !== 'undefined' ? (Contacts.all() || []) : []).forEach(c => {
+    const lat = parseFloat(c.lat), lng = parseFloat(c.lng);
+    if (!lat || !lng) return;
+    for (const f of feats.all) {
+      if (_featContains(f, lng, lat)) {
+        const n = _featName(f) || 'ASAP';
+        counts[n] = (counts[n] || 0) + 1;
+        placed++;
+        break;
+      }
+    }
+  });
+
+  // Hide the consumer pins while the catchment view is on
+  if (_ciMapLayer) _ciMap.removeLayer(_ciMapLayer);
+
+  const isLight = document.body.getAttribute('data-theme') === 'light';
+  _ciCatchmentLabels = L.layerGroup();
+  // Pick the biggest polygon per ASAP so each name gets exactly one badge
+  const badgeAnchor = {}; // name -> { feature, area }
+  const refinedNames = feats.refinedNames;
+  // Draw state polygons FIRST (faint backdrop) and refined ones ON TOP, so the
+  // crisp Boston shapes own the hover and the blocky state edges stay subtle.
+  const drawFeatures = feats.state.concat(feats.refined);
+  function catchStyle(feature) {
+    const name = _featName(feature);
+    const c = counts[name] || 0;
+    if (refinedNames.has(name)) {
+      return {
+        color: isLight ? 'rgba(28,117,188,0.95)' : 'rgba(76,184,207,0.95)',
+        weight: 2, opacity: 0.95,
+        fillColor: isLight ? '#1c75bc' : '#4cb8cf',
+        fillOpacity: c > 0 ? 0.24 : 0.12
+      };
+    }
+    // faint dashed backdrop for the simplified state polygons
+    return {
+      color: isLight ? 'rgba(28,117,188,0.38)' : 'rgba(150,182,205,0.42)',
+      weight: 0.8, opacity: 0.5, dashArray: '3 5',
+      fillColor: isLight ? '#1c75bc' : '#4cb8cf',
+      fillOpacity: c > 0 ? 0.12 : 0.03
+    };
+  }
+  _ciCatchmentLayer = L.geoJSON({ type: 'FeatureCollection', features: drawFeatures }, {
+    style: catchStyle,
+    onEachFeature: (feature, layer) => {
+      const p = feature.properties || {};
+      const name = _featName(feature) || 'ASAP';
+      const c = counts[name] || 0;
+      layer.bindTooltip(
+        '<div style="font:500 11px Geist,sans-serif;color:#0a1f3d;max-width:240px">'
+        + '<b>' + escapeHTML(name) + '</b> · ' + c + ' consumer' + (c === 1 ? '' : 's')
+        + (p.AREAS_SERVED ? '<br><span style="font-size:10px;color:#33415a">' + escapeHTML(p.AREAS_SERVED) + '</span>' : '')
+        + '</div>',
+        { sticky: true, direction: 'top', opacity: 0.96 }
+      );
+      layer.on('mouseover', function () { this.setStyle({ weight: refinedNames.has(name) ? 2.8 : 1.4, opacity: 0.95, dashArray: null }); });
+      layer.on('mouseout',  function () { if (_ciCatchmentLayer) _ciCatchmentLayer.resetStyle(this); });
+      // Track the largest polygon per ASAP (by area) for badge placement
+      const area = _featArea(feature);
+      if (!badgeAnchor[name] || area > badgeAnchor[name].area) badgeAnchor[name] = { feature, area };
+    }
+  }).addTo(_ciMap);
+
+  // One count badge per ASAP, at the visual centre of its largest polygon.
+  // Only badge ASAPs that actually have consumers, plus the 3 refined Boston
+  // ones — keeps the statewide view from filling with scattered "0" badges.
+  Object.keys(badgeAnchor).forEach(name => {
+    const c = counts[name] || 0;
+    if (c === 0 && !refinedNames.has(name)) return;
+    try {
+      const center = _featVisualCenter(badgeAnchor[name].feature);
+      if (!center) return;
+      _ciCatchmentLabels.addLayer(L.marker(center, {
+        interactive: false, keyboard: false,
+        icon: L.divIcon({
+          className: 'asap-count-badge' + (c > 0 ? ' has' : ''),
+          html: '<span>' + c + '</span>',
+          iconSize: [30, 30], iconAnchor: [15, 15]
+        })
+      }));
+    } catch (_) {}
+  });
+  _ciCatchmentLabels.addTo(_ciMap);
+
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true'); }
+  if ($('ci-map-meta')) $('ci-map-meta').textContent = placed + ' of ' + (typeof Contacts !== 'undefined' ? (Contacts.all() || []).length : 0) + ' consumers placed';
+  // Frame the regions so they're all visible
+  try { _ciMap.fitBounds(_ciCatchmentLayer.getBounds(), { padding: [20, 20] }); } catch (_) {}
+  setTimeout(() => { try { _ciMap.invalidateSize(); } catch (_) {} }, 60);
 }
 
 // ---- age stats --------------------------------------------------
@@ -10790,6 +11006,7 @@ function renderContacts() {
   const list = Contacts.all();
   const el = $('dash-contacts');
   const meta = $('contacts-meta');
+  if (!el) return; // Follow-up Contacts card was removed from the dashboard
 
   if (!list.length) {
     meta.textContent = '';
@@ -11142,7 +11359,7 @@ function renderContactReferrals(contactId) {
     wrap.innerHTML = '<div class="cdr-empty"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>No referrals yet. They\'re saved when you check resources during an intake or session.</div>';
     return;
   }
-  const fmt = d => { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch (_) { return d; } };
+  const fmt = d => fmtDate(d);
   const COLLAPSE_AT = 3; // show this many, hide the rest behind a toggle
   const rowHTML = (r, i) =>
     '<div class="referral-row' + (i >= COLLAPSE_AT ? ' rr-extra' : '') + '"' + (i >= COLLAPSE_AT ? ' hidden' : '') + '>' +
@@ -11190,9 +11407,7 @@ function renderContactSessions(contactId) {
   const str = v => (v === null || v === undefined) ? '' : String(v);
   wrap.innerHTML = list.map(s => {
     // Prefer the explicit session date; fall back to created timestamp
-    const date = s.date
-      ? new Date(s.date + 'T00:00:00').toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
-      : (s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '');
+    const date = fmtDate(s.date || s.createdAt);
     // New format uses notes; old placeholder records used summary
     const body = str(s.notes) || str(s.summary) || '—';
     const topic = str(s.topic);
@@ -11238,9 +11453,9 @@ function openSessionEdit(sessionId, contactId) {
   if (!s) return;
   _seSessionId = sessionId; _seContactId = contactId || s.contactId;
   const g = id => document.getElementById(id);
-  const dt = s.date || (s.createdAt ? String(s.createdAt).slice(0, 10) : todayISO());
+  const dt = dateOnly(s.date) || dateOnly(s.createdAt) || todayISO();
   g('se-title').textContent = s.topic || 'Session';
-  g('se-sub').textContent = (dt ? 'Logged ' + dt : '') + (s.staff ? ' · ' + s.staff : '');
+  g('se-sub').textContent = (dt ? 'Logged ' + fmtDate(dt) : '') + (s.staff ? ' · ' + s.staff : '');
   g('se-date').value = dt;
   g('se-topic').value = s.topic || '';
   g('se-notes').value = s.notes || s.summary || '';
@@ -11253,7 +11468,7 @@ function renderSessionEditReferrals(sessionId) {
   if (!wrap) return;
   const list = Referrals.forSession(sessionId);
   if (!list.length) { wrap.innerHTML = '<div class="cdr-empty" style="padding:0.6rem">No referrals were made in this session.</div>'; return; }
-  const fmt = d => { try { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) { return d; } };
+  const fmt = d => fmtDate(d, { month: 'short', day: 'numeric' });
   wrap.innerHTML = list.map(r =>
     '<div class="referral-row"><span class="rr-icon" aria-hidden="true"><i class="ph-duotone ph-map-pin"></i></span>' +
     '<div class="rr-main"><div class="rr-title">' + escapeHTML(r.name || '') + '</div>' +
@@ -11304,6 +11519,21 @@ function todayISO() {
   // Local calendar date as YYYY-MM-DD (avoids UTC off-by-one)
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+// Normalize any date value (YYYY-MM-DD or a full ISO timestamp) to YYYY-MM-DD.
+function dateOnly(v) {
+  if (!v) return '';
+  const m = String(v).match(/^\d{4}-\d{2}-\d{2}/);
+  return m ? m[0] : String(v);
+}
+
+// Format a date value for display; tolerates full ISO timestamps and bad input.
+function fmtDate(v, opts) {
+  const d = dateOnly(v);
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return isNaN(dt) ? d : dt.toLocaleDateString(undefined, opts || { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function hideSessionForm() {
@@ -11721,6 +11951,7 @@ function renderDonut(entries) {
   const R = 46;
   const C = 2 * Math.PI * R; // circumference
   let offset = 0;
+  const labelEls = [];
   const segs = data.map(([label, n], i) => {
     const len = (n / total) * C;
     const gap = C - len;
@@ -11733,10 +11964,21 @@ function renderDonut(entries) {
               + ' opacity="0.94">'
               + '<title>' + escapeHTML(String(label)) + ': ' + n + '</title>'
               + '</circle>';
+    // Value label at the slice midpoint — only for slices big enough (>=7%)
+    // that the ring has room, so the donut never looks crowded.
+    if (n / total >= 0.07) {
+      const mid = offset + len / 2;                // distance along circumference (starts at 3 o'clock, clockwise)
+      const theta = (mid / C) * 2 * Math.PI;
+      const lx = 60 + R * Math.cos(theta);
+      const ly = 60 + R * Math.sin(theta);
+      labelEls.push('<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '"'
+        + ' text-anchor="middle" dominant-baseline="central"'
+        + ' font-size="8.5" font-weight="700" fill="#fff" style="pointer-events:none">' + n + '</text>');
+    }
     offset += len;
     return seg;
   }).join('');
-  svgGroup.innerHTML = segs;
+  svgGroup.innerHTML = segs + labelEls.join('');
 
   legend.innerHTML = data.map(([label, n], i) => {
     const color = DONUT_COLORS[i % DONUT_COLORS.length];
@@ -11834,20 +12076,21 @@ function renderBars(events) {
   const barsEl = $('dash-bars');
   barsEl.style.gridTemplateColumns = 'repeat(' + spec.count + ', minmax(0, 1fr))';
 
-  // With many narrow bars, hide the numeric count label; keep it for <=14
-  const showValues = spec.count <= 14;
+  // Show the count above every bar that has data. Zeros stay blank so the dense
+  // 24/30-bar views don't get crowded; narrower bars get a smaller font.
+  const countFont = spec.count <= 14 ? '0.68rem' : '0.58rem';
 
   barsEl.innerHTML = buckets.map((b, i) => {
-    const h = b.count === 0 ? 0 : Math.max(6, Math.round((b.count / max) * 120));
+    // Bars with a count get a floor height so the number fits inside the bar.
+    const h = b.count === 0 ? 0 : Math.max(18, Math.round((b.count / max) * 120));
     const isNow = spec.highlightNow && b.key === nowKey;
     const delay = (i * (spec.count <= 12 ? 55 : 25)) + 'ms';
     const labelText = spec.label(b.date, i, spec.count);
     const titleAttr = (b.date.toLocaleString ? b.date.toLocaleString() : b.key) + ': ' + b.count;
     return '<div class="bar-col">'
-         +   (showValues
-              ? '<span class="hbar-count" style="font-size:0.68rem;line-height:1">' + b.count + '</span>'
-              : '')
-         +   '<span class="bar-fill' + (isNow ? ' accent' : '') + '" style="height:' + h + 'px;animation-delay:' + delay + '" title="' + titleAttr + '"></span>'
+         +   '<span class="bar-fill' + (isNow ? ' accent' : '') + '" style="height:' + h + 'px;animation-delay:' + delay + '" title="' + titleAttr + '">'
+         +     (b.count > 0 ? '<span class="bar-num" style="font-size:' + countFont + '">' + b.count + '</span>' : '')
+         +   '</span>'
          +   '<span class="bar-label">' + labelText + '</span>'
          + '</div>';
   }).join('');
