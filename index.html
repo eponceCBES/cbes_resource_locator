@@ -7863,10 +7863,17 @@ function applyAuthState() {
 // Login form
 // ----------------------------------------------------------------
 function handleLogin() {
-  const email = $('login-email').value.trim();
-  const password = $('login-password').value;
+  let email = $('login-email').value.trim();
+  let password = $('login-password').value;
   const err = $('login-error');
   err.classList.remove('visible');
+
+  // Demo convenience: if both fields are blank, just hitting Enter signs in as
+  // the demo user — no need to type the email/password.
+  if (!email && !password && USERS.length) {
+    email = USERS[0].email;
+    password = USERS[0].password;
+  }
 
   if (!email || !password) {
     $('login-error-text').textContent = t('login.error_missing');
@@ -9216,7 +9223,7 @@ $('zip-input').addEventListener('input', function() {
 // Login + Navigation + Dashboard wiring
 // ================================================================
 $('login-submit-btn').addEventListener('click', handleLogin);
-$('login-email').addEventListener('keydown',    e => { if (e.key === 'Enter') $('login-password').focus(); });
+$('login-email').addEventListener('keydown',    e => { if (e.key === 'Enter') { if ($('login-email').value.trim()) $('login-password').focus(); else handleLogin(); } });
 $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 
 // Language picker — toggle open/close + close on outside click
