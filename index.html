@@ -5017,6 +5017,10 @@
   body.accessible .cb-input-row .cb-icon-btn { width: 50px; height: 50px; }
   body.accessible .cb-chip { font-size: 0.92rem; padding: 0.55rem 0.9rem; }
 
+  /* AI assistant hidden from the public for now (testing rollout) —
+     remove this rule to bring the floating CB Assistant chatbot back. */
+  .cb-launcher, .cb-panel { display: none !important; }
+
   @media print { .cb-launcher, .cb-panel { display: none !important; } }
 
   /* =============================================
@@ -5440,8 +5444,37 @@
     </button>
 
     <p class="login-hint" data-i18n-html="login.hint">
-      Demo credentials: <code>eponce@centralboston.org</code> &middot; <code>CBES123!</code>
+      First time? Enter your work email — you'll be asked to create a password.
     </p>
+  </section>
+
+  <!-- ==========================================
+       STEP 0b — First-time password creation
+       ========================================== -->
+  <section class="step-panel" id="step-setpw" aria-label="Create your password">
+    <span class="eyebrow">CB Connects &middot; Staff Portal</span>
+    <h1 class="step-title" id="setpw-welcome">Welcome!</h1>
+    <p class="step-subtitle">This is your first sign-in. Create a password to finish setting up your account.</p>
+
+    <div class="input-group">
+      <label class="input-label" for="setpw-new">New password</label>
+      <input id="setpw-new" class="input-field" type="password"
+             placeholder="At least 8 characters" autocomplete="new-password" />
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="setpw-confirm">Confirm password</label>
+      <input id="setpw-confirm" class="input-field" type="password"
+             placeholder="Re-enter your password" autocomplete="new-password" />
+      <div class="error-msg" id="setpw-error" role="alert">
+        <span aria-hidden="true">&#9888;</span>
+        <span id="setpw-error-text">Passwords do not match.</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="setpw-submit-btn" type="button">
+      <span>Create password &amp; continue</span> <span aria-hidden="true">&#8594;</span>
+    </button>
   </section>
 
   <section class="step-panel active" id="step-age" aria-label="Age entry">
@@ -6470,7 +6503,7 @@ const I18N = {
     'login.submit': 'Sign in',
     'login.error_missing': 'Enter both email and password.',
     'login.error_invalid': 'Incorrect email or password.',
-    'login.hint': 'Demo credentials: <code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': "First time? Enter your work email — you'll be asked to create a password.",
 
     'age.eyebrow': 'CB Connects · Resource Finder',
     'age.title': 'Find the right <em>help</em>,<br>close to home.',
@@ -6575,7 +6608,7 @@ const I18N = {
     'login.submit': 'Iniciar sesión',
     'login.error_missing': 'Ingrese correo y contraseña.',
     'login.error_invalid': 'Correo o contraseña incorrectos.',
-    'login.hint': 'Credenciales de demo: <code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': '¿Primera vez? Ingrese su correo de trabajo — se le pedirá crear una contraseña.',
     'age.eyebrow': 'CB Connects · Buscador de Recursos',
     'age.title': 'Encuentre la <em>ayuda</em><br>adecuada, cerca de casa.',
     'age.subtitle': 'Tres pasos cortos le conectarán con servicios comunitarios en el área de Boston. Para empezar, díganos su edad.',
@@ -6665,7 +6698,7 @@ const I18N = {
     'login.submit': 'Konekte',
     'login.error_missing': 'Antre imèl ak modpas.',
     'login.error_invalid': 'Imèl oswa modpas pa kòrèk.',
-    'login.hint': 'Kredansyèl demo: <code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': 'Premye fwa? Antre imèl travay ou — n ap mande w kreye yon modpas.',
     'age.eyebrow': 'CB Connects · Jwenn Resous',
     'age.title': 'Jwenn bon <em>èd</em> la,<br>toupre lakay ou.',
     'age.subtitle': 'Twa etap kout ap konekte ou ak sèvis kominote nan Greater Boston. Pou kòmanse, di nou laj ou.',
@@ -6755,7 +6788,7 @@ const I18N = {
     'login.submit': 'Entrar',
     'login.error_missing': 'Digite e-mail e senha.',
     'login.error_invalid': 'E-mail ou senha incorretos.',
-    'login.hint': 'Credenciais de demo: <code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': 'Primeira vez? Digite seu e-mail de trabalho — você criará uma senha.',
     'age.eyebrow': 'CB Connects · Buscador de Recursos',
     'age.title': 'Encontre a <em>ajuda</em><br>certa, perto de casa.',
     'age.subtitle': 'Três passos curtos conectam você a serviços comunitários em Greater Boston. Para começar, diga sua idade.',
@@ -6845,7 +6878,7 @@ const I18N = {
     'login.submit': 'Đăng nhập',
     'login.error_missing': 'Nhập cả email và mật khẩu.',
     'login.error_invalid': 'Email hoặc mật khẩu không đúng.',
-    'login.hint': 'Thông tin demo: <code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': 'Lần đầu? Nhập email công việc của bạn — bạn sẽ được yêu cầu tạo mật khẩu.',
     'age.eyebrow': 'CB Connects · Tìm Nguồn Lực',
     'age.title': 'Tìm <em>sự giúp đỡ</em><br>phù hợp, gần nhà.',
     'age.subtitle': 'Ba bước ngắn kết nối bạn với dịch vụ cộng đồng tại Greater Boston. Để bắt đầu, cho chúng tôi biết tuổi của bạn.',
@@ -6935,7 +6968,7 @@ const I18N = {
     'login.submit': '登录',
     'login.error_missing': '请输入邮箱和密码。',
     'login.error_invalid': '邮箱或密码不正确。',
-    'login.hint': '演示凭据:<code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': '首次登录?输入您的工作邮箱,系统会提示您创建密码。',
     'age.eyebrow': 'CB Connects · 资源查询',
     'age.title': '在附近找到<em>合适</em>的<br>帮助。',
     'age.subtitle': '三个简短步骤将您与大波士顿地区的社区服务联系起来。首先,告诉我们您的年龄。',
@@ -7025,7 +7058,7 @@ const I18N = {
     'login.submit': 'Войти',
     'login.error_missing': 'Введите почту и пароль.',
     'login.error_invalid': 'Неверная почта или пароль.',
-    'login.hint': 'Демо-доступ: <code>eponce@centralboston.org</code> · <code>CBES123!</code>',
+    'login.hint': 'Впервые? Введите рабочую почту — вам предложат создать пароль.',
     'age.eyebrow': 'CB Connects · Поиск ресурсов',
     'age.title': 'Найдите нужную <em>помощь</em><br>рядом с домом.',
     'age.subtitle': 'Три коротких шага свяжут вас с общественными услугами в районе Большого Бостона. Для начала укажите ваш возраст.',
@@ -7193,28 +7226,65 @@ function showStep(id) {
 
 // ================================================================
 // Session + Event Tracker (localStorage-backed)
-// Replace USERS with a server call when you're ready to go live.
+// Auth is server-backed: the Users tab in the Google Sheet is the ONE
+// source of truth. There is no client-side account list or offline bypass.
 // ================================================================
-const USERS = [
-  { email: 'eponce@centralboston.org', password: 'CBES123!', name: 'Enrique Ponce' },
-  { email: 'staff@culpepper.gov',      password: 'Culpepper123!', name: 'Culpepper Office Staff' }
-];
-
 const Session = {
   KEY: 'cbes-connects-session',
   ANON_KEY: 'cbes-connects-anon-id',
   current() {
     try { return JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (_) { return null; }
   },
-  login(email, password) {
-    const u = USERS.find(x =>
-      x.email.toLowerCase() === String(email).trim().toLowerCase() &&
-      x.password === password
-    );
-    if (!u) return null;
-    const session = { email: u.email, name: u.name, loginAt: new Date().toISOString() };
-    try { localStorage.setItem(this.KEY, JSON.stringify(session)); } catch (_) {}
-    return session;
+  // Verify a sign-in against the Users tab in the Sheet (server-side).
+  // Returns one of:
+  //   - a session object                     (success — persisted to localStorage)
+  //   - { needsPassword:true, email, name }   (known email, no password yet)
+  //   - { ok:false, error }                   (no_account / disabled / invalid / network)
+  async login(email, password) {
+    const cleanEmail = String(email).trim();
+    try {
+      const res = await fetch(CONTACTS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'login', email: cleanEmail, password }),
+        redirect: 'follow'
+      });
+      const data = await res.json();
+      if (data && data.ok) {
+        const session = {
+          email: data.user.email, name: data.user.name,
+          role: data.user.role || 'staff', loginAt: new Date().toISOString()
+        };
+        try { localStorage.setItem(this.KEY, JSON.stringify(session)); } catch (_) {}
+        return session;
+      }
+      // Known email but no password set yet → caller prompts to create one.
+      if (data && data.needsPassword) return { needsPassword: true, email: cleanEmail, name: data.name };
+      return { ok: false, error: (data && data.error) || 'invalid' };
+    } catch (_) {
+      return { ok: false, error: 'network' };
+    }
+  },
+  // First-time password creation (or any change). Returns a session on success.
+  async setPassword(email, currentPassword, newPassword) {
+    try {
+      const res = await fetch(CONTACTS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'setPassword', email, currentPassword, newPassword }),
+        redirect: 'follow'
+      });
+      const data = await res.json();
+      if (data && data.ok) {
+        const session = {
+          email: data.user.email, name: data.user.name,
+          role: data.user.role || 'staff', loginAt: new Date().toISOString()
+        };
+        try { localStorage.setItem(this.KEY, JSON.stringify(session)); } catch (_) {}
+        return session;
+      }
+      return data || { ok: false };
+    } catch (e) {
+      return { ok: false, error: 'network' };
+    }
   },
   logout() { try { localStorage.removeItem(this.KEY); } catch (_) {} },
   // Stable per-browser anonymous ID for public visitors
@@ -7846,8 +7916,12 @@ function applyAuthState() {
   const sess = Session.current();
   document.body.classList.toggle('is-authed', !!sess);
 
-  // If the user just signed in from the login panel, land on the dashboard (staff home)
-  if (sess && $('step-login') && $('step-login').classList.contains('active')) {
+  // If the user just signed in (or finished first-time password setup), land on
+  // the dashboard (staff home)
+  const onAuthPanel =
+    (($('step-login')  && $('step-login').classList.contains('active')) ||
+     ($('step-setpw')  && $('step-setpw').classList.contains('active')));
+  if (sess && onAuthPanel) {
     if ($('card')) $('card').classList.add('wide');
     showStep('step-dashboard');
     if (typeof renderDashboard === 'function') renderDashboard();
@@ -7862,32 +7936,107 @@ function applyAuthState() {
 // ----------------------------------------------------------------
 // Login form
 // ----------------------------------------------------------------
-function handleLogin() {
-  let email = $('login-email').value.trim();
-  let password = $('login-password').value;
+async function handleLogin() {
+  const email = $('login-email').value.trim();
+  const password = $('login-password').value;
   const err = $('login-error');
   err.classList.remove('visible');
 
-  // Demo convenience: if both fields are blank, just hitting Enter signs in as
-  // the demo user — no need to type the email/password.
-  if (!email && !password && USERS.length) {
-    email = USERS[0].email;
-    password = USERS[0].password;
-  }
-
-  if (!email || !password) {
+  if (!email) {
     $('login-error-text').textContent = t('login.error_missing');
     err.classList.add('visible');
     return;
   }
-  const session = Session.login(email, password);
-  if (!session) {
-    $('login-error-text').textContent = t('login.error_invalid');
+
+  const btn = $('login-submit-btn');
+  btn.disabled = true;
+  let r;
+  try {
+    r = await Session.login(email, password);
+  } finally {
+    btn.disabled = false;
+  }
+
+  // Recognized email with no password yet → first-time password creation.
+  if (r && r.needsPassword) {
+    $('login-password').value = '';
+    openSetPassword(r.email, '', r.name);
+    return;
+  }
+
+  // Failure — unknown email, disabled account, wrong password, or no backend.
+  if (!r || r.ok === false) {
+    const code = r && r.error;
+    $('login-error-text').textContent =
+      code === 'no_account' ? 'No account found for that email. Ask your administrator to add you.'
+      : code === 'disabled' ? 'This account is disabled.'
+      : code === 'network' ? "Can't reach the server. Check your connection and try again."
+      : (!password ? t('login.error_missing') : t('login.error_invalid'));
     err.classList.add('visible');
     return;
   }
-  Tracker.log('login', { email: session.email });
+
+  // Success (r is a session).
+  Tracker.log('login', { email: r.email });
   $('login-password').value = '';
+  applyAuthState();
+}
+
+// ----------------------------------------------------------------
+// First-time password creation
+// ----------------------------------------------------------------
+let _setpwCtx = null; // { email, currentPassword } carried over from login
+
+function openSetPassword(email, currentPassword, name) {
+  _setpwCtx = { email, currentPassword };
+  const first = (name || '').trim().split(/\s+/)[0];
+  $('setpw-welcome').textContent = first ? ('Welcome, ' + first + '!') : 'Welcome!';
+  $('setpw-new').value = '';
+  $('setpw-confirm').value = '';
+  $('setpw-error').classList.remove('visible');
+  $('card').classList.remove('wide');
+  showStep('step-setpw');
+  setTimeout(() => $('setpw-new').focus(), 80);
+}
+
+async function handleSetPassword() {
+  if (!_setpwCtx) return;
+  const np = $('setpw-new').value;
+  const cp = $('setpw-confirm').value;
+  const err = $('setpw-error');
+  err.classList.remove('visible');
+
+  if (!np || np.length < 8) {
+    $('setpw-error-text').textContent = 'Password must be at least 8 characters.';
+    err.classList.add('visible');
+    return;
+  }
+  if (np !== cp) {
+    $('setpw-error-text').textContent = 'Passwords do not match.';
+    err.classList.add('visible');
+    return;
+  }
+
+  const btn = $('setpw-submit-btn');
+  btn.disabled = true;
+  let result;
+  try {
+    result = await Session.setPassword(_setpwCtx.email, _setpwCtx.currentPassword, np);
+  } finally {
+    btn.disabled = false;
+  }
+
+  if (!result || !result.email) {
+    $('setpw-error-text').textContent =
+      (result && result.error === 'weak') ? 'Password is too weak — use at least 8 characters.'
+      : (result && result.error === 'invalid_current') ? 'Your sign-in session expired — please sign in again.'
+      : 'Could not save your password. Check your connection and try again.';
+    err.classList.add('visible');
+    return;
+  }
+
+  Tracker.log('login', { email: result.email, firstSet: true });
+  _setpwCtx = null;
   applyAuthState();
 }
 
@@ -9225,6 +9374,11 @@ $('zip-input').addEventListener('input', function() {
 $('login-submit-btn').addEventListener('click', handleLogin);
 $('login-email').addEventListener('keydown',    e => { if (e.key === 'Enter') { if ($('login-email').value.trim()) $('login-password').focus(); else handleLogin(); } });
 $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+// First-time password creation
+$('setpw-submit-btn').addEventListener('click', handleSetPassword);
+$('setpw-new').addEventListener('keydown',     e => { if (e.key === 'Enter') $('setpw-confirm').focus(); });
+$('setpw-confirm').addEventListener('keydown', e => { if (e.key === 'Enter') handleSetPassword(); });
 
 // Language picker — toggle open/close + close on outside click
 (function wireLangPicker() {
