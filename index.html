@@ -7542,8 +7542,19 @@ const Campaigns = {
 // as text/plain (no Content-Type header) so the browser skips the CORS
 // preflight — the script reads e.postData.contents either way.
 // ----------------------------------------------------------------
+// Stamp who created a record — the signed-in user's email, or the anon id for
+// public visitors — the first time it's sent. The backend locks createdBy on
+// the row, so resending it on later edits is harmless (the original sticks).
+function stampCreator(payload) {
+  if (payload && payload.record && typeof payload.record === 'object' && !payload.record.createdBy) {
+    payload.record.createdBy = (typeof Session !== 'undefined' && Session.actor) ? Session.actor() : '';
+  }
+  return payload;
+}
+
 function apiPost(payload) {
   try {
+    stampCreator(payload);
     return fetch(CONTACTS_API_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
   } catch (e) { return Promise.resolve(null); }
 }
@@ -7720,6 +7731,7 @@ const Contacts = {
   // POST with body as text/plain so no CORS preflight is triggered —
   // Apps Script still receives the JSON string via e.postData.contents.
   async _post(payload) {
+    stampCreator(payload);
     return fetch(CONTACTS_API_URL, {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -7847,6 +7859,7 @@ const Tickets = {
   },
 
   async _post(payload) {
+    stampCreator(payload);
     return fetch(CONTACTS_API_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
   },
 
